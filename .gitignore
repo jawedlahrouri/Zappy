@@ -1,0 +1,15 @@
+# Zappy executables
+zappy_server
+zappy_gui
+zappy_ai
+
+# Object files
+*.o
+
+# IDE / Editor configurations
+.vscode/
+.idea/
+.vs/
+*.swp
+*.swo
+*~
