@@ -108,3 +108,24 @@ class ZappyCommand:
         if response == "ko":
             return -1
         return int(response)
+    
+    def fork(self):
+        print("[Agent] commande: Fork")
+        self.network.send_command("Fork\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
+
+    def eject(self):
+        print("[Agent] commande: Eject")
+        self.network.send_command("Eject\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
+    
+    def death(self):
+        print("[Agent] commande: Death")
+        self.network.send_command("Death\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "dead"
