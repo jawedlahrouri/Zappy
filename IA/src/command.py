@@ -16,9 +16,9 @@ class ZappyCommand:
             return []
         return self._parse_look(response)
 
-    def _parse_look(self, str):
+    def _parse_look(self, raw_str):
         parsed_vision = []
-        clean_str = str.strip('[]\n')
+        clean_str = raw_str.strip('[]\n')
         tiles = clean_str.split(',')
 
         for tile in tiles:
@@ -32,3 +32,22 @@ class ZappyCommand:
         response = self._wait_for_response()
         print(f"[Agent] Réponse: {response}")
         return response == "ok"
+    
+    def inventory(self):
+        print("[Agent] commande: Inventory")
+        self.network.send_command("Inventory\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        if response == "ko":
+            return {}
+        return self._parse_inventory(response)
+    
+    def _parse_inventory(self, raw_str):
+        inventory = {}
+        clean_str = raw_str.strip('[]\n')
+        items = clean_str.split(',')
+        for item in items:
+            key, value = item.strip().split()
+            inventory[key] = int(value)
+        return inventory
+
