@@ -18,11 +18,13 @@ NetworkManager::~NetworkManager()
         _socket.disconnect();
 }
 
-bool NetworkManager::isConnected() const {
+bool NetworkManager::isConnected() const
+{
     return _isConnected;
 }
 
-bool NetworkManager::connectToServer(const std::string& ip, unsigned short port) {
+bool NetworkManager::connectToServer(const std::string& ip, unsigned short port)
+{
     if (_socket.connect(ip, port) == sf::Socket::Done) {
         _isConnected = true;
         std::cout << "Connected to server " << ip << ":" << port << std::endl;
@@ -33,7 +35,8 @@ bool NetworkManager::connectToServer(const std::string& ip, unsigned short port)
     return false;
 }
 
-bool NetworkManager::authenticateAsGraphic() {
+bool NetworkManager::authenticateAsGraphic()
+{
     if (!_isConnected)
         return false;
 
@@ -66,7 +69,8 @@ bool NetworkManager::authenticateAsGraphic() {
     return true;
 }
 
-std::string NetworkManager::receiveData() {
+std::string NetworkManager::receiveData()
+{
     if (!_isConnected)
         return "";
 

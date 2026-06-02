@@ -28,7 +28,7 @@ zappy_server: $(SERVER_OBJ)
 	$(CXX) $(CXXFLAGS) -o zappy_server $(SERVER_OBJ) $(SERVER_INC)
 
 zappy_gui: $(GUI_OBJ)
-	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ) $(GUI_INC)
+	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ) -lsfml-network -lsfml-system $(GUI_INC)
 
 zappy_ai: $(AI_SRC)
 	cp $(AI_SRC) zappy_ai
