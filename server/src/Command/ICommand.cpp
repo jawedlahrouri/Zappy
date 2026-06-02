@@ -2,13 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** Zappy-1
 ** File description:
-** ICommand.cpp
+** Command.cpp
 */
 
 #include "Command/ICommand.hpp"
-#include <iostream>
-#include <unordered_map>
+#include "Command/MapCommand.hpp"
+#include "Command/PlayerCommand.hpp"
+#include "Command/GameCommand.hpp"
 
-static std::unordered_map<std::string, void (ICommand::*)(std::string)> commands = {
-
-};
