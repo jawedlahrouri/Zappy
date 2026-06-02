@@ -71,4 +71,17 @@ class ZappyCommand:
         response = self._wait_for_response()
         print(f"[Agent] Réponse: {response}")
         return response == "ok"
-
+    
+    def take_object(self, obj):
+        print(f"[Agent] commande: Take {obj}")
+        self.network.send_command(f"Take {obj}\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
+    
+    def set_object(self, obj):
+        print(f"[Agent] commande: Set {obj}")
+        self.network.send_command(f"Set {obj}\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
