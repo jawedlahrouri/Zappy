@@ -5,7 +5,7 @@
 ** ICommand.cpp
 */
 
-#include "ICommand.hpp"
+#include "Command/ICommand.hpp"
 #include <iostream>
 #include <unordered_map>
 

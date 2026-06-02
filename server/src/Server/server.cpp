@@ -1,0 +1,203 @@
+/*
+** EPITECH PROJECT, 2026
+** Zappy-1
+** File description:
+** server.cpp
+*/
+
+#include "Server/Server.hpp"
+#include <iostream>
+#include "Exception_Server.hpp"
+#include "Socket/Socket.hpp"
+#include "Poll/Poll.hpp"
+#include <unistd.h>
+#include <cstring>
+
+Server::~Server()
+{
+    cleanup();
+}
+
+void Server::accept_client()
+{
+    try {
+        Socket client_socket = _master_socket.accept_connection();
+        int fd = client_socket.get_socket();
+        
+        if (fd != -1) {
+            _poll.add_fd(fd, POLLIN);
+            _clients.emplace(fd, std::move(client_socket));
+            _client_buffers[fd] = "";
+            _output_buffers[fd] = "";
+            std::cout << "New client connected on socket " << fd << std::endl;
+            send_response(fd, "WELCOME");
+        }
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] accept_client exception: " << e.what() << std::endl;
+    }
+}
+
+void Server::send_response(int client_socket, const std::string &message)
+{
+    try {
+        std::string msg_to_send = message;
+        if (msg_to_send.empty() || msg_to_send.back() != '\n') {
+            msg_to_send += "\n";
+        }
+        _output_buffers[client_socket] += msg_to_send;
+        _poll.add_events(client_socket, POLLOUT);
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] send_response exception: " << e.what() << std::endl;
+    }
+}
+
+void Server::broadcast_event(const std::string &message, int exclude_socket)
+{
+    try {
+        for (const auto &[socket, buffer] : _client_buffers) {
+            if (socket != exclude_socket) {
+                send_response(socket, message);
+            }
+        }
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] broadcast_event exception: " << e.what() << std::endl;
+    }
+}
+
+void Server::remove_client(int client_socket)
+{
+    try {
+        _output_buffers.erase(client_socket);
+        auto it = _clients.find(client_socket);
+        if (it != _clients.end()) {
+            it->second.close_socket();
+            _clients.erase(it);
+        }
+        _client_buffers.erase(client_socket);
+        _poll.remove_fd(client_socket);
+        std::cout << "Client " << client_socket << " disconnected" << std::endl;
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] remove_client exception: " << e.what() << std::endl;
+    }
+}
+
+bool Server::handle_writable(size_t index)
+{
+    try {
+        int client_socket = _poll.get_fd(index);
+        auto &buffer = _output_buffers[client_socket];
+
+        if (buffer.empty()) {
+            _poll.remove_events(client_socket, POLLOUT);
+            return false;
+        }
+
+        auto it = _clients.find(client_socket);
+        if (it != _clients.end()) {
+            it->second.send_data(buffer);
+            buffer.clear();
+            _poll.remove_events(client_socket, POLLOUT);
+        }
+        return false;
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] handle_writable exception: " << e.what() << std::endl;
+        remove_client(_poll.get_fd(index));
+        return true;
+    }
+}
+
+bool Server::handle_client_data(size_t poll_index)
+{
+    try {
+        int client_socket = _poll.get_fd(poll_index);
+        auto it = _clients.find(client_socket);
+        if (it == _clients.end()) {
+            return false;
+        }
+        std::string data = it->second.recv_data(1024);
+
+        if (data.empty()) {
+            remove_client(client_socket);
+            return true;
+        } else {
+            std::cout << "Received on socket " << client_socket << ": " << data;
+            send_response(client_socket, data);
+        }
+        return false;
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] handle_client_data exception: " << e.what() << std::endl;
+        remove_client(_poll.get_fd(poll_index));
+        return true;
+    }
+}
+
+void Server::cleanup()
+{
+    try {
+        for (auto &[fd, client] : _clients) {
+            client.close_socket();
+        }
+        _clients.clear();
+        _client_buffers.clear();
+        _output_buffers.clear();
+        _master_socket.close_socket();
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] cleanup exception: " << e.what() << std::endl;
+    }
+}
+
+void Server::process_poll_event(size_t &i)
+{
+    if (_poll.is_readable(i)) {
+        if (i == 0) {
+            accept_client();
+        } else {
+            if (handle_client_data(i)) {
+                --i;
+                return;
+            }
+        }
+    }
+    if (i > 0 && i < _poll.get_size() && _poll.is_writable(i)) {
+        if (handle_writable(i)) {
+            --i;
+        }
+    }
+}
+
+void Server::run_poll_loop()
+{
+    std::cout << "Waiting for connections..." << std::endl;
+    while (true) {
+        int poll_count = _poll.run_poll(-1);
+        if (poll_count == -1) {
+            if (errno == EINTR) {
+                continue;
+            }
+            throw Exception_Server("poll failed");
+        }
+
+        for (size_t i = 0; i < _poll.get_size(); ++i) {
+            process_poll_event(i);
+        }
+    }
+}
+
+void Server::open_server(int port, int clientsNb, const std::vector<std::string> &teamNames)
+{
+    _port = port;
+    _clientsNb = clientsNb;
+    _teamNames = teamNames;
+    try {
+        _master_socket.create_socket(port, clientsNb);
+        _master_socket.bind_socket();
+        _master_socket.receive_data();
+
+        std::cout << "Server opened on port " << _port << std::endl;
+        _poll.add_fd(_master_socket.get_socket(), POLLIN);
+
+        run_poll_loop();
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("open_server: ") + e.what());
+    }
+}

@@ -9,7 +9,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Iserver/include -IGameEngine/include
 
 SERVER_DIR = server
-SERVER_SRC = $(shell find $(SERVER_DIR)/src -name "*.cpp")
+SERVER_SRC = $(shell find $(SERVER_DIR) -name "*.cpp")
 SERVER_OBJ = $(SERVER_SRC:.cpp=.o)
 
 GUI_DIR = GameEngine
