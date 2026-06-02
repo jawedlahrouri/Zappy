@@ -1,0 +1,31 @@
+/*
+** EPITECH PROJECT, 2026
+** Zappy-1
+** File description:
+** Core
+*/
+
+#ifndef CORE_HPP_
+    #define CORE_HPP_
+
+    #include "NetworkManager.hpp"
+    #include "GameWorld.hpp"
+    #include <sstream>
+    #include <chrono>
+    #include <thread>
+
+    class Core {
+    public:
+        Core();
+        ~Core();
+        int run(int ac, char** av);
+
+    private:
+        void parseCommand(const std::string& command);
+
+        NetworkManager _network;
+        GameWorld _world;
+        bool _isRunning;
+    };
+
+#endif /* !CORE_HPP_ */
