@@ -97,3 +97,14 @@ class ZappyCommand:
         response = self._wait_for_response()
         print(f"[Agent] Réponse: {response}")
         return response == "ok"    
+
+    # Méthode d'interaction avec les autres joueurs/avec le jeu
+
+    def Connect_nbr(self):
+        print("[Agent] commande: Connect_nbr")
+        self.network.send_command("Connect_nbr\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        if response == "ko":
+            return -1
+        return int(response)
