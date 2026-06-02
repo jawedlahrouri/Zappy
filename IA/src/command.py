@@ -50,4 +50,25 @@ class ZappyCommand:
             key, value = item.strip().split()
             inventory[key] = int(value)
         return inventory
+    
+    def forward(self):
+        print("[Agent] commande: Forward")
+        self.network.send_command("Forward\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
+    
+    def right(self):
+        print("[Agent] commande: Right")
+        self.network.send_command("Right\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
+    
+    def left(self):
+        print("[Agent] commande: Left")
+        self.network.send_command("Left\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
 
