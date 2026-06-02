@@ -7,6 +7,8 @@
 
 #include "Command/MapCommand.hpp"
 
+
+// TODO: tout ce qui se trouve dans ce fichier risque de bouger j'ai juste mis ça ici pour le moment. A VERIFIER PLUS TARD 
 void MapCommand::expulsion_player() const {
     
 }

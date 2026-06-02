@@ -6,7 +6,5 @@
 */
 
 #include "Command/ICommand.hpp"
-#include "Command/MapCommand.hpp"
-#include "Command/PlayerCommand.hpp"
-#include "Command/GameCommand.hpp"
 
+//ICommand::~ICommand() {}
