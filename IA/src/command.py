@@ -7,6 +7,7 @@ class ZappyCommand:
     def __init__(self, network):
         self.network = network
 
+    # Méthode de capteurs de l'environnement 
     def look(self):
         print("[Agent] commande: Look")
         self.network.send_command("Look\n")
@@ -51,6 +52,7 @@ class ZappyCommand:
             inventory[key] = int(value)
         return inventory
     
+    # Méthodes de déplacement
     def forward(self):
         print("[Agent] commande: Forward")
         self.network.send_command("Forward\n")
@@ -72,6 +74,7 @@ class ZappyCommand:
         print(f"[Agent] Réponse: {response}")
         return response == "ok"
     
+    # Méthodes d'interaction avec l'environnement
     def take_object(self, obj):
         print(f"[Agent] commande: Take {obj}")
         self.network.send_command(f"Take {obj}\n")
@@ -85,3 +88,12 @@ class ZappyCommand:
         response = self._wait_for_response()
         print(f"[Agent] Réponse: {response}")
         return response == "ok"
+
+
+    # Méthode d'incantation pour l'upgrade des ptits persos  là TODO: à implémenter complètement plus tard je préfere d'abord faire les commande "bidon"
+    def Incantation(self):
+        print("[Agent] commande: Incantation")
+        self.network.send_command("Incantation\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"    
