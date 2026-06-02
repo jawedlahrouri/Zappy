@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+import time
+from src.server_link import ZappyNetwork
+
 class ZappyCommand:
     def __init__(self, network):
         self.network = network
@@ -22,3 +25,10 @@ class ZappyCommand:
             items = tile.strip().split()
             parsed_vision.append(items)
         return parsed_vision
+    
+    def broadcast_text(self, text):
+        print(f"[Agent] commande: Broadcast '{text}'")
+        self.network.send_command(f"Broadcast {text}\n")
+        response = self._wait_for_response()
+        print(f"[Agent] Réponse: {response}")
+        return response == "ok"
