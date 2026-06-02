@@ -90,13 +90,21 @@ class ZappyCommand:
         return response == "ok"
 
 
-    # Méthode d'incantation pour l'upgrade des ptits persos  là TODO: à implémenter complètement plus tard je préfere d'abord faire les commande "bidon"
-    def Incantation(self):
+    # Méthode d'incantation
         print("[Agent] commande: Incantation")
         self.network.send_command("Incantation\n")
-        response = self._wait_for_response()
-        print(f"[Agent] Réponse: {response}")
-        return response == "ok"    
+        first_response = self._wait_for_response()
+        print(f"[Agent] Incantation (Début): {first_response}")
+        if first_response == "ko":
+            return False
+        if first_response == "Elevation underway":
+            second_response = self._wait_for_response()
+            print(f"[Agent] Incantation (Fin): {second_response}")
+            if second_response.startswith("Current level"):
+                return True
+            else:
+                return False
+        return False
 
     # Méthode d'interaction avec les autres joueurs/avec le jeu
 
