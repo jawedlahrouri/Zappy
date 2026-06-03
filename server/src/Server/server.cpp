@@ -53,6 +53,7 @@ void Server::detect_client_type(int client_socket)
 {
     auto it = _clients.find(client_socket);
     std::string line;
+    bool team_exists = false;
     
     if (it == _clients.end() || it->second->type != ClientType::PENDING)
         return;
@@ -64,7 +65,6 @@ void Server::detect_client_type(int client_socket)
         _clients[client_socket] = std::make_shared<GUI>(std::move(client->socket));
         std::cout << "Client " << client_socket << " authenticated as GUI" << std::endl;
     } else {
-        bool team_exists = false;
         for (const auto &team : _teamNames) {
             if (line == team) {
                 team_exists = true;

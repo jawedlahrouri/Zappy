@@ -21,4 +21,14 @@ class ICommand {
         virtual void visit(const GameCommand *element) const = 0;
 };
 
+class Command : public ICommand {
+    public:
+        Command() = default;
+        ~Command() override = default;
+
+        void visit(const MapCommand *element) const override;
+        void visit(const PlayerCommand *element) const override;
+        void visit(const GameCommand *element) const override;
+};
+
 #endif
