@@ -91,6 +91,7 @@ class ZappyCommand:
 
 
     # Méthode d'incantation
+    def incantation(self):
         print("[Agent] commande: Incantation")
         self.network.send_command("Incantation\n")
         first_response = self._wait_for_response()
@@ -108,7 +109,7 @@ class ZappyCommand:
 
     # Méthode d'interaction avec les autres joueurs/avec le jeu
 
-    def Connect_nbr(self):
+    def connect_nbr(self):
         print("[Agent] commande: Connect_nbr")
         self.network.send_command("Connect_nbr\n")
         response = self._wait_for_response()
