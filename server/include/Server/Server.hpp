@@ -8,11 +8,51 @@
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
 
+#include <map>
+#include <queue>
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 #include "Socket/Socket.hpp"
 #include "Poll/Poll.hpp"
+
+enum class ClientType {
+    PENDING,
+    AI,
+    GUI
+};
+
+class Client {
+    public:
+        Client(Socket clientSocket);
+        virtual ~Client() = default;
+        Socket socket;
+        ClientType type;
+        std::string buffer;
+        std::string write_buffer;
+};
+
+class AI : public Client {
+    public:
+        AI(Socket clientSocket, int player_id);
+        int id;
+        std::string teamName;
+        int x = 0;
+        int y = 0;
+        int level;
+        int orientation;
+        
+        std::map<std::string, int> inventory; 
+        std::queue<std::string> commandQueue;
+        int action_ticks_left = -1;
+        int food_ticks;
+};
+
+class GUI : public Client {
+    public:
+        GUI(Socket clientSocket);
+};
 
 class Server {
     public:
@@ -22,6 +62,8 @@ class Server {
         void open_server(int port, int clientsNb, const std::vector<std::string> &teamNames);
 
     private:
+        bool get_next_line(std::string &buffer, std::string &line);
+        void detect_client_type(int client_socket);
         void run_poll_loop();
         void process_poll_event(size_t &i);
         void accept_client();
@@ -34,9 +76,7 @@ class Server {
 
         Socket _master_socket;
         Poll _poll;
-        std::unordered_map<int, Socket> _clients;
-        std::unordered_map<int, std::string> _client_buffers;
-        std::unordered_map<int, std::string> _output_buffers;
+        std::unordered_map<int, std::shared_ptr<Client>> _clients;
 
         int _port = 0;
         int _clientsNb = 0;
