@@ -40,10 +40,10 @@ class Pathfinder:
             for _ in range(shift):
                 self.cmd.forward()
 
-    def search_and_take_items(self, target_items):
+    def search_and_take_items(self, target_items, vision):
         best_index = -1
         best_score = -999
-        for index, tile_contents in enumerate(self.vision):
+        for index, tile_contents in enumerate(vision):
             score = self._score_tile(index, tile_contents, target_items)
             if score > best_score:
                 best_score = score
@@ -52,36 +52,35 @@ class Pathfinder:
             print(f"[Agent] Cible optimale: case {best_index} (Score: {best_score}). Déplacement...")
             self.explore_step = 0
             self.go_to_tile(best_index)
-            if 'player' in self.vision[best_index] and best_index != 0:
+            if 'player' in vision[best_index] and best_index != 0:
                 print("[Agent] Présence détectée sur la cible. EJECT !")
                 self.cmd.eject()
-            items_on_tile = self.vision[best_index]
+            items_on_tile = vision[best_index]
             for item in target_items:
                 count = items_on_tile.count(item)
                 for _ in range(count):
                     print(f"[Agent] Ramassage multiple : {item}")
                     self.cmd.take_object(item)
             return True
-        self.explore()
         return False
 
-    def explore(self):
-        if self.level <= 2:
+    def explore(self, level):
+        if level <= 2:
             if self.explore_step < 3:
-                print(f"[Agent Lvl {self.level}] Exploration : On trace tout droit.")
+                print(f"[Agent Lvl {level}] Exploration : On trace tout droit.")
                 self.cmd.forward()
                 self.explore_step += 1
             else:
-                print(f"[Agent Lvl {self.level}] Exploration : Virage pour quadriller la zone.")
+                print(f"[Agent Lvl {level}] Exploration : Virage pour quadriller la zone.")
                 action = random.choice([self.cmd.right, self.cmd.left])
                 action()
                 self.explore_step = 0 
         else:
             if self.explore_step < 3:
-                print(f"[Agent Lvl {self.level}] Exploration : Scan rotation droite ({self.explore_step + 1}/3)")
+                print(f"[Agent Lvl {level}] Exploration : Scan rotation droite ({self.explore_step + 1}/3)")
                 self.cmd.right()
                 self.explore_step += 1
             else:
-                print(f"[Agent Lvl {self.level}] Exploration : Scan 360° terminé. On avance !")
+                print(f"[Agent Lvl {level}] Exploration : Scan 360° terminé. On avance !")
                 self.cmd.forward()
                 self.explore_step = 0

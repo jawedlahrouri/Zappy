@@ -11,17 +11,16 @@ class Farmer:
             7: {'linemate': 2, 'deraumere': 2, 'sibur': 2, 'mendiane': 2, 'phiras': 2, 'thystame': 1},
         }
 
-    def can_elevate(self):
-        needed = self.requirements.get(self.level)
+    def can_elevate(self, level, inventory):
+        needed = self.requirements.get(level)
         if needed is None:
             return False
-        return all(self.inventory.get(item, 0) >= amount for item, amount in needed.items())
+        return all(inventory.get(item, 0) >= amount for item, amount in needed.items())
 
     def get_missing_stones(self, level, inventory):
-        self.inventory = inventory
         needed = self.requirements.get(level, {})
         missing = []
         for item, amount in needed.items():
-            if self.inventory.get(item, 0) < amount:
+            if inventory.get(item, 0) < amount:
                 missing.append(item)                
         return missing

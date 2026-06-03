@@ -17,12 +17,15 @@ class ZappyAgent:
     def __init__(self, command_interface: ZappyCommand):
         self.cmd = command_interface
         self.pathfinder = Pathfinder(self.cmd)
-        self.farmer = Farmer(self.cmd)
+        self.farmer = Farmer()
+
         self.is_alive = True
         self.state = AgentState.SURVIVAL
         self.level = 1
         self.inventory = {}
         self.vision = []
+        self.food_minimum = 5
+        self.food_safe = 15
 
     def update_internal_state(self):
         self.inventory = self.cmd.inventory()
@@ -34,7 +37,7 @@ class ZappyAgent:
         if food <= self.food_minimum:
             self.state = AgentState.SURVIVAL
             return
-        if self.can_elevate():
+        if self.farmer.can_elevate(self.level, self.inventory): 
             if self.level == 1:
                 self.state = AgentState.ELEVATION
             else:
