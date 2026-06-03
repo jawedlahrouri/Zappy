@@ -57,6 +57,9 @@ class ZappyAgent:
                 success = self.pathfinder.search_and_take_items(missing, self.vision)
                 if not success:
                     self.pathfinder.explore(self.level)
+            else:
+                print("[Agent]  exploration par défaut.")
+                self.pathfinder.explore(self.level)
     
     def run(self):
         print("[Agent] Démarrage du cycle.")
