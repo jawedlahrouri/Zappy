@@ -10,6 +10,8 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include "Parsing/ai_execute_cmds.hpp"
+
 
 std::vector<std::string> Parsing::split_command(const std::string &command)
 {
@@ -30,14 +32,7 @@ void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &co
         return;
 
     std::string action = tokens[0];
-    std::vector<std::string> valid_actions = {
-        "Forward", "Right", "Left", "Look", "Inventory", 
-        "Broadcast", "Connect_nbr", "Fork", "Eject", 
-        "Take", "Set", "Incantation"
-    };
-
-    auto it = std::find(valid_actions.begin(), valid_actions.end(), action);
-    if (it == valid_actions.end()) {
+    if (ai_cmds.find(action) == ai_cmds.end()) {
         client->write_buffer += "ko\n";
         return;
     }
