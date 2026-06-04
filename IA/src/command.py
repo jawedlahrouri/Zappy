@@ -8,6 +8,16 @@ class ZappyCommand:
         self.network = network
         self.broadcast_queue = []
 
+    def wait_for_incantation_follower(self):
+        print("[Agent] FOLLOWER : En attente du rituel...")
+        first_response = self._wait_for_response()
+        if first_response == "Elevation underway":
+            second_response = self._wait_for_response()
+            print(f"[Agent] FOLLOWER Incantation (Fin): {second_response}")
+            if second_response.startswith("Current level"):
+                return True
+        return False
+
     def _wait_for_response(self):
         while True:
             messages = self.network.receive_messages()
