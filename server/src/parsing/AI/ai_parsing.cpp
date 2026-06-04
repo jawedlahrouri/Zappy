@@ -11,37 +11,45 @@
 #include <sstream>
 #include <algorithm>
 #include "Parsing/ai_execute_cmds.hpp"
-
+#include "Exception_Server.hpp"
 
 std::vector<std::string> Parsing::split_command(const std::string &command)
 {
-    std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(command);
+    try {
+        std::vector<std::string> tokens;
+        std::string token;
+        std::istringstream tokenStream(command);
 
-    while (tokenStream >> token) {
-        tokens.push_back(token);
+        while (tokenStream >> token) {
+            tokens.push_back(token);
+        }
+        return tokens;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("split_command failed: ") + e.what());
     }
-    return tokens;
 }
 
 void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &command)
 {
-    std::vector<std::string> tokens = split_command(command);
-    if (tokens.empty())
-        return;
+    try {
+        std::vector<std::string> tokens = split_command(command);
+        if (tokens.empty())
+            return;
 
-    std::string action = tokens[0];
-    if (ai_cmds.find(action) == ai_cmds.end()) {
-        client->write_buffer += "ko\n";
-        return;
-    }
+        std::string action = tokens[0];
+        if (ai_cmds.find(action) == ai_cmds.end()) {
+            client->write_buffer += "ko\n";
+            return;
+        }
 
-    // queue 10 commands
-    if (client->commandQueue.size() < 10) {
-        client->commandQueue.push(command);
-        std::cout << "AI [#" << client->id << "] queued command: " << command << std::endl;
-    } else {
-        std::cout << "AI [#" << client->id << "] command queue full, command dropped" << std::endl;
+        // queue 10 commands
+        if (client->commandQueue.size() < 10) {
+            client->commandQueue.push(command);
+            std::cout << "AI [#" << client->id << "] queued command: " << command << std::endl;
+        } else {
+            std::cout << "AI [#" << client->id << "] command queue full, command dropped" << std::endl;
+        }
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("parse_ai_command failed: ") + e.what());
     }
 }
