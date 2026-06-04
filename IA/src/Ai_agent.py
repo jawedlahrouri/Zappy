@@ -2,6 +2,7 @@
 
 import random
 import math
+import time
 from enum import Enum
 from src.command import ZappyCommand
 from src.agent_submodules.pathfinding import Pathfinder
@@ -32,8 +33,19 @@ class ZappyAgent:
         self.food_safe = 15
 
     def update_internal_state(self):
-        self.inventory = self.cmd.inventory()
-        self.vision = self.cmd.look()
+        response = self.cmd.look()
+        if response == "dead":
+            self.is_alive = False
+            print("[Agent] Je suis mort.")
+            return
+        self.vision = response
+        
+        response = self.cmd.inventory()
+        if response == "dead":
+            self.is_alive = False
+            print("[Agent] Je suis mort.")
+            return
+        self.inventory = response
 
     def evaluate_situation(self):
         food = self.inventory.get('food', 0)
@@ -76,31 +88,25 @@ class ZappyAgent:
                 for stone_name, amount in required_stones.items():
                     for _ in range(amount):
                         self.cmd.set_object(stone_name)
-                print("[Agent] Pierres posées. Lancement de l'Incantation !")
                 success = self.cmd.incantation()
                 if success:
                     self.level += 1
                     print(f"[Agent] SUCCÈS! je passe au Niveau {self.level} !")
                     self.grouper.role = None
                 else:
-                    print("[Agent] ❌ Échec de l'incantation.")
+                    print("[Agent] Échec de l'incantation.")
             elif self.grouper.role == 'FOLLOWER':
                 success = self.cmd.wait_for_incantation_follower()
                 if success:
                     self.level += 1
-                    print(f"[Agent] SUCCÈS ! Le FOLLOWER passe au Niveau {self.level} !")
-                    self.grouper.role = None  # On reset
-                else:
-                    print("[Agent] ❌ Échec de l'incantation du Leader.")
+                    print(f"[Agent] FOLLOWER passe au Niveau {self.level}")
                     self.grouper.role = None
 
     def run(self):
         print("[Agent] Démarrage du cycle.")
         while self.is_alive:
             self.update_internal_state()
-            if not self.inventory:
-                self.is_alive = False
-                break
             self.evaluate_situation()
             self.act_based_on_state()
+            time.sleep(0.2)
 
