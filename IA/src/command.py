@@ -6,6 +6,25 @@ from src.server_link import ZappyNetwork
 class ZappyCommand:
     def __init__(self, network):
         self.network = network
+        self.broadcast_queue = []
+
+    def _wait_for_response(self):
+        while True:
+            messages = self.network.receive_messages()
+            for msg in messages:
+                if msg.startswith("message "):
+                    self.broadcast_queue.append(msg)
+                elif msg.startswith("eject: "):
+                    print(f"[Agent] Aïe ! On s'est fait pousser : {msg}")
+                elif msg == "dead":
+                    return "dead"
+                else:
+                    return msg
+    
+    def get_unread_broadcasts(self):
+        unread = self.broadcast_queue.copy()
+        self.broadcast_queue.clear()
+        return unread
 
     # Méthode de capteurs de l'environnement 
     def look(self):
