@@ -15,7 +15,7 @@
 class MapCommand {
 public:
     virtual ~MapCommand() {}
-    virtual void Accept(ICommand *element) const = 0;
+    virtual void Accept(ICommand *element) const;
 
     std::vector<std::vector<int>> get_map() const;
     int get_map_width() const;

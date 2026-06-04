@@ -12,6 +12,7 @@
 #include "Poll/Poll.hpp"
 #include <unistd.h>
 #include <cstring>
+#include "Parsing/Parsing.hpp"
 
 Client::Client(Socket clientSocket)
     : socket(clientSocket), type(ClientType::PENDING)
@@ -131,6 +132,19 @@ void Server::broadcast_event(const std::string &message, int exclude_socket)
     }
 }
 
+void Server::send_to_guis(const std::string &message)
+{
+    try {
+        for (const auto &[fd, client] : _clients) {
+            if (client->type == ClientType::GUI) {
+                send_response(fd, message);
+            }
+        }
+    } catch (const std::exception &e) {
+        std::cout << "[ERROR] send_to_guis exception: " << e.what() << std::endl;
+    }
+}
+
 void Server::remove_client(int client_socket)
 {
     try {
@@ -191,8 +205,16 @@ bool Server::handle_client_data(size_t poll_index)
             if (it->second->type == ClientType::PENDING) {
                 detect_client_type(client_socket);
             } else {
-                std::cout << "Received on socket " << client_socket << ": " << data;
-                send_response(client_socket, data);
+                std::string line;
+                while (get_next_line(it->second->buffer, line)) {
+                    if (it->second->type == ClientType::GUI) {
+                        auto gui_client = std::dynamic_pointer_cast<GUI>(it->second);
+                        Parsing::parse_gui_command(gui_client, line, *this);
+                    } else if (it->second->type == ClientType::AI) {
+                        auto ai_client = std::dynamic_pointer_cast<AI>(it->second);
+                        Parsing::parse_ai_command(ai_client, line);
+                    }
+                }
             }
         }
         return false;

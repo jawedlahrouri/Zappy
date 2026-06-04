@@ -60,6 +60,7 @@ class Server {
         ~Server();
 
         void open_server(int port, int clientsNb, const std::vector<std::string> &teamNames);
+        void send_to_guis(const std::string &message);
 
     private:
         bool get_next_line(std::string &buffer, std::string &line);
