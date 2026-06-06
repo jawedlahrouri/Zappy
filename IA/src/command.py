@@ -43,18 +43,24 @@ class ZappyCommand:
         self.network.send_command("Look\n")
         response = self._wait_for_response()
         print(f"[Agent] Réponse: {response}")
+        if response == "dead":
+            return "dead"
         if response == "ko":
             return []
         return self._parse_look(response)
 
     def _parse_look(self, raw_str):
         parsed_vision = []
-        clean_str = raw_str.strip('[]\n')
-        tiles = clean_str.split(',')
-
-        for tile in tiles:
-            items = tile.strip().split()
-            parsed_vision.append(items)
+        try:
+            clean_str = raw_str.strip('[]\n ')
+            if not clean_str:
+                return []
+            tiles = clean_str.split(',')
+            for tile in tiles:
+                items = tile.strip().split()
+                parsed_vision.append(items)
+        except Exception as e:
+            print(f"[Erreur] Parsing vision échoué sur '{raw_str}': {e}")
         return parsed_vision
     
     def broadcast_text(self, text):
@@ -69,17 +75,26 @@ class ZappyCommand:
         self.network.send_command("Inventory\n")
         response = self._wait_for_response()
         print(f"[Agent] Réponse: {response}")
+        if response == "dead":
+            return "dead"
         if response == "ko":
             return {}
         return self._parse_inventory(response)
     
     def _parse_inventory(self, raw_str):
         inventory = {}
-        clean_str = raw_str.strip('[]\n')
-        items = clean_str.split(',')
-        for item in items:
-            key, value = item.strip().split()
-            inventory[key] = int(value)
+        try:
+            clean_str = raw_str.strip('[]\n ')
+            if not clean_str:
+                return {}
+            items = clean_str.split(',')
+            for item in items:
+                parts = item.strip().split()
+                if len(parts) == 2:
+                    key, value = parts[0], parts[1]
+                    inventory[key] = int(value)
+        except Exception as e:
+            print(f"[Erreur] Parsing inventaire échoué sur '{raw_str}': {e}")
         return inventory
     
     # Méthodes de déplacement
