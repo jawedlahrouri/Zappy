@@ -1,6 +1,5 @@
 class Farmer:
     def __init__(self):
-        # La liste des prérequis par niveau
         self.requirements = {
             1: {'linemate': 1},
             2: {'linemate': 1, 'deraumere': 1, 'sibur': 1},

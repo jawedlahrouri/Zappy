@@ -23,6 +23,7 @@ class ZappyCommand:
             messages = self.network.receive_messages()
             for msg in messages:
                 if msg.startswith("message "):
+                    print(f"[Réseau] Interception : {msg}")
                     self.broadcast_queue.append(msg)
                 elif msg.startswith("eject: "):
                     print(f"[Agent] Aïe ! On s'est fait pousser : {msg}")

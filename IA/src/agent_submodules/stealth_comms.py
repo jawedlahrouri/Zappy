@@ -34,7 +34,6 @@ class StealthComms:
         if not self.is_token_valid(token):
             return None
         if token in self.previous_calls:
-            print("[Comms] Tentative de rejeu ennemie détectée et esquivée !")
             return None
         self.previous_calls.add(token)
         return {"command": command, "param": param}

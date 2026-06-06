@@ -29,9 +29,11 @@ class Grouper:
         heard_k = None
         for msg in unread_messages:
             try:
-                parts = msg.replace("message ", "").split(", ", 1)
-                k = int(parts[0])
-                decoded = self.comms.decode(parts[1])
+                clean_msg = msg.replace("message ", "")
+                parts = clean_msg.split(",", 1)
+                k = int(parts[0].strip())
+                raw_text = parts[1].strip()
+                decoded = self.comms.decode(raw_text)
                 if decoded and decoded['command'] == 'need_mate':
                     param_parts = decoded['param'].split('-')
                     msg_level = int(param_parts[0].replace('lv', ''))
@@ -39,29 +41,29 @@ class Grouper:
                     if msg_level == level:
                         if self.role != 'LEADER' or msg_id > my_id:
                             heard_k = k
-            except:
+                            print(f"[Grouper] Tie-Breaker PERDU face à {msg_id}. On capitule.")
+                        else:
+                            print(f"[Grouper] Tie-Breaker GAGNÉ face à {msg_id}. On l'ignore.")
+            except Exception as e:
                 continue
         return heard_k
 
-    def process_grouping(self, level, my_id, unread_messages, vision):
-        heard_k = self.analyze_calls(level, my_id, unread_messages)
-        if heard_k is not None:
+    def process_grouping(self, level, my_id, vision):
+        if self.current_k is not None:
             self.role = 'FOLLOWER'
         elif self.role is None:
             self.role = 'LEADER'
         if self.role == 'FOLLOWER':
-            target_k = heard_k if heard_k is not None else self.current_k
-            if target_k == 0:
-                print("[Grouper] FOLLOWER : Arrivé sur la case du Leader !")
+            if self.current_k == 0:
+                print("[Grouper] FOLLOWER : Arrivé sur la case du Leader")
                 self.current_k = None
                 return True
-            elif target_k is not None:
-                print(f"[Grouper] FOLLOWER : En route vers K={target_k}")
-                self._move_towards_sound(target_k)
-                self.current_k = None
             else:
-                print("[Grouper] FOLLOWER : Attente du prochain ping radio...")
-            return False
+                print(f"[Grouper] FOLLOWER : En route vers K={self.current_k}")
+                self._move_towards_sound(self.current_k)
+                self.current_k = None
+                return False
+
         elif self.role == 'LEADER':
             players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
             needed = self.player_reqs.get(level, 1)
@@ -69,6 +71,6 @@ class Grouper:
                 print(f"[Grouper] LEADER : Équipe au complet ({players_on_tile}/{needed}).")
                 return True
             print(f"[Grouper] LEADER (ID: {my_id}) : Attente alliés. Broadcast...")
-            secret_msg = self.comms.encode(f"lv{level}-{my_id}", "need_mate")
+            secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
             self.cmd.broadcast_text(secret_msg)
             return False

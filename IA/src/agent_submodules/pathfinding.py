@@ -52,9 +52,6 @@ class Pathfinder:
             print(f"[Agent] Cible optimale: case {best_index} (Score: {best_score}). Déplacement...")
             self.explore_step = 0
             self.go_to_tile(best_index)
-            if 'player' in vision[best_index] and best_index != 0:
-                print("[Agent] Présence détectée sur la cible. EJECT !")
-                self.cmd.eject()
             items_on_tile = vision[best_index]
             for item in target_items:
                 count = items_on_tile.count(item)
