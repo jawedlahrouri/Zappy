@@ -30,6 +30,7 @@ class ZappyCommand:
                     return "dead"
                 else:
                     return msg
+            time.sleep(0.05)
     
     def get_unread_broadcasts(self):
         unread = self.broadcast_queue.copy()
