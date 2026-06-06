@@ -25,27 +25,21 @@ class Grouper:
             self.cmd.right()
             self.cmd.forward()
 
-    def analyze_calls(self, level, my_id, unread_messages):
+    def analyze_calls(self, level, my_id, decoded_messages):
         heard_k = None
-        for msg in unread_messages:
-            try:
-                clean_msg = msg.replace("message ", "")
-                parts = clean_msg.split(",", 1)
-                k = int(parts[0].strip())
-                raw_text = parts[1].strip()
-                decoded = self.comms.decode(raw_text)
-                if decoded and decoded['command'] == 'need_mate':
-                    param_parts = decoded['param'].split('-')
-                    msg_level = int(param_parts[0].replace('lv', ''))
-                    msg_id = int(param_parts[1])
-                    if msg_level == level:
-                        if self.role != 'LEADER' or msg_id > my_id:
-                            heard_k = k
-                            print(f"[Grouper] Tie-Breaker PERDU face à {msg_id}. On capitule.")
-                        else:
-                            print(f"[Grouper] Tie-Breaker GAGNÉ face à {msg_id}. On l'ignore.")
-            except Exception as e:
-                continue
+        for msg_obj in decoded_messages:
+            k = msg_obj['k']
+            decoded = msg_obj['data']
+            if decoded['command'] == 'needmate':
+                param_parts = decoded['param'].split('-')
+                msg_level = int(param_parts[0].replace('lv', ''))
+                msg_id = int(param_parts[1])
+                if msg_level == level:
+                    if self.role != 'LEADER' or msg_id > my_id:
+                        heard_k = k
+                        print(f"[Grouper] Tie-Breaker PERDU face à {msg_id}. On capitule.")
+                    else:
+                        print(f"[Grouper] Tie-Breaker GAGNÉ face à {msg_id}. On l'ignore.")
         return heard_k
 
     def process_grouping(self, level, my_id, vision):
@@ -55,9 +49,16 @@ class Grouper:
             self.role = 'LEADER'
         if self.role == 'FOLLOWER':
             if self.current_k == 0:
-                print("[Grouper] FOLLOWER : Arrivé sur la case du Leader")
-                self.current_k = None
-                return True
+                players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
+                needed = self.player_reqs.get(level, 1)
+                if players_on_tile >= needed:
+                    print(f"[Grouper] FOLLOWER : Équipe au complet ({players_on_tile}/{needed}). Prêt pour le rituel !")
+                    self.current_k = None
+                    return True
+                else:
+                    print(f"[Grouper] FOLLOWER : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
+                    self.current_k = None
+                    return False
             else:
                 print(f"[Grouper] FOLLOWER : En route vers K={self.current_k}")
                 self._move_towards_sound(self.current_k)

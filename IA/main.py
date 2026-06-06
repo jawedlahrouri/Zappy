@@ -76,7 +76,7 @@ def main(port, machine, team_name):
         return 84
     try:
         cmd_interface = ZappyCommand(net)
-        agent = ZappyAgent(cmd_interface)
+        agent = ZappyAgent(cmd_interface, team_name)
         agent.run()
         print("[Agent] Agent terminé correctement")
     except KeyboardInterrupt:
