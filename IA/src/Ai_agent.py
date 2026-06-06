@@ -29,8 +29,8 @@ class ZappyAgent:
         self.level = 1
         self.inventory = {}
         self.vision = []
-        self.food_minimum = 50
-        self.food_safe = 100
+        self.food_minimum = 15
+        self.food_safe = 30
 
     #mets à jour l'état interne de l'agent et vérifie s'il est encore en vie
     def update_internal_state(self):
@@ -62,12 +62,16 @@ class ZappyAgent:
     def evaluate_situation(self):
         food = self.inventory.get('food', 0)
         if food <= self.food_minimum:
-            print(f"[Agent] SURVIVAL MODE: nourriture {food} <= limite {self.food_minimum}")
+            print(f"[Agent] SURVIVAL : nourriture ({food} < {self.food_minimum})")
             self.state = AgentState.SURVIVAL
             return
 
         if self.farmer.can_elevate(self.level, self.inventory): 
-            print(f"[Agent] Ressources d'élévation détectées!")
+            if self.is_food_critical_for_action(300):
+                print(f"[Agent] Évolution possible, mais réserves insuffisantes pour survivre au rituel (300 TU). FARMING NOURRITURE !")
+                self.state = AgentState.SURVIVAL
+                return
+            print(f"[Agent] Ressources d'élévation prêtes et réserves pleines !")
             if self.level == 1:
                 self.state = AgentState.ELEVATION
             else:
@@ -79,9 +83,8 @@ class ZappyAgent:
             self.state = AgentState.FARMING
             return
         
-        if self.state != AgentState.FARMING:
-            print(f"[Agent] MODE par défaut: SURVIVAL (attente)")
-            self.state = AgentState.SURVIVAL
+        print(f"[Agent] MODE par défaut: SURVIVAL")
+        self.state = AgentState.SURVIVAL
 
     def act_based_on_state(self):
         #methode survival : cherche de la nourriture en priorité sinon explore
@@ -138,3 +141,11 @@ class ZappyAgent:
             self.evaluate_situation()
             self.act_based_on_state()
             time.sleep(0.2)
+
+    def is_food_critical_for_action(self, estimated_tu_cost):
+        food = self.inventory.get('food', 0)
+        current_tu = food * 126
+        minimum_tu_required = (self.food_minimum * 126)
+        if current_tu < (estimated_tu_cost + minimum_tu_required):
+            return True
+        return False
