@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
 import random
-import math
 import time
+import sys
+import subprocess
 from enum import Enum
 from src.command import ZappyCommand
 from src.agent_submodules.pathfinding import Pathfinder
@@ -15,15 +16,17 @@ class AgentState(Enum):
     FARMING = 2
     GROUPING = 3
     ELEVATION = 4
+    FORKING = 5
 
 class ZappyAgent:
-    def __init__(self, command_interface: ZappyCommand):
+    def __init__(self, command_interface: ZappyCommand, team_name: str):
         self.cmd = command_interface
         self.pathfinder = Pathfinder(self.cmd)
         self.farmer = Farmer()
         self.comms = StealthComms()
         self.grouper = Grouper(self.cmd, self.comms)
 
+        self.team_name = team_name
         self.unread_messages = []
         self.agent_id = random.randint(1000, 9999)
         self.is_alive = True
@@ -31,10 +34,12 @@ class ZappyAgent:
         self.level = 1
         self.inventory = {}
         self.vision = []
-        self.food_minimum = 5
+        self.food_minimum = 6
         self.food_safe = 15
+        self.team_roster = {}
+        self.population_target = 10
+        self.last_ping_time = time.time()
 
-    #mets à jour l'état interne de l'agent et vérifie s'il est encore en vie
     def update_internal_state(self):
         if not self.cmd.network.connected:
             self.is_alive = False
@@ -54,15 +59,48 @@ class ZappyAgent:
         self.inventory = response
         self.unread_messages = self.cmd.get_unread_broadcasts()
 
+        self.decoded_messages = []
+        for msg in self.unread_messages:
+            try:
+                clean_msg = msg.replace("message ", "")
+                parts = clean_msg.split(",", 1)
+                k = int(parts[0].strip())
+                raw_text = parts[1].strip()
+                decoded = self.comms.decode(raw_text)
+                if decoded:
+                    self.decoded_messages.append({'k': k, 'data': decoded})
+            except Exception:
+                continue
+        current_time = time.time()
+        if current_time - self.last_ping_time > 15:
+            secret_msg = self.comms.encode(str(self.agent_id), "ping")
+            self.cmd.broadcast_text(secret_msg)
+            self.last_ping_time = current_time
+
+    def process_radio_and_demographics(self):
+        current_time = time.time()
+        for msg_obj in self.decoded_messages:
+            decoded = msg_obj['data']
+            if decoded['command'] == 'ping':
+                sender_id = int(decoded['param'])
+                self.team_roster[sender_id] = current_time
+            elif decoded['command'] == 'needmate':
+                sender_id = int(decoded['param'].split('-')[1])
+                self.team_roster[sender_id] = current_time
+        dead_ids = [ally_id for ally_id, last_seen in self.team_roster.items() if current_time - last_seen > 40]
+        for ally_id in dead_ids:
+            print(f"[Agent] L'agent {ally_id} ne répond plus. Déclaré mort.")
+            del self.team_roster[ally_id]
+
     def evaluate_situation(self):
         if self.state == AgentState.ELEVATION:
             return
+        self.process_radio_and_demographics()
         food = self.inventory.get('food', 0)
         if food <= self.food_minimum:
             self.state = AgentState.SURVIVAL
             return
-        call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.unread_messages)
-        
+        call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.decoded_messages)
         if call_k is not None:
             print(f"[Agent] Appel radio valide reçu (K={call_k}) ! On passe en GROUPING.")
             self.grouper.current_k = call_k
@@ -79,6 +117,20 @@ class ZappyAgent:
             else:
                 self.state = AgentState.GROUPING
             return
+            
+        current_population = len(self.team_roster) + 1
+        if current_population < self.population_target:
+            is_queen = True
+            for ally_id in self.team_roster.keys():
+                if ally_id > self.agent_id:
+                    is_queen = False
+                    break
+            if is_queen and food > self.food_safe:
+                if not self.is_food_critical_for_action(42):
+                    print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
+                    self.state = AgentState.FORKING
+                    return
+
         if food > self.food_safe:
             self.state = AgentState.FARMING
             return
@@ -125,7 +177,16 @@ class ZappyAgent:
                     print(f"[Agent] FOLLOWER passe au Niveau {self.level} !")
             self.grouper.role = None
             self.state = AgentState.SURVIVAL
-            #TODO: les gars ajoutez ici les futurs comportement je ferais une map quand j'aurais moins la flemme
+
+        elif self.state == AgentState.FORKING:
+            success = self.cmd.fork()
+            if success:
+                print("[Agent] Un œuf a été pondu.")
+                print("[Agent] Lancement d'un nouveau clone en arrière-plan...")
+                port = str(self.cmd.network.port)
+                machine = self.cmd.network.machine
+                subprocess.Popen([sys.executable, "main.py", "-p", port, "-h", machine, "-n", self.team_name])
+            self.state = AgentState.SURVIVAL
 
     def run(self):
         print("[Agent] Démarrage du cycle.")
@@ -133,7 +194,7 @@ class ZappyAgent:
             self.update_internal_state()
             self.evaluate_situation()
             self.act_based_on_state()
-            time.sleep(0.2)
+            time.sleep(0.1)
 
     def is_food_critical_for_action(self, estimated_tu_cost):
         food = self.inventory.get('food', 0)

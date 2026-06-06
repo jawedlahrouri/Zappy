@@ -27,7 +27,7 @@ class StealthComms:
         return f"{token}_{param}_{command}"
 
     def decode(self, raw_text):
-        parts = raw_text.split('_')
+        parts = raw_text.split('_', 2)
         if len(parts) != 3:
             return None
         token, param, command = parts
