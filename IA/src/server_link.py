@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
+import time
 
 class ZappyNetwork:
     def __init__(self, machine, port):
@@ -10,45 +11,61 @@ class ZappyNetwork:
         self.buffer = ""
         self.connected = False
 
+    #se connecte au serveur
     def connect(self):
         try:
             self.sock.connect((self.machine, self.port))
+            self.sock.setblocking(False)
             self.connected = True
-            print(f"Connecté au serveur {self.machine}:{self.port}")
+            print(f"[Connexion] Connecté au serveur {self.machine}:{self.port}")
         except ConnectionRefusedError:
-            print("Erreur: Impossible de se connecter au serveur.")
-            exit(84)
+            print(f"[Erreur] Impossible de se connecter à {self.machine}:{self.port}")
+            self.connected = False
+            raise
+        except socket.timeout:
+            print(f"[Erreur] Timeout de connexion à {self.machine}:{self.port}")
+            self.connected = False
+            raise
 
+    #envoie une commande au serveur
     def send_command(self, command: str):
         if not self.connected:
-            return
+            print("[Erreur] Non connecté au serveur")
+            return False
         if not command.endswith('\n'):
-            command += '\n'
+            command += '\n'        
         try:
             self.sock.sendall(command.encode('utf-8'))
+            return True
         except socket.error as e:
-            print(f"Erreur d'envoi: {e}")
+            print(f"[Erreur d'envoi] {e}")
             self.connected = False
+            return False
 
+    #reçoit les messages du serveur et les parse en une liste de messages complet
     def receive_messages(self) -> list:
         if not self.connected:
             return []
         try:
             data = self.sock.recv(4096).decode('utf-8')
             if not data:
-                print("Le serveur a fermé la connexion.")
+                print("[Avertissement] Serveur a fermé la connexion")
                 self.connected = False
                 return []
             self.buffer += data
+        except BlockingIOError:
+            pass
         except socket.error as e:
-            print(f"Erreur de réception: {e}")
+            print(f"[Erreur de réception] {e}")
             self.connected = False
             return []
+        
         messages = []
         while '\n' in self.buffer:
             msg, self.buffer = self.buffer.split('\n', 1)
-            messages.append(msg)
-            
+            msg = msg.strip()
+            if msg:
+                messages.append(msg)
         return messages
 
     def close(self):
