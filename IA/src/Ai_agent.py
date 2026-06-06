@@ -24,51 +24,50 @@ class ZappyAgent:
         self.comms = StealthComms()
         self.grouper = Grouper(self.cmd, self.comms)
 
+        self.unread_messages = []
+        self.agent_id = random.randint(1000, 9999)
         self.is_alive = True
         self.state = AgentState.SURVIVAL
         self.level = 1
         self.inventory = {}
         self.vision = []
-        self.food_minimum = 15
-        self.food_safe = 30
+        self.food_minimum = 5
+        self.food_safe = 15
 
     #mets à jour l'état interne de l'agent et vérifie s'il est encore en vie
     def update_internal_state(self):
         if not self.cmd.network.connected:
             self.is_alive = False
-            print("[Agent] Connecté perdue.")
+            print("[Agent] Connexion perdue.")
             return
         
         response = self.cmd.look()
         if response == "dead":
             self.is_alive = False
-            print("[Agent] Je suis mort.")
             return
         self.vision = response
         
         response = self.cmd.inventory()
         if response == "dead":
             self.is_alive = False
-            print("[Agent] Je suis mort.")
             return
         self.inventory = response
-
-        food = self.inventory.get('food', 0)
-        if food <= 0:
-            print("[Agent] Plus de nourriture, c'est la mort.")
-            self.is_alive = False
-
-    # verifie la situation actuelle et décide du mode de l'agent
+        self.unread_messages = self.cmd.get_unread_broadcasts()
     def evaluate_situation(self):
         food = self.inventory.get('food', 0)
         if food <= self.food_minimum:
-            print(f"[Agent] SURVIVAL : nourriture ({food} < {self.food_minimum})")
             self.state = AgentState.SURVIVAL
             return
-
-        if self.farmer.can_elevate(self.level, self.inventory): 
-            if self.is_food_critical_for_action(300):
-                print(f"[Agent] Évolution possible, mais réserves insuffisantes pour survivre au rituel (300 TU). FARMING NOURRITURE !")
+        call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.unread_messages)
+        
+        if call_k is not None:
+            print(f"[Agent] Appel radio valide reçu (K={call_k}) ! On passe en GROUPING.")
+            self.grouper.current_k = call_k
+            self.state = AgentState.GROUPING
+            return
+        if self.farmer.can_elevate(self.level, self.inventory):
+            if food < (self.food_minimum + 3):
+                print("[Agent] Pierres OK, mais nourriture insuffisante pour le rituel. Survie !")
                 self.state = AgentState.SURVIVAL
                 return
             print(f"[Agent] Ressources d'élévation prêtes et réserves pleines !")
@@ -79,21 +78,17 @@ class ZappyAgent:
             return
 
         if food > self.food_safe:
-            print(f"[Agent] FARMING MODE: nourriture {food}")
             self.state = AgentState.FARMING
             return
         
-        print(f"[Agent] MODE par défaut: SURVIVAL")
         self.state = AgentState.SURVIVAL
 
     def act_based_on_state(self):
-        #methode survival : cherche de la nourriture en priorité sinon explore
         if self.state == AgentState.SURVIVAL:
             success = self.pathfinder.search_and_take_items(['food'], self.vision)
             if not success:
                 self.pathfinder.explore(self.level)
 
-        #methode farming : cherche les ressources d'élévation manquantes sinon explore
         elif self.state == AgentState.FARMING:
             missing = self.farmer.get_missing_stones(self.level, self.inventory)
             if missing:
@@ -101,17 +96,13 @@ class ZappyAgent:
                 if not success:
                     self.pathfinder.explore(self.level)
             else:
-                print("[Agent]  exploration par défaut.")
                 self.pathfinder.explore(self.level)
 
-        #methode grouping : écoute les autres agents pour se regrouper si possible, sinon explore
         elif self.state == AgentState.GROUPING:
-            is_grouped = self.grouper.listen_and_group(self.level)
+            is_grouped = self.grouper.process_grouping(self.level, self.agent_id, self.unread_messages, self.vision)
             if is_grouped:
-                print("[Agent] Regroupement réussi ! Passage en phase d'Incantation.")
+                print("[Agent] Regroupement validé ! Passage en phase d'Incantation.")
                 self.state = AgentState.ELEVATION
-        
-        #methode elevation : si leader, prépare le rituel, sinon attend le rituel du leader
         elif self.state == AgentState.ELEVATION:
             print(f"[Agent] Mode ÉLÉVATION (Niveau {self.level}) : préparation du rituel.")
             if self.level == 1 or self.grouper.role == 'LEADER':
@@ -122,17 +113,18 @@ class ZappyAgent:
                 success = self.cmd.incantation()
                 if success:
                     self.level += 1
-                    print(f"[Agent] SUCCÈS! je passe au Niveau {self.level} !")
-                    self.grouper.role = None
+                    print(f"[Agent] 🌟 SUCCÈS ! Je passe au Niveau {self.level} !")
                 else:
-                    print("[Agent] Échec de l'incantation.")
+                    print("[Agent] ❌ Échec de l'incantation.")
+                self.grouper.role = None
+                
             elif self.grouper.role == 'FOLLOWER':
                 success = self.cmd.wait_for_incantation_follower()
                 if success:
                     self.level += 1
-                    print(f"[Agent] FOLLOWER passe au Niveau {self.level}")
-                    self.grouper.role = None
-            #TODo: les gars ajoutez ici les futurs comportement je ferais une map quand j'aurais moins la flemme
+                    print(f"[Agent] 🌟 FOLLOWER passe au Niveau {self.level} !")
+                self.grouper.role = None
+            #TODO: les gars ajoutez ici les futurs comportement je ferais une map quand j'aurais moins la flemme
 
     def run(self):
         print("[Agent] Démarrage du cycle.")
