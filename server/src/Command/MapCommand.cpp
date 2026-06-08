@@ -7,8 +7,6 @@
 
 #include "Command/MapCommand.hpp"
 
-
-// TODO: tout ce qui se trouve dans ce fichier risque de bouger j'ai juste mis ça ici pour le moment. A VERIFIER PLUS TARD 
 void MapCommand::expulsion_player() const {
     
 }
@@ -115,6 +113,22 @@ std::vector<int> MapCommand::get_player_inventory() const {
     return _player_inventory;
 }
 
-void MapCommand::Accept(ICommand *element) const {
+void MapCommand::Accept(ICommand *element) {
     element->visit(this);
+}
+
+void MapCommand::set_map_width(int width) {
+    _map_width = width;
+}
+
+void MapCommand::set_map_height(int height) {
+    _map_height = height;
+}
+
+void MapCommand::set_team_name(const std::string &team_name) {
+    _team_name = team_name;
+}
+
+void MapCommand::set_connection_player(int connection_player) {
+    _connection_player = connection_player;
 }

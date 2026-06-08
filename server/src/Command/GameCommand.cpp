@@ -63,6 +63,6 @@ void GameCommand::set_q6(int q6) {
     this->_q6 = q6;
 }
 
-void GameCommand::Accept(ICommand *element) const {
+void GameCommand::Accept(ICommand *element) {
     element->visit(this);
 }

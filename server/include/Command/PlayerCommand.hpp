@@ -14,7 +14,7 @@
 class PlayerCommand {
     public:
         virtual ~PlayerCommand() {}
-        virtual void Accept(ICommand *element) const;
+        virtual void Accept(ICommand *element);
     
         int get_nb_players() const;
         int get_orientation() const;

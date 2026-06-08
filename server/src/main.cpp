@@ -78,7 +78,7 @@ int main (int argc, char** argv) {
     }
     try {
         config = parse_args(argc, argv, config);
-        server.open_server(config.port, config.clientsNb, config.teamNames, config.freq);
+        server.open_server(config.port, config.clientsNb, config.teamNames, config.freq, config.width, config.height);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return 84;

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include "Parsing/ai_execute_cmds.hpp"
 #include "Exception_Server.hpp"
+#include "Parsing/Respond.hpp"
 
 std::vector<std::string> Parsing::split_command(const std::string &command)
 {
@@ -38,7 +39,7 @@ void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &co
 
         std::string action = tokens[0];
         if (ai_cmds.find(action) == ai_cmds.end()) {
-            server.send_response(client->socket.get_socket(), "ko");
+            Respond::send_response(server, client->socket.get_socket(), "ko");
             return;
         }
 

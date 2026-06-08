@@ -15,7 +15,12 @@
 class MapCommand {
 public:
     virtual ~MapCommand() {}
-    virtual void Accept(ICommand *element) const;
+    virtual void Accept(ICommand *element);
+
+    void set_map_width(int width);
+    void set_map_height(int height);
+    void set_team_name(const std::string &team_name);
+    void set_connection_player(int slots);
 
     std::vector<std::vector<int>> get_map() const;
     int get_map_width() const;

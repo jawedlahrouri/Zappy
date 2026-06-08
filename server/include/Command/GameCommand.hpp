@@ -13,7 +13,7 @@
 class GameCommand {
     public:
         virtual ~GameCommand() {}
-        virtual void Accept(ICommand *element) const;
+        virtual void Accept(ICommand *element);
 
         int get_x() const;
         int get_y() const;
@@ -46,7 +46,5 @@ class GameCommand {
         int _q5; // resource 5 (phiras) quantity
         int _q6; // resource 6 (thystame) quantity
 };
-
-
 
 #endif

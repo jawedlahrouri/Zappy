@@ -8,6 +8,7 @@
 #ifndef ICOMMAND_HPP
 #define ICOMMAND_HPP
 
+class Server;
 class MapCommand;
 class PlayerCommand;
 class GameCommand;
@@ -16,19 +17,21 @@ class ICommand {
     public:
         virtual ~ICommand() = default;
 
-        virtual void visit(const MapCommand *element) const = 0;
-        virtual void visit(const PlayerCommand *element) const = 0;
-        virtual void visit(const GameCommand *element) const = 0;
+        virtual void visit(MapCommand *element) const = 0;
+        virtual void visit(PlayerCommand *element) const = 0;
+        virtual void visit(GameCommand *element) const = 0;
 };
 
 class Command : public ICommand {
     public:
-        Command() = default;
+        Command(Server &server);
         ~Command() override = default;
 
-        void visit(const MapCommand *element) const override;
-        void visit(const PlayerCommand *element) const override;
-        void visit(const GameCommand *element) const override;
+        void visit(MapCommand *element) const override;
+        void visit(PlayerCommand *element) const override;
+        void visit(GameCommand *element) const override;
+    private:
+        Server &_server;
 };
 
 #endif

@@ -13,10 +13,12 @@
 #include <unistd.h>
 #include <cstring>
 #include "Parsing/Parsing.hpp"
-#include "Clock_frequency/clock.hpp"
 #include <chrono>
 #include "Parsing/AiCommandParser.hpp"
 #include "Parsing/ai_execute_cmds.hpp"
+#include "GameEngine/GameEngine.hpp"
+#include "Parsing/Respond.hpp"
+#include "Server/login.hpp"
 
 Client::Client(Socket clientSocket)
     : socket(clientSocket), type(ClientType::PENDING)
@@ -29,25 +31,15 @@ AI::AI(Socket clientSocket, int player_id)
     type = ClientType::AI;
 }
 
-bool AI::consume_food()
-{
-    food_ticks--;
-    if (food_ticks <= 0) {
-        if (inventory["food"] > 0) {
-            inventory["food"]--;
-            food_ticks = 126;
-            return true;
-        }
-        return false;
-    }
-    return true;
-}
+
 
 GUI::GUI(Socket clientSocket)
     : Client(clientSocket)
 {
     type = ClientType::GUI;
 }
+
+Server::Server() = default;
 
 Server::~Server()
 {
@@ -81,7 +73,9 @@ void Server::detect_client_type(int client_socket)
     if (!get_next_line(client->buffer, line))
         return;
     if (line == "GRAPHIC") {
-        _clients[client_socket] = std::make_shared<GUI>(std::move(client->socket));
+        auto gui_client = std::make_shared<GUI>(std::move(client->socket));
+        _clients[client_socket] = gui_client;
+        Login::login_gui(gui_client, *this);
         std::cout << "Client " << client_socket << " authenticated as GUI" << std::endl;
     } else {
         for (const auto &team : _teamNames) {
@@ -95,9 +89,10 @@ void Server::detect_client_type(int client_socket)
             auto ai_client = std::make_shared<AI>(std::move(client->socket), player_id);
             ai_client->teamName = line;
             _clients[client_socket] = ai_client;
+            Login::login_ai(ai_client, line, *this);
             std::cout << "Client " << client_socket << " authenticated as AI in team " << line << std::endl;
         } else {
-            send_response(client_socket, "ko");
+            Respond::send_response(*this, client_socket, "ko");
             remove_client(client_socket);
         }
     }
@@ -113,55 +108,14 @@ void Server::accept_client()
             _poll.add_fd(fd, POLLIN);
             _clients[fd] = std::make_shared<Client>(std::move(client_socket));
             std::cout << "New client connected on socket " << fd << std::endl;
-            send_response(fd, "WELCOME");
+            Respond::send_response(*this, fd, "WELCOME");
         }
     } catch (const std::exception &e) {
         std::cout << "[ERROR] accept_client exception: " << e.what() << std::endl;
     }
 }
 
-void Server::send_response(int client_socket, const std::string &message)
-{
-    try {
-        std::string msg_to_send = message;
-        if (msg_to_send.empty() || msg_to_send.back() != '\n') {
-            msg_to_send += "\n";
-        }
-        auto it = _clients.find(client_socket);
-        if (it != _clients.end()) {
-            it->second->write_buffer += msg_to_send;
-            _poll.add_events(client_socket, POLLOUT);
-        }
-    } catch (const std::exception &e) {
-        std::cout << "[ERROR] send_response exception: " << e.what() << std::endl;
-    }
-}
 
-void Server::broadcast_event(const std::string &message, int exclude_socket)
-{
-    try {
-        for (const auto &[socket, client] : _clients) {
-            if (socket != exclude_socket) {
-                send_response(socket, message);
-            }
-        }
-    } catch (const std::exception &e) {
-        std::cout << "[ERROR] broadcast_event exception: " << e.what() << std::endl;
-    }
-}
-
-void Server::send_to_guis(const std::string &message)
-{
-    try {
-        for (const auto &[fd, client] : _clients) {
-            if (client->type == ClientType::GUI) {
-                send_response(fd, message);
-            }
-        }
-    } catch (const std::exception &e) {
-        std::cout << "[ERROR] send_to_guis exception: " << e.what() << std::endl;
-    }
-}
 
 void Server::remove_client(int client_socket)
 {
@@ -275,10 +229,10 @@ void Server::process_poll_event(size_t &i)
     }
 }
 
-void Server::run_poll_loop(ClockFrequency &clock)
+void Server::run_poll_loop()
 {
     std::cout << "Waiting for connections..." << std::endl;
-    double tick_duration_ms = 1000.0 / clock.getClockFrequency();
+    double tick_duration_ms = 1000.0 / _freq;
     auto next_tick_time = std::chrono::steady_clock::now();
 
     while (true) {
@@ -302,18 +256,20 @@ void Server::run_poll_loop(ClockFrequency &clock)
 
         now = std::chrono::steady_clock::now();
         if (now >= next_tick_time) {
-            clock.tick();
-            update_game();
+            if (_game_engine) {
+                _game_engine->update(*this);
+            }
             next_tick_time += std::chrono::milliseconds(static_cast<int>(tick_duration_ms));
         }
     }
 }
 
-void Server::open_server(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq)
+void Server::open_server(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq, int width, int height)
 {
     _port = port;
     _clientsNb = clientsNb;
     _teamNames = teamNames;
+    _freq = freq;
     try {
         _master_socket.create_socket(port, clientsNb);
         _master_socket.bind_socket();
@@ -322,86 +278,10 @@ void Server::open_server(int port, int clientsNb, const std::vector<std::string>
         std::cout << "Server opened on port " << _port << std::endl;
         _poll.add_fd(_master_socket.get_socket(), POLLIN);
 
-        ClockFrequency clock(freq);
-        run_poll_loop(clock);
+        _game_engine = std::make_unique<GameEngine>(width, height);
+
+        run_poll_loop();
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("open_server: ") + e.what());
     }
-}
-
-void Server::update_game()
-{
-    std::vector<int> clients_to_remove;
-
-    for (auto &[fd, client] : _clients) {
-        if (client->type != ClientType::AI)
-            continue;
-        auto ai = std::dynamic_pointer_cast<AI>(client);
-        if (!handle_ai_survival(fd, ai, clients_to_remove))
-            continue;
-        handle_ai_active_command(ai);
-        handle_ai_next_command(ai);
-    }
-    for (int fd : clients_to_remove)
-        remove_client(fd);
-}
-
-bool Server::handle_ai_survival(int fd, std::shared_ptr<AI> ai, std::vector<int> &clients_to_remove)
-{
-    if (!ai->consume_food()) {
-        send_response(fd, "death");
-        send_to_guis("pdi " + std::to_string(ai->id));
-        clients_to_remove.push_back(fd);
-        return false;
-    }
-    return true;
-}
-
-void Server::handle_ai_active_command(std::shared_ptr<AI> ai)
-{
-    if (ai->action_ticks_left > 0) {
-        ai->action_ticks_left--;
-        if (ai->action_ticks_left == 0) {
-            execute_ai_action(ai);
-            ai->action_ticks_left = -1;
-        }
-    }
-}
-
-void Server::handle_ai_next_command(std::shared_ptr<AI> ai)
-{
-    if (ai->action_ticks_left == -1 && !ai->commandQueue.empty()) {
-        std::string next_cmd = ai->commandQueue.front();
-        ai->action_ticks_left = get_command_duration(next_cmd);
-        if (ai->action_ticks_left == 0) {
-            execute_ai_action(ai);
-            ai->action_ticks_left = -1;
-        }
-    }
-}
-
-void Server::execute_ai_action(std::shared_ptr<AI> ai)
-{
-    if (ai->commandQueue.empty())
-        return;
-    std::string command = ai->commandQueue.front();
-    ai->commandQueue.pop();
-
-    std::string action = command.substr(0, command.find(' '));
-    auto it = ai_cmds.find(action);
-    if (it != ai_cmds.end()) {
-        AiCommandParser parser;
-        auto func = it->second.func;
-        (parser.*func)(ai, command, *this);
-    }
-}
-
-int Server::get_command_duration(const std::string &command)
-{
-    std::string action = command.substr(0, command.find(' '));
-    auto it = ai_cmds.find(action);
-    if (it != ai_cmds.end()) {
-        return it->second.duration;
-    }
-    return 0;
 }

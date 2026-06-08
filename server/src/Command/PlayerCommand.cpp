@@ -63,6 +63,6 @@ void PlayerCommand::set_ressource_nb(int ressource_nb) {
     this->_ressource_nb = ressource_nb;
 }
 
-void PlayerCommand::Accept(ICommand *element) const {
+void PlayerCommand::Accept(ICommand *element) {
     element->visit(this);
 }
