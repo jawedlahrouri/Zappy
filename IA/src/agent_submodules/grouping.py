@@ -53,6 +53,8 @@ class Grouper:
             return self.act_leader(level, my_id, vision)
         
     def act_follower(self, level, my_id, vision):
+        if self.current_k is None:
+            return False
         if self.current_k == 0:
             players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
             needed = self.player_reqs.get(level, 1)

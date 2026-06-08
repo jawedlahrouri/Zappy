@@ -1,5 +1,12 @@
 #!/usr/bin/python3
-from src.Ai_agent import AgentState
+from enum import Enum
+
+class AgentState(Enum):
+    SURVIVAL = 1
+    FARMING = 2
+    GROUPING = 3
+    ELEVATION = 4
+    FORKING = 5
 
 class StateComportment:
     def __init__(self, agent):

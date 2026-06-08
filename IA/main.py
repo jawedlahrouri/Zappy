@@ -32,28 +32,33 @@ def wait_for_infos(net):
     timeout = 0
     max_timeout = 5000 
     
-    while timeout < max_timeout and (not client_num or not dimensions):
+    while timeout < max_timeout and (client_num is None or dimensions is None):
         messages = net.receive_messages()
         for msg in messages:
+            if msg == "ko":
+                print("[Erreur] Le serveur a refusé la team (ko). Nom invalide ou équipe pleine ?")
+                return False, None, None
             try:
-                if not client_num and msg.isdigit():
+                if client_num is None and msg.isdigit():
                     client_num = int(msg)
                     print(f"[Handshake] CLIENT-NUM: {client_num}")
-                elif not dimensions and ' ' in msg:
+                    if client_num == 0:
+                        print("[Erreur] L'équipe est pleine (0 slots restants).")
+                        return False, 0, None
+                elif dimensions is None and ' ' in msg:
                     parts = msg.split()
                     if len(parts) == 2 and all(p.isdigit() for p in parts):
                         dimensions = (int(parts[0]), int(parts[1]))
                         print(f"[Handshake] Dimensions: {dimensions[0]}x{dimensions[1]}")
             except (ValueError, IndexError):
                 pass
-        if not client_num or not dimensions:
+        if client_num is None or dimensions is None:
             time.sleep(0.1)
             timeout += 100
-    if not client_num or not dimensions:
+    if client_num is None or dimensions is None:
         print(f"[Erreur] Handshake incomplet (CLIENT-NUM: {client_num}, Dimensions: {dimensions})")
         return False, None, None
     return True, client_num, dimensions
-
 
 def handshake(net, team_name):
     if not wait_for_welcome(net):
