@@ -49,20 +49,17 @@ class ZappyAgent:
             self.is_alive = False
             print("[Agent] Connexion perdue.")
             return
-        
         response = self.cmd.look()
         if response == "dead":
             self.is_alive = False
             return
         self.vision = response
-        
         response = self.cmd.inventory()
         if response == "dead":
             self.is_alive = False
             return
         self.inventory = response
         self.unread_messages = self.cmd.get_unread_broadcasts()
-
         self.decoded_messages = []
         for msg in self.unread_messages:
             try:
@@ -111,33 +108,40 @@ class ZappyAgent:
             self.state = AgentState.GROUPING
             return
         if self.farmer.can_elevate(self.level, self.inventory):
-            if food < (self.food_minimum + 3):
-                print("[Agent] Pierres OK, mais nourriture insuffisante pour le rituel. Survie !")
-                self.state = AgentState.SURVIVAL
-                return
-            print(f"[Agent] Ressources d'élévation prêtes pour le Niveau {self.level} ! Passage en mode ÉLÉVATION.")
-            if self.level == 1:
-                self.state = AgentState.ELEVATION
-            else:
-                self.state = AgentState.GROUPING
-            return
-            
+            return self.elevate_conditions(food)
         current_population = len(self.team_roster) + 1
         if current_population < self.population_target:
-            is_queen = True
-            for ally_id in self.team_roster.keys():
-                if ally_id > self.agent_id:
-                    is_queen = False
-                    break
-            if is_queen and food > self.food_safe:
-                if not self.is_food_critical_for_action(42):
-                    print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
-                    self.state = AgentState.FORKING
-                    return
+            if self.check_population(food, current_population) == 1: 
+                return
         if food > self.food_safe:
             self.state = AgentState.FARMING
             return
         self.state = AgentState.SURVIVAL
+
+    def check_population(self, food, current_population):
+        is_queen = True
+        for ally_id in self.team_roster.keys():
+            if ally_id > self.agent_id:
+                is_queen = False
+                break
+        if is_queen and food > self.food_safe:
+            if not self.is_food_critical_for_action(42):
+                print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
+                self.state = AgentState.FORKING
+                return 1
+        return 0
+
+    def elevate_conditions(self, food):
+        if food < (self.food_minimum + 3):
+            print("[Agent] Pierres OK, mais nourriture insuffisante pour le rituel. Survie !")
+            self.state = AgentState.SURVIVAL
+            return
+        print(f"[Agent] Ressources d'élévation prêtes pour le Niveau {self.level} ! Passage en mode ÉLÉVATION.")
+        if self.level == 1:
+            self.state = AgentState.ELEVATION
+        else:
+            self.state = AgentState.GROUPING
+        return
 
     def act_based_on_state(self):
         if self.state == AgentState.SURVIVAL:
