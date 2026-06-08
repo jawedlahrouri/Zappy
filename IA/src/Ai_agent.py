@@ -134,7 +134,6 @@ class ZappyAgent:
                     print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
                     self.state = AgentState.FORKING
                     return
-
         if food > self.food_safe:
             self.state = AgentState.FARMING
             return
