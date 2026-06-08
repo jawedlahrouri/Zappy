@@ -17,6 +17,7 @@ Command::Command(Server &server)
 {
 }
 
+//probablement temporaire ici je vais voir pour faire un truc plus propre
 void Command::visit(MapCommand *element) const {
     int count = 0;
     std::string team_name = element->get_team_name();
