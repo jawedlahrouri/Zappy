@@ -48,30 +48,35 @@ class Grouper:
         elif self.role is None:
             self.role = 'LEADER'
         if self.role == 'FOLLOWER':
-            if self.current_k == 0:
-                players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
-                needed = self.player_reqs.get(level, 1)
-                if players_on_tile >= needed:
-                    print(f"[Grouper] FOLLOWER : Équipe au complet ({players_on_tile}/{needed}). Prêt pour le rituel !")
-                    self.current_k = None
-                    return True
-                else:
-                    print(f"[Grouper] FOLLOWER : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
-                    self.current_k = None
-                    return False
-            else:
-                print(f"[Grouper] FOLLOWER : En route vers K={self.current_k}")
-                self._move_towards_sound(self.current_k)
-                self.current_k = None
-                return False
-
+            return self.act_follower(level, my_id, vision)
         elif self.role == 'LEADER':
+            return self.act_leader(level, my_id, vision)
+        
+    def act_follower(self, level, my_id, vision):
+        if self.current_k == 0:
             players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
             needed = self.player_reqs.get(level, 1)
             if players_on_tile >= needed:
-                print(f"[Grouper] LEADER : Équipe au complet ({players_on_tile}/{needed}).")
+                print(f"[Grouper] FOLLOWER : Équipe au complet ({players_on_tile}/{needed}). Prêt pour le rituel !")
+                self.current_k = None
                 return True
-            print(f"[Grouper] LEADER (ID: {my_id}) : Attente alliés. Broadcast...")
-            secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
-            self.cmd.broadcast_text(secret_msg)
+            else:
+                print(f"[Grouper] FOLLOWER : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
+                self.current_k = None
+                return False
+        else:
+            print(f"[Grouper] FOLLOWER : En route vers K={self.current_k}")
+            self._move_towards_sound(self.current_k)
+            self.current_k = None
             return False
+
+    def act_leader(self, level, my_id, vision):
+        players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
+        needed = self.player_reqs.get(level, 1)
+        if players_on_tile >= needed:
+            print(f"[Grouper] LEADER : Équipe au complet ({players_on_tile}/{needed}).")
+            return True
+        print(f"[Grouper] LEADER (ID: {my_id}) : Attente alliés. Broadcast...")
+        secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
+        self.cmd.broadcast_text(secret_msg)
+        return False
