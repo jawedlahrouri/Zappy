@@ -15,6 +15,8 @@
 #include "Parsing/Parsing.hpp"
 #include "Clock_frequency/clock.hpp"
 #include <chrono>
+#include "Parsing/AiCommandParser.hpp"
+#include "Parsing/ai_execute_cmds.hpp"
 
 Client::Client(Socket clientSocket)
     : socket(clientSocket), type(ClientType::PENDING)
@@ -25,6 +27,20 @@ AI::AI(Socket clientSocket, int player_id)
     : Client(clientSocket), id(player_id), level(1), orientation(1), food_ticks(126)
 {
     type = ClientType::AI;
+}
+
+bool AI::consume_food()
+{
+    food_ticks--;
+    if (food_ticks <= 0) {
+        if (inventory["food"] > 0) {
+            inventory["food"]--;
+            food_ticks = 126;
+            return true;
+        }
+        return false;
+    }
+    return true;
 }
 
 GUI::GUI(Socket clientSocket)
@@ -287,6 +303,7 @@ void Server::run_poll_loop(ClockFrequency &clock)
         now = std::chrono::steady_clock::now();
         if (now >= next_tick_time) {
             clock.tick();
+            update_game();
             next_tick_time += std::chrono::milliseconds(static_cast<int>(tick_duration_ms));
         }
     }
@@ -310,4 +327,81 @@ void Server::open_server(int port, int clientsNb, const std::vector<std::string>
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("open_server: ") + e.what());
     }
+}
+
+void Server::update_game()
+{
+    std::vector<int> clients_to_remove;
+
+    for (auto &[fd, client] : _clients) {
+        if (client->type != ClientType::AI)
+            continue;
+        auto ai = std::dynamic_pointer_cast<AI>(client);
+        if (!handle_ai_survival(fd, ai, clients_to_remove))
+            continue;
+        handle_ai_active_command(ai);
+        handle_ai_next_command(ai);
+    }
+    for (int fd : clients_to_remove)
+        remove_client(fd);
+}
+
+bool Server::handle_ai_survival(int fd, std::shared_ptr<AI> ai, std::vector<int> &clients_to_remove)
+{
+    if (!ai->consume_food()) {
+        send_response(fd, "death");
+        send_to_guis("pdi " + std::to_string(ai->id));
+        clients_to_remove.push_back(fd);
+        return false;
+    }
+    return true;
+}
+
+void Server::handle_ai_active_command(std::shared_ptr<AI> ai)
+{
+    if (ai->action_ticks_left > 0) {
+        ai->action_ticks_left--;
+        if (ai->action_ticks_left == 0) {
+            execute_ai_action(ai);
+            ai->action_ticks_left = -1;
+        }
+    }
+}
+
+void Server::handle_ai_next_command(std::shared_ptr<AI> ai)
+{
+    if (ai->action_ticks_left == -1 && !ai->commandQueue.empty()) {
+        std::string next_cmd = ai->commandQueue.front();
+        ai->action_ticks_left = get_command_duration(next_cmd);
+        if (ai->action_ticks_left == 0) {
+            execute_ai_action(ai);
+            ai->action_ticks_left = -1;
+        }
+    }
+}
+
+void Server::execute_ai_action(std::shared_ptr<AI> ai)
+{
+    if (ai->commandQueue.empty())
+        return;
+    std::string command = ai->commandQueue.front();
+    ai->commandQueue.pop();
+
+    std::string action = command.substr(0, command.find(' '));
+    auto it = ai_cmds.find(action);
+    if (it != ai_cmds.end()) {
+        AiCommandParser parser;
+        auto func = it->second.func;
+        (parser.*func)(ai, command, *this);
+    }
+}
+
+int Server::get_command_duration(const std::string &command)
+{
+    std::string action = command.substr(0, command.find(' '));
+    auto it = ai_cmds.find(action);
+    if (it != ai_cmds.end()) {
+        return it->second.duration;
+    }
+    return 0;
 }

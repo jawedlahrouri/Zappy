@@ -14,7 +14,13 @@
 
 class AiCommandParser;
 class AI;
+class Server;
 
-extern std::map<std::string, void (AiCommandParser::*)(std::shared_ptr<AI>, const std::string &command)> ai_cmds;
+struct AiCommand {
+    void (AiCommandParser::*func)(std::shared_ptr<AI> client, const std::string &command, Server &server);
+    int duration;
+};
+
+extern std::map<std::string, AiCommand> ai_cmds;
 
 #endif /* !AI_EXECUTE_CMDS_HPP_ */

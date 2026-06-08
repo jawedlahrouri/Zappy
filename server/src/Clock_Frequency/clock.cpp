@@ -7,6 +7,7 @@
 
 
 #include "Clock_frequency/clock.hpp"
+#include <chrono>
 
 ClockFrequency::ClockFrequency(int frequency)
     : _clockFrequency(frequency) {}

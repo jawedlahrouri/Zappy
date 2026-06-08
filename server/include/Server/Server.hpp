@@ -47,6 +47,7 @@ class AI : public Client {
         std::queue<std::string> commandQueue;
         int action_ticks_left = -1;
         int food_ticks;
+        bool consume_food();
 };
 
 class GUI : public Client {
@@ -69,6 +70,12 @@ class Server {
         bool get_next_line(std::string &buffer, std::string &line);
         void detect_client_type(int client_socket);
         void run_poll_loop(ClockFrequency &clock);
+        void update_game();
+        bool handle_ai_survival(int fd, std::shared_ptr<AI> ai, std::vector<int> &clients_to_remove);
+        void handle_ai_active_command(std::shared_ptr<AI> ai);
+        void handle_ai_next_command(std::shared_ptr<AI> ai);
+        void execute_ai_action(std::shared_ptr<AI> client);
+        int get_command_duration(const std::string &command);
         void process_poll_event(size_t &i);
         void accept_client();
         void remove_client(int client_socket);

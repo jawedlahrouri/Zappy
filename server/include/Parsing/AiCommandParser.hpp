@@ -10,26 +10,25 @@
 
 #include <string>
 #include <memory>
-
-class AI;
+#include "Server/Server.hpp"
 
 class AiCommandParser {
     public:
         AiCommandParser() = default;
         ~AiCommandParser() = default;
 
-        void parse_forward(std::shared_ptr<AI> client, const std::string &command);
-        void parse_right(std::shared_ptr<AI> client, const std::string &command);
-        void parse_left(std::shared_ptr<AI> client, const std::string &command);
-        void parse_look(std::shared_ptr<AI> client, const std::string &command);
-        void parse_inventory(std::shared_ptr<AI> client, const std::string &command);
-        void parse_broadcast(std::shared_ptr<AI> client, const std::string &command);
-        void parse_connect_nbr(std::shared_ptr<AI> client, const std::string &command);
-        void parse_fork(std::shared_ptr<AI> client, const std::string &command);
-        void parse_eject(std::shared_ptr<AI> client, const std::string &command);
-        void parse_take(std::shared_ptr<AI> client, const std::string &command);
-        void parse_set(std::shared_ptr<AI> client, const std::string &command);
-        void parse_incantation(std::shared_ptr<AI> client, const std::string &command);
+        void parse_forward(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_right(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_left(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_look(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_inventory(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_broadcast(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_connect_nbr(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_fork(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_eject(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_take(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_set(std::shared_ptr<AI> client, const std::string &command, Server &server);
+        void parse_incantation(std::shared_ptr<AI> client, const std::string &command, Server &server);
 };
 
 #endif /* !AI_COMMAND_PARSER_HPP_ */
