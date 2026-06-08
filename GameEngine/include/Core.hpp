@@ -10,6 +10,7 @@
 
     #include "NetworkManager.hpp"
     #include "GameWorld.hpp"
+    #include "WindowManager.hpp"
     #include <sstream>
     #include <chrono>
     #include <thread>
@@ -23,6 +24,7 @@
     private:
         void parseCommand(const std::string& command);
 
+        WindowManager _windowManager;
         NetworkManager _network;
         GameWorld _world;
         bool _isRunning;

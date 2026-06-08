@@ -19,25 +19,28 @@ Core::~Core()
 int Core::run(int ac, char** av) {
     unsigned short port = (ac > 1) ? static_cast<unsigned short>(std::stoi(av[1])) : 4242;
 
-    if (!_network.connectToServer("127.0.0.1", port)) {
+    if (!_network.connectToServer("127.0.0.1", port))
         return 84;
-    }
 
-    if (!_network.authenticateAsGraphic()) {
+    if (!_network.authenticateAsGraphic())
         return 84;
-    }
 
     _isRunning = true;
     std::cout << "[Core] Moteur démarré. Écoute du serveur..." << std::endl;
 
-    while (_isRunning) {
-        std::string command = _network.receiveData();
+    while (_windowManager.isOpen()) {
+        _windowManager.handleEvents();
 
+        std::string command = _network.receiveData();
         if (!command.empty()) {
             parseCommand(command);
         }
+ 
+        _windowManager.clear();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        _windowManager.drawWorld(_world);
+
+        _windowManager.display();
     }
 
     return 0;
@@ -46,6 +49,8 @@ int Core::run(int ac, char** av) {
 void Core::parseCommand(const std::string& command) {
     std::stringstream ss(command);
     std::string cmdType;
+
+    std::cout << command << std::endl;
     
     ss >> cmdType;
 
@@ -64,6 +69,12 @@ void Core::parseCommand(const std::string& command) {
         ss >> id >> x >> y >> orientation;
 
         _world.movePlayer(id, x, y, orientation);
+    }
+    else if (cmdType == "bct") {
+        int x = 0, y = 0, q0 = 0, q1 = 0, q2 = 0, q3 = 0, q4 = 0, q5 = 0, q6 = 0;
+        ss >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
+
+        _world.setTileResources(x, y, _world.resToResources(q0, q1, q2, q3, q4, q5, q6));
     }
     //ajouter les autres commandes
 }

@@ -30,11 +30,26 @@ void GameWorld::setMapSize(int width, int height)
     }
 }
 
-void GameWorld::setTileResources(int x, int y, const Resources& res) {
+void GameWorld::setTileResources(int x, int y, const Resources& res)
+{
     if (x >= 0 && x < _width && y >= 0 && y < _height) {
         _map[x][y].resources = res;
     }
 }
+
+Resources GameWorld::resToResources(int q0, int q1, int q2, int q3, int q4, int q5, int q6)
+{
+    Resources res;
+    res.food = q0;
+    res.linemate = q1;
+    res.deraumere = q2;
+    res.sibur = q3;
+    res.mendiane = q4;
+    res.phiras = q5;
+    res.thystame = q6;
+    return res;
+}
+
 
 void GameWorld::addPlayer(const Player& player) {
     _players[player.id] = player;
@@ -43,7 +58,12 @@ void GameWorld::addPlayer(const Player& player) {
 
 void GameWorld::movePlayer(int id, int x, int y, int orientation)
 {
-    Player newPlayer = _players.find(id)->second;
+    auto player = _players.find(id);
+
+    if (player == _players.end())
+        return;
+
+    Player newPlayer = player->second;
     newPlayer.x = x;
     newPlayer.y = y;
     newPlayer.orientation = orientation;
