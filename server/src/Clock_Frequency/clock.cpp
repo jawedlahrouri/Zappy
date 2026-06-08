@@ -21,7 +21,4 @@ void ClockFrequency::setClockFrequency(int frequency) {
 int ClockFrequency::getClockFrequency() {
     return _clockFrequency;
 }
-
-void ClockFrequency::tick() {
-    // Stub implementation to be filled with tick logic later
-}
+// le system de tick (game_update) se trouve dans server.cpp 
