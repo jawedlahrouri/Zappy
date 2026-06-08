@@ -29,7 +29,7 @@ std::vector<std::string> Parsing::split_command(const std::string &command)
     }
 }
 
-void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &command)
+void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &command, Server &server)
 {
     try {
         std::vector<std::string> tokens = split_command(command);
@@ -38,7 +38,7 @@ void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &co
 
         std::string action = tokens[0];
         if (ai_cmds.find(action) == ai_cmds.end()) {
-            client->write_buffer += "ko\n";
+            server.send_response(client->socket.get_socket(), "ko");
             return;
         }
 

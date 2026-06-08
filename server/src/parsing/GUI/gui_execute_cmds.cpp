@@ -30,9 +30,6 @@ std::map<std::string, void (GuiCommandParser::*)(std::shared_ptr<GUI>, const std
     {"pbc", &GuiCommandParser::parse_gui_pbc},
     {"pfc", &GuiCommandParser::parse_gui_pfc},
     {"pfk", &GuiCommandParser::parse_gui_pfk},
-    {"pdr", &GuiCommandParser::parse_gui_pdr},
-    {"pdr", &GuiCommandParser::parse_gui_pdr},
-    {"pdr", &GuiCommandParser::parse_gui_pdr},
-    {"pdr", &GuiCommandParser::parse_gui_pdr},
-    {"pdr", &GuiCommandParser::parse_gui_pdr},
+    {"sgt", &GuiCommandParser::parse_gui_sgt},
+    {"sst", &GuiCommandParser::parse_gui_sst},
 };

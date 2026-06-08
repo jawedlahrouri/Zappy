@@ -20,3 +20,7 @@ void ClockFrequency::setClockFrequency(int frequency) {
 int ClockFrequency::getClockFrequency() {
     return _clockFrequency;
 }
+
+void ClockFrequency::tick() {
+    // Stub implementation to be filled with tick logic later
+}

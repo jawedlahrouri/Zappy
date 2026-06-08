@@ -21,7 +21,7 @@ class Parsing {
         Parsing() = default;
         ~Parsing() = default;
 
-        static void parse_ai_command(std::shared_ptr<AI> client, const std::string &command);
+        static void parse_ai_command(std::shared_ptr<AI> client, const std::string &command, Server &server);
         static void parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, Server &server);
 
     private:

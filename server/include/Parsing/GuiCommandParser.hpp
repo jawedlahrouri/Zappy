@@ -33,6 +33,8 @@ class GuiCommandParser {
         void parse_gui_pbc(std::shared_ptr<GUI> client, const std::string &command, Server &server);
         void parse_gui_pfc(std::shared_ptr<GUI> client, const std::string &command, Server &server);
         void parse_gui_pfk(std::shared_ptr<GUI> client, const std::string &command, Server &server);
+        void parse_gui_sgt(std::shared_ptr<GUI> client, const std::string &command, Server &server);
+        void parse_gui_sst(std::shared_ptr<GUI> client, const std::string &command, Server &server);
 };
 
 #endif /* !GUI_COMMAND_PARSER_HPP_ */

@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <cstring>
 #include "Parsing/Parsing.hpp"
+#include "Clock_frequency/clock.hpp"
+#include <chrono>
 
 Client::Client(Socket clientSocket)
     : socket(clientSocket), type(ClientType::PENDING)
@@ -212,7 +214,7 @@ bool Server::handle_client_data(size_t poll_index)
                         Parsing::parse_gui_command(gui_client, line, *this);
                     } else if (it->second->type == ClientType::AI) {
                         auto ai_client = std::dynamic_pointer_cast<AI>(it->second);
-                        Parsing::parse_ai_command(ai_client, line);
+                        Parsing::parse_ai_command(ai_client, line, *this);
                     }
                 }
             }
@@ -257,11 +259,20 @@ void Server::process_poll_event(size_t &i)
     }
 }
 
-void Server::run_poll_loop()
+void Server::run_poll_loop(ClockFrequency &clock)
 {
     std::cout << "Waiting for connections..." << std::endl;
+    double tick_duration_ms = 1000.0 / clock.getClockFrequency();
+    auto next_tick_time = std::chrono::steady_clock::now();
+
     while (true) {
-        int poll_count = _poll.run_poll(-1);
+        auto now = std::chrono::steady_clock::now();
+        int timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_tick_time - now).count();
+        if (timeout_ms < 0) {
+            timeout_ms = 0;
+        }
+
+        int poll_count = _poll.run_poll(timeout_ms);
         if (poll_count == -1) {
             if (errno == EINTR) {
                 continue;
@@ -272,10 +283,16 @@ void Server::run_poll_loop()
         for (size_t i = 0; i < _poll.get_size(); ++i) {
             process_poll_event(i);
         }
+
+        now = std::chrono::steady_clock::now();
+        if (now >= next_tick_time) {
+            clock.tick();
+            next_tick_time += std::chrono::milliseconds(static_cast<int>(tick_duration_ms));
+        }
     }
 }
 
-void Server::open_server(int port, int clientsNb, const std::vector<std::string> &teamNames)
+void Server::open_server(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq)
 {
     _port = port;
     _clientsNb = clientsNb;
@@ -288,7 +305,8 @@ void Server::open_server(int port, int clientsNb, const std::vector<std::string>
         std::cout << "Server opened on port " << _port << std::endl;
         _poll.add_fd(_master_socket.get_socket(), POLLIN);
 
-        run_poll_loop();
+        ClockFrequency clock(freq);
+        run_poll_loop(clock);
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("open_server: ") + e.what());
     }

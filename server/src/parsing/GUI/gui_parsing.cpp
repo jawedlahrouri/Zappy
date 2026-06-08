@@ -26,7 +26,7 @@ void Parsing::parse_gui_command(std::shared_ptr<GUI> client, const std::string &
             auto func = it->second;
             (parser.*func)(client, command, server);
         } else {
-            client->write_buffer += "suc\n";
+            server.send_response(client->socket.get_socket(), "suc");
         }
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("parse_gui_command failed: ") + e.what());

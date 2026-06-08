@@ -54,24 +54,26 @@ class GUI : public Client {
         GUI(Socket clientSocket);
 };
 
+class ClockFrequency;
+
 class Server {
     public:
         Server() = default;
         ~Server();
 
-        void open_server(int port, int clientsNb, const std::vector<std::string> &teamNames);
+        void open_server(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq);
         void send_to_guis(const std::string &message);
+        void send_response(int client_socket, const std::string &message);
 
     private:
         bool get_next_line(std::string &buffer, std::string &line);
         void detect_client_type(int client_socket);
-        void run_poll_loop();
+        void run_poll_loop(ClockFrequency &clock);
         void process_poll_event(size_t &i);
         void accept_client();
         void remove_client(int client_socket);
         bool handle_client_data(size_t poll_index);
         bool handle_writable(size_t index);
-        void send_response(int client_socket, const std::string &message);
         void broadcast_event(const std::string &message, int exclude_socket = -1);
         void cleanup();
 

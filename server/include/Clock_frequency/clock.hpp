@@ -15,6 +15,7 @@ public:
 
     void setClockFrequency(int frequency); 
     int getClockFrequency();
+    void tick();
 
 private:
     int _clockFrequency;
