@@ -18,12 +18,12 @@ class utils:
         self.farmer = Farmer()
         self.comms = StealthComms()
         self.grouper = Grouper(self.cmd, self.comms)
+        self.team_name = team_name
 
     def  launch_clone(self):
         print("[Agent] Un œuf a été pondu.")
         print("[Agent] Lancement d'un nouveau clone en arrière-plan...")
         port = str(self.cmd.network.port)
         machine = self.cmd.network.machine
-        subprocess.Popen([sys.executable, "main.py", "-p", port, "-h", machine, "-n", self.team_name])
-
+        subprocess.Popen(["./zappy_ai", "-p", port, "-h", machine, "-n", self.team_name])
 

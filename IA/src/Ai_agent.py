@@ -9,16 +9,9 @@ from src.agent_submodules.pathfinding import Pathfinder
 from src.agent_submodules.farm import Farmer
 from src.agent_submodules.grouping import Grouper
 from src.agent_submodules.stealth_comms import StealthComms
-from src.agent_submodules.agent_state import StateComportment
+from src.agent_submodules.agent_state import StateComportment, AgentState 
 from src.command import ZappyCommand
 from src.utils import utils
-
-class AgentState(Enum):
-    SURVIVAL = 1
-    FARMING = 2
-    GROUPING = 3
-    ELEVATION = 4
-    FORKING = 5
 
 class ZappyAgent:
     def __init__(self, command_interface: ZappyCommand, team_name: str):
