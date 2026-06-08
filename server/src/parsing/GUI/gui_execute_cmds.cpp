@@ -9,10 +9,7 @@
 #include "Parsing/GuiCommandParser.hpp"
 #include "Parsing/gui_execute_cmds.hpp"
 #include "Server/Server.hpp"
-#include "Command/ICommand.hpp"
-#include "Command/MapCommand.hpp"
-#include "Command/PlayerCommand.hpp"
-#include "Command/GameCommand.hpp"
+
 #include <iostream>
 
 std::map<std::string, void (GuiCommandParser::*)(std::shared_ptr<GUI>, const std::string &command, Server &server)> gui_cmds = {
