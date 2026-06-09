@@ -1,12 +1,24 @@
+#!/usr/bin/python3
 import math
 import random
+from src.logger import ZappyLogger
+
+logger = ZappyLogger.get_logger("Pathfinder")
 
 class Pathfinder:
     def __init__(self, command_interface):
-        self.cmd = command_interface
-        self.explore_step = 0
+        self.cmd = command_interface # Interface de commande pour interagir avec le serveur.
+        self.explore_step = 0 # Variable pour suivre les étapes d'exploration et de scan, permettant de varier les mouvements de l'agent pour une exploration plus efficace.
 
     def _score_tile(self, index, tile_contents, target_items):
+        """Calcule un score pour une case en fonction des éléments recherchés.\n
+        Params:
+            -index (int): L'index de la case.
+            -tile_contents (list): Les éléments présents sur la case.
+            -target_items (list): Les éléments à rechercher.
+        Retourne:
+            -int: Le score de la case."""
+
         score = 0
         items_found = 0
         for item in target_items:
@@ -24,6 +36,11 @@ class Pathfinder:
         return score
 
     def go_to_tile(self, target_index):
+        """Déplace l'agent vers une case cible en fonction de son index dans la vision.\n
+        Params:
+            -target_index (int): L'index de la case cible dans la vision.
+        Ne retourne rien."""
+
         if target_index == 0:
             return
         row = int(math.sqrt(target_index))
@@ -41,6 +58,13 @@ class Pathfinder:
                 self.cmd.forward()
 
     def search_and_take_items(self, target_items, vision):
+        """Cherche les cases contenant les éléments ciblés et se déplace vers la meilleure case pour les ramasser.\n
+        Params:
+            -target_items (list): Les éléments à rechercher.
+            -vision (list): La vision actuelle de l'agent, une liste de cases avec leur contenu.
+        Retourne:
+            -bool: True si une case cible a été trouvée et traitée, False sinon."""
+
         best_index = -1
         best_score = -999
         for index, tile_contents in enumerate(vision):
@@ -50,34 +74,45 @@ class Pathfinder:
                 best_index = index
         if best_index != -1:
             print(f"[Agent] Cible optimale: case {best_index} (Score: {best_score}). Déplacement...")
+            logger.info(f"Agent se déplace vers la case {best_index} pour ramasser des items. Score de la case: {best_score}. Items ciblés: {target_items}. Contenu de la case: {vision[best_index]}")  
             self.explore_step = 0
             self.go_to_tile(best_index)
             items_on_tile = vision[best_index]
             for item in target_items:
                 count = items_on_tile.count(item)
                 for _ in range(count):
+                    logger.info(f"Agent ramasse {item} sur la case {best_index}.")
                     print(f"[Agent] Ramassage multiple : {item}")
                     self.cmd.take_object(item)
             return True
         return False
 
     def explore(self, level):
+        """Explore la zone autour de l'agent en fonction de son niveau.\n
+        Params:
+            -level (int): Le niveau de l'agent.
+        Ne retourne rien."""
+
         if level <= 2:
             if self.explore_step < 3:
+                logger.info(f"Agent explore en avançant droit devant. Étape {self.explore_step + 1}/3.")
                 print(f"[Agent Lvl {level}] Exploration : On trace tout droit.")
                 self.cmd.forward()
                 self.explore_step += 1
             else:
+                logger.info(f"Agent explore en virant pour quadriller la zone. Étape {self.explore_step + 1}/3.")
                 print(f"[Agent Lvl {level}] Exploration : Virage pour quadriller la zone.")
                 action = random.choice([self.cmd.right, self.cmd.left])
                 action()
                 self.explore_step = 0 
         else:
             if self.explore_step < 3:
+                logger.info(f"Agent explore en scannant à droite. Étape {self.explore_step + 1}/3.")
                 print(f"[Agent Lvl {level}] Exploration : Scan rotation droite ({self.explore_step + 1}/3)")
                 self.cmd.right()
                 self.explore_step += 1
             else:
+                logger.info(f"Agent explore en avançant après scan. Étape {self.explore_step + 1}/3.")
                 print(f"[Agent Lvl {level}] Exploration : Scan 360° terminé. On avance !")
                 self.cmd.forward()
                 self.explore_step = 0
