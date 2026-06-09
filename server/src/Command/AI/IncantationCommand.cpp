@@ -14,7 +14,11 @@
 #include <iostream>
 
 void IncantationCommand::Accept(IAiVisitor *visitor) {
+    try {
     visitor->visit(this);
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("IncantationCommand::Accept: ") + e.what());
+    }
 }
 
 void AiCommandParser::parse_incantation(std::shared_ptr<AI> client, const std::string &command, Server &server)
@@ -32,5 +36,9 @@ void AiCommandParser::parse_incantation(std::shared_ptr<AI> client, const std::s
 }
 
 void AiVisitor::visit(IncantationCommand *element) {
+    try {
     (void)element;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("AiVisitor::visit: ") + e.what());
+    }
 }

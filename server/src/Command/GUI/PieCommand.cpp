@@ -14,7 +14,11 @@
 #include <iostream>
 
 void PieCommand::Accept(IGuiVisitor *visitor) {
+    try {
     visitor->visit(this);
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("PieCommand::Accept: ") + e.what());
+    }
 }
 
 void GuiCommandParser::parse_gui_pie(std::shared_ptr<GUI> client, const std::string &command, Server &server)
@@ -32,5 +36,9 @@ void GuiCommandParser::parse_gui_pie(std::shared_ptr<GUI> client, const std::str
 }
 
 void GuiVisitor::visit(PieCommand *element) {
+    try {
     (void)element;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("GuiVisitor::visit: ") + e.what());
+    }
 }

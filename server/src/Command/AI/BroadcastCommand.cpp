@@ -14,7 +14,11 @@
 #include <iostream>
 
 void BroadcastCommand::Accept(IAiVisitor *visitor) {
+    try {
     visitor->visit(this);
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("BroadcastCommand::Accept: ") + e.what());
+    }
 }
 
 void AiCommandParser::parse_broadcast(std::shared_ptr<AI> client, const std::string &command, Server &server)
@@ -32,5 +36,9 @@ void AiCommandParser::parse_broadcast(std::shared_ptr<AI> client, const std::str
 }
 
 void AiVisitor::visit(BroadcastCommand *element) {
+    try {
     (void)element;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("AiVisitor::visit: ") + e.what());
+    }
 }

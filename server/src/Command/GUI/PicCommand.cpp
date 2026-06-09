@@ -14,7 +14,11 @@
 #include <iostream>
 
 void PicCommand::Accept(IGuiVisitor *visitor) {
+    try {
     visitor->visit(this);
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("PicCommand::Accept: ") + e.what());
+    }
 }
 
 void GuiCommandParser::parse_gui_pic(std::shared_ptr<GUI> client, const std::string &command, Server &server)
@@ -32,5 +36,9 @@ void GuiCommandParser::parse_gui_pic(std::shared_ptr<GUI> client, const std::str
 }
 
 void GuiVisitor::visit(PicCommand *element) {
+    try {
     (void)element;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("GuiVisitor::visit: ") + e.what());
+    }
 }

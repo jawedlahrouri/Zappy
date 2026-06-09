@@ -25,6 +25,7 @@ static void print_help() {
 }
 
 ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
+    try {
     for (int i = 1; i < argc; i++) {
         if (std::string(argv[i]) == "-p") {
             if (i + 1 >= argc) throw Exception_Server("Missing argument for option -p");
@@ -66,9 +67,13 @@ ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
     std::cout << "Clients: " << config.clientsNb << std::endl;
     std::cout << "Frequency: " << config.freq << std::endl;
     return config;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("parse_args: ") + e.what());
+    }
 }
 
 int main (int argc, char** argv) {
+    try {
     ServerConfig config;
     Server server;
     
@@ -85,4 +90,7 @@ int main (int argc, char** argv) {
     }
 
     return 0;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("main: ") + e.what());
+    }
 }

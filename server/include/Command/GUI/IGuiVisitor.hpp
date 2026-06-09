@@ -1,22 +1,22 @@
 #ifndef IGUIVISITOR_HPP_
 #define IGUIVISITOR_HPP_
 
-#include "GUI/MszCommand.hpp"
-#include "GUI/BctCommand.hpp"
-#include "GUI/MctCommand.hpp"
-#include "GUI/TnaCommand.hpp"
-#include "GUI/PpoCommand.hpp"
-#include "GUI/PlvCommand.hpp"
-#include "GUI/PinCommand.hpp"
-#include "GUI/PicCommand.hpp"
-#include "GUI/PieCommand.hpp"
-#include "GUI/PdrCommand.hpp"
-#include "GUI/PgtCommand.hpp"
-#include "GUI/PbcCommand.hpp"
-#include "GUI/PfcCommand.hpp"
-#include "GUI/PfkCommand.hpp"
-#include "GUI/SgtCommand.hpp"
-#include "GUI/SstCommand.hpp"
+#include "Command/GUI/MszCommand.hpp"
+#include "Command/GUI/BctCommand.hpp"
+#include "Command/GUI/MctCommand.hpp"
+#include "Command/GUI/TnaCommand.hpp"
+#include "Command/GUI/PpoCommand.hpp"
+#include "Command/GUI/PlvCommand.hpp"
+#include "Command/GUI/PinCommand.hpp"
+#include "Command/GUI/PicCommand.hpp"
+#include "Command/GUI/PieCommand.hpp"
+#include "Command/GUI/PdrCommand.hpp"
+#include "Command/GUI/PgtCommand.hpp"
+#include "Command/GUI/PbcCommand.hpp"
+#include "Command/GUI/PfcCommand.hpp"
+#include "Command/GUI/PfkCommand.hpp"
+#include "Command/GUI/SgtCommand.hpp"
+#include "Command/GUI/SstCommand.hpp"
 
 class IGuiVisitor {
 public:

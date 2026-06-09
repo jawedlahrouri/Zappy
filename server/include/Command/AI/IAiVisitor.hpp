@@ -1,18 +1,18 @@
 #ifndef IAIVISITOR_HPP_
 #define IAIVISITOR_HPP_
 
-#include "AI/ForwardCommand.hpp"
-#include "AI/RightCommand.hpp"
-#include "AI/LeftCommand.hpp"
-#include "AI/LookCommand.hpp"
-#include "AI/InventoryCommand.hpp"
-#include "AI/BroadcastCommand.hpp"
-#include "AI/ConnectNbrCommand.hpp"
-#include "AI/ForkCommand.hpp"
-#include "AI/EjectCommand.hpp"
-#include "AI/TakeCommand.hpp"
-#include "AI/SetCommand.hpp"
-#include "AI/IncantationCommand.hpp"
+#include "Command/AI/ForwardCommand.hpp"
+#include "Command/AI/RightCommand.hpp"
+#include "Command/AI/LeftCommand.hpp"
+#include "Command/AI/LookCommand.hpp"
+#include "Command/AI/InventoryCommand.hpp"
+#include "Command/AI/BroadcastCommand.hpp"
+#include "Command/AI/ConnectNbrCommand.hpp"
+#include "Command/AI/ForkCommand.hpp"
+#include "Command/AI/EjectCommand.hpp"
+#include "Command/AI/TakeCommand.hpp"
+#include "Command/AI/SetCommand.hpp"
+#include "Command/AI/IncantationCommand.hpp"
 
 class IAiVisitor {
 public:
