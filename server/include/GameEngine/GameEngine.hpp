@@ -38,6 +38,7 @@ class GameEngine {
         ~GameEngine() = default;
 
         void update(Server &server);
+        void update_ai(std::shared_ptr<AI> ai, Server &server, std::vector<int> &clients_to_remove);
 
         int get_width() const { return _width; }
         int get_height() const { return _height; }
