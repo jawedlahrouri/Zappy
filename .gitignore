@@ -22,3 +22,14 @@ __pycache__/
 *.pyd
 env/
 venv/
+.clangd
+compile_flags.txt
+**/compile_flags.txt
+compile_commands.json
+**/compile_commands.json
+.cache/
+subject/*
+
+
+
+
