@@ -21,12 +21,9 @@ void EjectCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_eject(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void AiCommandParser::parse_eject([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)server;
         EjectCommand cmd;
         AiVisitor visitor(server);
         cmd.Accept(&visitor);
@@ -35,9 +32,8 @@ void AiCommandParser::parse_eject(std::shared_ptr<AI> client, const std::string 
     }
 }
 
-void AiVisitor::visit(EjectCommand *element) {
+void AiVisitor::visit([[maybe_unused]] EjectCommand *element) {
     try {
-    (void)element;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("AiVisitor::visit: ") + e.what());
     }

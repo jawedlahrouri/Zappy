@@ -22,10 +22,9 @@ void ForwardCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_forward(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)command;
         ForwardCommand cmd;
         cmd.setClient(client);
         AiVisitor visitor(server);
@@ -35,7 +34,7 @@ void AiCommandParser::parse_forward(std::shared_ptr<AI> client, const std::strin
     }
 }
 
-void AiVisitor::visit(ForwardCommand *element) {
+void AiVisitor::visit([[maybe_unused]] ForwardCommand *element) {
     try {
         auto client = element->getClient();
         auto engine = _server.get_game_engine().get();

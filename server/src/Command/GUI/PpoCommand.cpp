@@ -21,7 +21,7 @@ void PpoCommand::Accept(IGuiVisitor *visitor) {
     }
 }
 
-void GuiCommandParser::parse_gui_ppo(std::shared_ptr<GUI> client, const std::string &command, Server &server)
+void GuiCommandParser::parse_gui_ppo([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
         PpoCommand cmd;
@@ -42,7 +42,7 @@ void GuiCommandParser::parse_gui_ppo(std::shared_ptr<GUI> client, const std::str
     }
 }
 
-void GuiVisitor::visit(PpoCommand *element) {
+void GuiVisitor::visit([[maybe_unused]] PpoCommand *element) {
     try {
     auto gui_client = element->getClient();
     int target_id = element->getPlayerId();

@@ -21,12 +21,9 @@ void MszCommand::Accept(IGuiVisitor *visitor) {
     }
 }
 
-void GuiCommandParser::parse_gui_msz(std::shared_ptr<GUI> client, const std::string &command, Server &server)
+void GuiCommandParser::parse_gui_msz([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)server;
         MszCommand cmd;
         GuiVisitor visitor(server);
         cmd.Accept(&visitor);
@@ -35,9 +32,8 @@ void GuiCommandParser::parse_gui_msz(std::shared_ptr<GUI> client, const std::str
     }
 }
 
-void GuiVisitor::visit(MszCommand *element) {
+void GuiVisitor::visit([[maybe_unused]] MszCommand *element) {
     try {
-    (void)element;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GuiVisitor::visit: ") + e.what());
     }

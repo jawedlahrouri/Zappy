@@ -21,12 +21,9 @@ void LeftCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_left(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void AiCommandParser::parse_left([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)server;
         LeftCommand cmd;
         cmd.setClient(client);
         AiVisitor visitor(server);
@@ -36,7 +33,7 @@ void AiCommandParser::parse_left(std::shared_ptr<AI> client, const std::string &
     }
 }
 
-void AiVisitor::visit(LeftCommand *element) {
+void AiVisitor::visit([[maybe_unused]] LeftCommand *element) {
     try {
         auto client = element->getClient();
         client->orientation = (client->orientation - 1 + 4) % 4;

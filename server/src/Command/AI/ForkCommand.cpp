@@ -21,12 +21,9 @@ void ForkCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_fork(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void AiCommandParser::parse_fork([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)server;
         ForkCommand cmd;
         AiVisitor visitor(server);
         cmd.Accept(&visitor);
@@ -35,9 +32,8 @@ void AiCommandParser::parse_fork(std::shared_ptr<AI> client, const std::string &
     }
 }
 
-void AiVisitor::visit(ForkCommand *element) {
+void AiVisitor::visit([[maybe_unused]] ForkCommand *element) {
     try {
-    (void)element;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("AiVisitor::visit: ") + e.what());
     }

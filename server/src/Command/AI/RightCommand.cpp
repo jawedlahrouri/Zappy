@@ -21,11 +21,9 @@ void RightCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_right(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void AiCommandParser::parse_right([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)command;
-        (void)server;
         RightCommand cmd;
         cmd.setClient(client);
         AiVisitor visitor(server);
@@ -35,7 +33,7 @@ void AiCommandParser::parse_right(std::shared_ptr<AI> client, const std::string 
     }
 }
 
-void AiVisitor::visit(RightCommand *element) {
+void AiVisitor::visit([[maybe_unused]] RightCommand *element) {
     try {
         auto client = element->getClient();
         client->orientation = (client->orientation + 1) % 4;
