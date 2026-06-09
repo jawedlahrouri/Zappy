@@ -6,17 +6,15 @@
 ##
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++20
+CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Iserver/include -IGameEngine/include
 
 SERVER_DIR = server
-SERVER_SRC = $(wildcard $(SERVER_DIR)/src/*.cpp)
+SERVER_SRC = $(shell find $(SERVER_DIR) -name "*.cpp")
 SERVER_OBJ = $(SERVER_SRC:.cpp=.o)
-SERVER_INC = -I$(SERVER_DIR)/include
 
 GUI_DIR = GameEngine
-GUI_SRC = $(wildcard $(GUI_DIR)/src/*.cpp)
+GUI_SRC = $(shell find $(GUI_DIR)/src -name "*.cpp")
 GUI_OBJ = $(GUI_SRC:.cpp=.o)
-GUI_INC = -I$(GUI_DIR)/include
 
 AI_DIR = IA
 AI_SRC = $(AI_DIR)/main.py
@@ -25,17 +23,17 @@ AI_SRC = $(AI_DIR)/main.py
 all: zappy_server zappy_gui zappy_ai
 
 zappy_server: $(SERVER_OBJ)
-	$(CXX) $(CXXFLAGS) -o zappy_server $(SERVER_OBJ) $(SERVER_INC)
+	$(CXX) $(CXXFLAGS) -o zappy_server $(SERVER_OBJ)
 
 zappy_gui: $(GUI_OBJ)
-	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ) $(GUI_INC)
+	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ)
 
 zappy_ai: $(AI_SRC)
 	cp $(AI_SRC) zappy_ai
 	chmod +x zappy_ai
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ -I$(dir $<)../include
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(SERVER_OBJ) $(GUI_OBJ)
