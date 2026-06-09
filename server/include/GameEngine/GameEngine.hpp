@@ -11,9 +11,26 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <array>
 
 class AI;
 class Server;
+
+enum ResourceType {
+    FOOD = 0,
+    LINEMATE,
+    DERAUMERE,
+    SIBUR,
+    MENDIANE,
+    PHIRAS,
+    THYSTAME,
+    RESOURCE_COUNT
+};
+
+struct Tile {
+    std::array<int, RESOURCE_COUNT> resources = {0, 0, 0, 0, 0, 0, 0};
+    std::vector<int> playerIds;
+};
 
 class GameEngine {
     public:
@@ -24,6 +41,13 @@ class GameEngine {
 
         int get_width() const { return _width; }
         int get_height() const { return _height; }
+        
+        const Tile& get_tile(int x, int y) const;
+        void add_resource_to_tile(int x, int y, ResourceType type, int quantity);
+        void remove_resource_from_tile(int x, int y, ResourceType type, int quantity);
+
+        void generate_initial_resources();
+        void spawn_resources_cycle();
 
     private:
         bool handle_ai_survival(int fd, std::shared_ptr<AI> ai, Server &server, std::vector<int> &clients_to_remove);
@@ -34,6 +58,10 @@ class GameEngine {
 
         int _width;
         int _height;
+
+        std::vector<std::vector<Tile>> _map;
+        int _resource_spawn_ticks = 0;
+        const std::array<double, RESOURCE_COUNT> _densities = {0.5, 0.3, 0.15, 0.1, 0.1, 0.08, 0.05};
 };
 
 #endif /* !GAME_ENGINE_HPP_ */
