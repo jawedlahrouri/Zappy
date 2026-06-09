@@ -7,6 +7,20 @@
 
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++20
+RAYLIB_PKG = $(shell pkg-config --exists raylib 2>/dev/null && echo 1 || echo 0)
+RAYLIB_MANUAL = $(shell printf '#include <raylib.h>\nint main(void){return 0;}\n' | $(CXX) -x c++ - -lraylib -o /tmp/zappy_raylib_check >/dev/null 2>&1 && rm -f /tmp/zappy_raylib_check && echo 1 || echo 0)
+
+ifeq ($(RAYLIB_PKG),1)
+    RAYLIB_CFLAGS = $(shell pkg-config --cflags raylib 2>/dev/null)
+    RAYLIB_LIBS = $(shell pkg-config --libs raylib 2>/dev/null)
+    CXXFLAGS += -DZAPPY_HAS_RAYLIB=1 $(RAYLIB_CFLAGS)
+else ifeq ($(RAYLIB_MANUAL),1)
+    RAYLIB_LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+    CXXFLAGS += -DZAPPY_HAS_RAYLIB=1
+else
+    RAYLIB_LIBS =
+    CXXFLAGS += -DZAPPY_HAS_RAYLIB=0
+endif
 
 SERVER_DIR = server
 SERVER_SRC = $(wildcard $(SERVER_DIR)/src/*.cpp)
@@ -28,7 +42,7 @@ zappy_server: $(SERVER_OBJ)
 	$(CXX) $(CXXFLAGS) -o zappy_server $(SERVER_OBJ) $(SERVER_INC)
 
 zappy_gui: $(GUI_OBJ)
-	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ) -lsfml-network -lsfml-system -lsfml-graphics -lsfml-window $(GUI_INC)
+	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ) -lsfml-network -lsfml-system -lsfml-graphics -lsfml-window $(RAYLIB_LIBS) $(GUI_INC)
 
 zappy_ai: $(AI_SRC)
 	cp $(AI_SRC) zappy_ai

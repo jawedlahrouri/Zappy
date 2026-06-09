@@ -10,6 +10,9 @@
 
 #include <SFML/Graphics.hpp>
 #include "GameWorld.hpp"
+#include "RaylibRenderer.hpp"
+#include <memory>
+#include <string>
 
 class WindowManager {
 public:
@@ -26,13 +29,28 @@ public:
     void drawWorld(const GameWorld& world);
 
     private:
+        enum class RenderMode {
+            TwoD,
+            ThreeD
+        };
+
+        void create2DWindow(unsigned int width, unsigned int height);
+        void loadTextures();
         void updateView(unsigned int width, unsigned int height);
         void zoomView(float factor);
         void resetZoom();
+        void switchTo2D();
+        void switchTo3D();
 
         sf::RenderWindow _window;
         sf::View _worldView;
+        std::unique_ptr<RaylibRenderer> _renderer3D;
+        RenderMode _renderMode;
         float _zoomLevel;
+        unsigned int _width;
+        unsigned int _height;
+        std::string _title;
+        bool _raylibWarningPrinted;
         sf::Texture _tileTexture;
         sf::Texture _linemateTexture;
     };

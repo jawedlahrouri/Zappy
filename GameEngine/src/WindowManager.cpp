@@ -19,12 +19,20 @@ namespace {
 }
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
-    : _zoomLevel(1.0f)
+    : _renderer3D(std::make_unique<RaylibRenderer>()),
+    _renderMode(RenderMode::TwoD),
+    _zoomLevel(1.0f),
+    _width(width),
+    _height(height),
+    _title(title),
+    _raylibWarningPrinted(false)
 {
-    _window.create(sf::VideoMode(width, height), title);
-    _window.setFramerateLimit(60);
-    updateView(width, height);
+    create2DWindow(width, height);
+    loadTextures();
+}
 
+void WindowManager::loadTextures()
+{
     TextureManager& tm = TextureManager::getInstance();
     
     tm.loadTexture("ground", "ground.png");
@@ -43,11 +51,27 @@ WindowManager::~WindowManager()
     if (_window.isOpen()) {
         _window.close();
     }
+    _renderer3D->close();
 }
 
 bool WindowManager::isOpen() const
 {
+    if (_renderMode == RenderMode::ThreeD)
+        return _renderer3D->isOpen();
     return _window.isOpen();
+}
+
+void WindowManager::create2DWindow(unsigned int width, unsigned int height)
+{
+    if (_window.isOpen())
+        _window.close();
+
+    _width = width;
+    _height = height;
+    _window.create(sf::VideoMode(width, height), _title);
+    _window.setFramerateLimit(60);
+    _renderMode = RenderMode::TwoD;
+    updateView(width, height);
 }
 
 void WindowManager::updateView(unsigned int width, unsigned int height)
@@ -80,11 +104,19 @@ void WindowManager::resetZoom()
 
 void WindowManager::handleEvents()
 {
+    if (_renderMode == RenderMode::ThreeD) {
+        if (_renderer3D->shouldToggleTo2D())
+            switchTo2D();
+        return;
+    }
+
     sf::Event event;
     while (_window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             _window.close();
         } else if (event.type == sf::Event::Resized) {
+            _width = event.size.width;
+            _height = event.size.height;
             updateView(event.size.width, event.size.height);
         } else if (event.type == sf::Event::MouseWheelScrolled) {
             if (event.mouseWheelScroll.delta > 0)
@@ -100,6 +132,9 @@ void WindowManager::handleEvents()
                 zoomView(ZOOM_STEP);
             } else if (event.key.code == sf::Keyboard::R) {
                 resetZoom();
+            } else if (event.key.code == sf::Keyboard::Tab ||
+                event.key.code == sf::Keyboard::V) {
+                switchTo3D();
             }
         }
     }
@@ -107,16 +142,29 @@ void WindowManager::handleEvents()
 
 void WindowManager::clear()
 {
+    if (_renderMode == RenderMode::ThreeD) {
+        _renderer3D->beginFrame();
+        return;
+    }
     _window.clear(sf::Color(30, 30, 30));
 }
 
 void WindowManager::display()
 {
+    if (_renderMode == RenderMode::ThreeD) {
+        _renderer3D->endFrame();
+        return;
+    }
     _window.display();
 }
 
 void WindowManager::drawWorld(const GameWorld& world)
 {
+    if (_renderMode == RenderMode::ThreeD) {
+        _renderer3D->drawWorld(world);
+        return;
+    }
+
     int mapWidth = world.getWidth();
     int mapHeight = world.getHeight();
 
@@ -158,4 +206,31 @@ void WindowManager::drawWorld(const GameWorld& world)
     for (const auto& pair : eggs) {
         GraphicalUtils::drawEgg(_window, pair.second, TILE_SIZE, offsetX, offsetY);
     }
+}
+
+void WindowManager::switchTo2D()
+{
+    _renderer3D->close();
+    create2DWindow(_width, _height);
+}
+
+void WindowManager::switchTo3D()
+{
+    if (!_renderer3D->isAvailable()) {
+        if (!_raylibWarningPrinted) {
+            std::cerr << "[WindowManager] Raylib indisponible: installez raylib pour activer la vue 3D." << std::endl;
+            _raylibWarningPrinted = true;
+        }
+        return;
+    }
+
+    if (_window.isOpen()) {
+        const sf::Vector2u size = _window.getSize();
+
+        _width = size.x;
+        _height = size.y;
+        _window.close();
+    }
+    _renderer3D->open(_width, _height, _title + " - 3D");
+    _renderMode = RenderMode::ThreeD;
 }
