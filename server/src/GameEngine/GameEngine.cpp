@@ -57,7 +57,6 @@ bool GameEngine::handle_ai_survival(int fd, std::shared_ptr<AI> ai, Server &serv
             return true;
         }
         Respond::send_response(server, fd, "death");
-        Respond::send_to_guis(server, "pdi " + std::to_string(ai->id));
         clients_to_remove.push_back(fd);
         return false;
     }

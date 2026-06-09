@@ -69,6 +69,7 @@ class Server {
         int get_freq() const { return _freq; }
         const std::vector<std::string> &get_team_names() const { return _teamNames; }
         const std::unique_ptr<GameEngine>& get_game_engine() const { return _game_engine; }
+        void send_event(const class IEventElement &event);
 
     private:
         bool get_next_line(std::string &buffer, std::string &line);

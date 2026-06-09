@@ -17,6 +17,8 @@
 #include "Parsing/AiCommandParser.hpp"
 #include "Parsing/ai_execute_cmds.hpp"
 #include "GameEngine/GameEngine.hpp"
+#include "Event/GUI/EventVisitor.hpp"
+#include "Event/GUI/PdiEvent.hpp"
 #include "Parsing/Respond.hpp"
 #include "Server/login.hpp"
 
@@ -58,6 +60,12 @@ Server::~Server()
     } catch (const std::exception &e) {
         std::cerr << "[ERROR] " << Exception_Server(std::string("Server::~Server: ") + e.what()).what() << std::endl;
     }
+}
+
+void Server::send_event(const IEventElement &event)
+{
+    EventVisitor visitor(*this);
+    event.Accept(&visitor);
 }
 
 bool Server::get_next_line(std::string &buffer, std::string &line)
@@ -142,6 +150,16 @@ void Server::remove_client(int client_socket)
     try {
         auto it = _clients.find(client_socket);
         if (it != _clients.end()) {
+            if (it->second->type == ClientType::AI) {
+                auto ai = std::dynamic_pointer_cast<AI>(it->second);
+                if (ai)
+                    send_event(PdiEvent(ai->id));
+            }
+            if (!it->second->write_buffer.empty()) {
+                try {
+                    it->second->socket.send_data(it->second->write_buffer);
+                } catch (...) {}
+            }
             it->second->socket.close_socket();
             _clients.erase(it);
         }

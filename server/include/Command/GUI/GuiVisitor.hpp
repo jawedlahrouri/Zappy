@@ -17,13 +17,7 @@ public:
     void visit(PpoCommand *element) override;
     void visit(PlvCommand *element) override;
     void visit(PinCommand *element) override;
-    void visit(PicCommand *element) override;
-    void visit(PieCommand *element) override;
-    void visit(PdrCommand *element) override;
-    void visit(PgtCommand *element) override;
-    void visit(PbcCommand *element) override;
-    void visit(PfcCommand *element) override;
-    void visit(PfkCommand *element) override;
+
     void visit(SgtCommand *element) override;
     void visit(SstCommand *element) override;
 

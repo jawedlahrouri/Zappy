@@ -10,10 +10,8 @@
 #include "Server/login.hpp"
 #include "Parsing/Respond.hpp"
 #include "GameEngine/GameEngine.hpp"
-
-
-#include <iostream>
-#include <string>
+#include "Event/GUI/EventVisitor.hpp"
+#include "Event/GUI/PnwEvent.hpp"
 
 // protocol:
 // <-- WELCOME (sent on connection accept)
@@ -41,6 +39,8 @@ void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, Serve
     } else {
         Respond::send_response(server, fd, "0 0");
     }
+    
+    server.send_event(PnwEvent(ai));
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Login::login_ai: ") + e.what());
     }
@@ -65,6 +65,18 @@ void Login::login_gui(std::shared_ptr<GUI> gui, Server &server)
     Respond::send_response(server, fd, "sgt " + std::to_string(server.get_freq()));
     for (const auto &team : server.get_team_names()) {
         Respond::send_response(server, fd, "tna " + team);
+    }
+    for (const auto &[client_fd, client] : server.get_clients()) {
+        if (client->type == ClientType::AI) {
+            auto ai = std::dynamic_pointer_cast<AI>(client);
+            if (ai) {
+                std::string pnw_msg = "pnw " + std::to_string(ai->id) + " " +
+                                    std::to_string(ai->x) + " " + std::to_string(ai->y) + " " +
+                                    std::to_string(ai->orientation) + " " +
+                                    std::to_string(ai->level) + " " + ai->teamName;
+                Respond::send_response(server, fd, pnw_msg);
+            }
+        }
     }
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Login::login_gui: ") + e.what());
