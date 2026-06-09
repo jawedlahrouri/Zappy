@@ -12,11 +12,15 @@
 #include "Parsing/ai_execute_cmds.hpp"
 #include "Parsing/Respond.hpp"
 #include <iostream>
+#include <random>
+#include <cmath>
 
 GameEngine::GameEngine(int width, int height)
     : _width(width), _height(height)
 {
     try {
+        _map.resize(_height, std::vector<Tile>(_width));
+        generate_initial_resources();
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GameEngine::GameEngine: ") + e.what());
     }
@@ -25,24 +29,60 @@ GameEngine::GameEngine(int width, int height)
 void GameEngine::update(Server &server)
 {
     try {
-    std::vector<int> clients_to_remove;
-    const auto &clients = server.get_clients();
+        std::vector<int> clients_to_remove;
+        const auto &clients = server.get_clients();
 
-    for (auto &[fd, client] : clients) {
-        if (client->type != ClientType::AI)
-            continue;
-        auto ai = std::dynamic_pointer_cast<AI>(client);
-        if (!handle_ai_survival(fd, ai, server, clients_to_remove))
-            continue;
-        handle_ai_active_command(ai, server);
-        handle_ai_next_command(ai, server);
-    }
+        for (auto &[fd, client] : clients) {
+            if (client->type != ClientType::AI)
+                continue;
+            auto ai = std::dynamic_pointer_cast<AI>(client);
+            if (!handle_ai_survival(fd, ai, server, clients_to_remove))
+                continue;
+            handle_ai_active_command(ai, server);
+            handle_ai_next_command(ai, server);
+        }
 
-    for (int fd : clients_to_remove) {
-        server.remove_client(fd);
-    }
+        for (int fd : clients_to_remove) {
+            server.remove_client(fd);
+        }
+        _resource_spawn_ticks++;
+
+        if (_resource_spawn_ticks >= 20) {
+            spawn_resources_cycle();
+            for (int y = 0; y < _height; y++) {
+                for (int x = 0; x < _width; x++) {
+                    const Tile &t = _map[y][x];
+                    std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
+                                          std::to_string(t.resources[FOOD]) + " " +
+                                          std::to_string(t.resources[LINEMATE]) + " " +
+                                          std::to_string(t.resources[DERAUMERE]) + " " +
+                                          std::to_string(t.resources[SIBUR]) + " " +
+                                          std::to_string(t.resources[MENDIANE]) + " " +
+                                          std::to_string(t.resources[PHIRAS]) + " " +
+                                          std::to_string(t.resources[THYSTAME]);
+                    Respond::send_to_guis(server, bct_msg);
+                }
+            }
+            _resource_spawn_ticks = 0;
+            std::cout << "[MAP] Resources respawn cycle triggered and pushed to GUIs." << std::endl;
+        }
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GameEngine::update: ") + e.what());
+    }
+}
+
+void GameEngine::spawn_resources_cycle()
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis_x(0, _width - 1);
+    std::uniform_int_distribution<> dis_y(0, _height - 1);
+
+    for (int i = 0; i < RESOURCE_COUNT; i++) {
+        int amount_to_spawn = std::max(1, static_cast<int>(std::floor(_width * _height * _densities[i] * 0.1)));
+        for (int q = 0; q < amount_to_spawn; q++) {
+            _map[dis_y(gen)][dis_x(gen)].resources[i]++;
+        }
     }
 }
 
@@ -129,5 +169,58 @@ int GameEngine::get_command_duration(const std::string &command)
     return 0;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GameEngine::get_command_duration: ") + e.what());
+    }
+}
+
+const Tile& GameEngine::get_tile(int x, int y) const
+{
+    int toric_x = (x % _width + _width) % _width;
+    int toric_y = (y % _height + _height) % _height;
+
+    return _map[toric_y][toric_x];
+}
+
+void GameEngine::add_resource_to_tile(int x, int y, ResourceType type, int quantity)
+{
+    int toric_x = (x % _width + _width) % _width;
+    int toric_y = (y % _height + _height) % _height;
+
+    _map[toric_y][toric_x].resources[type] += quantity;
+}
+
+void GameEngine::remove_resource_from_tile(int x, int y, ResourceType type, int quantity)
+{
+    int toric_x = (x % _width + _width) % _width;
+    int toric_y = (y % _height + _height) % _height;
+
+    _map[toric_y][toric_x].resources[type] -= quantity;
+    if (_map[toric_y][toric_x].resources[type] < 0)
+        _map[toric_y][toric_x].resources[type] = 0;
+}
+
+void GameEngine::generate_initial_resources()
+{
+    try {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis_x(0, _width - 1);
+        std::uniform_int_distribution<> dis_y(0, _height - 1);
+
+        for (int i = 0; i < RESOURCE_COUNT; i++) {
+            double density = _densities[i];
+            int total_quantity = std::floor(_width * _height * density);
+            
+            if (total_quantity == 0 && _width > 0 && _height > 0) {
+                total_quantity = 1;
+            }
+            for (int q = 0; q < total_quantity; q++) {
+                int rand_x = dis_x(gen);
+                int rand_y = dis_y(gen);
+                _map[rand_y][rand_x].resources[i]++;
+            }
+        }
+        std::cout << "[MAP] Initial resources generated successfully." << std::endl;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("GameEngine::generate_initial_resources: ") + e.what());
     }
 }
