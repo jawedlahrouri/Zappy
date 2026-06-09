@@ -13,7 +13,7 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
 
     sf::Sprite foodSprite(tm.getTexture("food"));
     sf::Sprite linemateSprite(tm.getTexture("linemate"));
-    // sf::Sprite deraumereSprite(tm.getTexture("deraumere"));
+    sf::Sprite deraumereSprite(tm.getTexture("deraumere"));
     // sf::Sprite siburSprite(tm.getTexture("sibur"));
     // sf::Sprite mendianeSprite(tm.getTexture("mendiane"));
     // sf::Sprite phirasSprite(tm.getTexture("phiras"));
@@ -21,7 +21,7 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
 
     foodSprite.setScale(resScale, resScale);
     linemateSprite.setScale(resScale, resScale);
-    // deraumereSprite.setScale(resScale, resScale);
+    deraumereSprite.setScale(resScale, resScale);
     // siburSprite.setScale(resScale, resScale);
     // mendianeSprite.setScale(resScale, resScale);
     // phirasSprite.setScale(resScale, resScale);
@@ -37,11 +37,10 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
         target.draw(linemateSprite);
     }
 
-    // // q2 : Deraumere (Au milieu à gauche)
-    // if (tile.resources.deraumere > 0) {
-    //     deraumereSprite.setPosition(startX + 4.0f, startY + 24.0f);
-    //     target.draw(deraumereSprite);
-    // }
+    if (tile.resources.deraumere > 0) {
+        deraumereSprite.setPosition(startX + 4.0f, startY + 24.0f);
+        target.draw(deraumereSprite);
+    }
 
     // // q3 : Sibur (Au centre exact de la case)
     // if (tile.resources.sibur > 0) {
@@ -90,4 +89,29 @@ void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, 
     else if (player.orientation == 4) triangle.setRotation(270.0f);
 
     target.draw(triangle);
+}
+
+void GraphicalUtils::drawEgg(sf::RenderTarget& target, const Egg& egg, float tileSize, float offsetX, float offsetY)
+{
+    float startX = egg.x * tileSize + offsetX;
+    float startY = egg.y * tileSize + offsetY;
+
+    const TextureManager& tm = TextureManager::getInstance();
+    sf::Sprite eggSprite(tm.getTexture("egg"));
+
+    float eggScale = 0.3f;
+    eggSprite.setScale(eggScale, eggScale);
+
+    if (egg.isHatched) {
+        eggSprite.setColor(sf::Color(255, 215, 0, 200));
+    } else {
+        eggSprite.setColor(sf::Color(255, 255, 255, 255));
+    }
+
+    float posX = startX + (tileSize / 2.0f) - (19.0f / 2.0f);
+    float posY = startY + tileSize - 24.0f;
+
+    eggSprite.setPosition(posX, posY);
+
+    target.draw(eggSprite);
 }

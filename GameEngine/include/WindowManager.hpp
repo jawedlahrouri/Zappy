@@ -25,10 +25,16 @@ public:
 
     void drawWorld(const GameWorld& world);
 
-private:
-    sf::RenderWindow _window;
-    sf::Texture _tileTexture;
-    sf::Texture _linemateTexture;
-};
+    private:
+        void updateView(unsigned int width, unsigned int height);
+        void zoomView(float factor);
+        void resetZoom();
+
+        sf::RenderWindow _window;
+        sf::View _worldView;
+        float _zoomLevel;
+        sf::Texture _tileTexture;
+        sf::Texture _linemateTexture;
+    };
 
 #endif /* !WINDOWMANAGER_HPP_ */

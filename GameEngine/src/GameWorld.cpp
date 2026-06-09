@@ -70,6 +70,24 @@ void GameWorld::movePlayer(int id, int x, int y, int orientation)
     _players[id] = newPlayer;
 }
 
+void GameWorld::addEgg(int id, int parentId, int x, int y)
+{
+    _eggs[id] = {id, x, y, parentId, false};
+}
+    
+void GameWorld::hatchEgg(int id) {
+    if (_eggs.find(id) != _eggs.end()) _eggs[id].isHatched = true;
+}
+
+void GameWorld::removeEgg(int id) {
+    _eggs.erase(id);
+}
+
+const std::map<int, Egg>&  GameWorld::getEggs() const
+{
+    return _eggs;
+}
+
 void GameWorld::removePlayer(int id)
 {
     _players.erase(id);

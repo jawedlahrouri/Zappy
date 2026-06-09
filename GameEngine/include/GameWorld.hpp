@@ -39,6 +39,14 @@
         Resources inventory;
     };
 
+    struct Egg {
+        int id;
+        int x;
+        int y;
+        int playerParentId;
+        bool isHatched; // false = pondu, true = éclos/prêt
+    };
+
     class GameWorld {
     public:
         GameWorld();
@@ -50,17 +58,22 @@
         void addPlayer(const Player& player);
         void movePlayer(int id, int x, int y, int orientation);
         void removePlayer(int id);
+        void addEgg(int id, int parentId, int x, int y);
+        void hatchEgg(int id);
+        void removeEgg(int id);
 
         int getWidth() const;
         int getHeight() const;
         const std::vector<std::vector<Tile>>& getMap() const;
         const std::map<int, Player>& getPlayers() const;
+        const std::map<int, Egg>& getEggs() const;
 
     private:
         int _width = 0;
         int _height = 0;
         std::vector<std::vector<Tile>> _map;
         std::map<int, Player> _players;
+        std::map<int, Egg> _eggs;
     };
 
 #endif /* !GAMEWORLD_HPP_ */
