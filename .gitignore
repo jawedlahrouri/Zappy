@@ -2,6 +2,7 @@
 zappy_server
 zappy_gui
 zappy_ai
+zappy_ref-v3.0.1/
 
 # Object files
 *.o
@@ -13,6 +14,14 @@ zappy_ai
 *.swp
 *.swo
 *~
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
 .clangd
 compile_flags.txt
 **/compile_flags.txt
