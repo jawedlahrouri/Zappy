@@ -28,6 +28,7 @@ void AiCommandParser::parse_left(std::shared_ptr<AI> client, const std::string &
         (void)command;
         (void)server;
         LeftCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(server);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -37,7 +38,16 @@ void AiCommandParser::parse_left(std::shared_ptr<AI> client, const std::string &
 
 void AiVisitor::visit(LeftCommand *element) {
     try {
-    (void)element;
+        auto client = element->getClient();
+        client->orientation = (client->orientation - 1 + 4) % 4;
+        if (client->orientation == 0)
+            client->orientation = 4;
+        Respond::send_response(_server, client->socket.get_socket(), "ok");
+        std::string ppo_msg = "ppo " + std::to_string(client->id) + " " +
+                                std::to_string(client->x) + " " +
+                                std::to_string(client->y) + " " +
+                                std::to_string(client->orientation);
+        Respond::send_to_guis(_server, ppo_msg);
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("AiVisitor::visit: ") + e.what());
     }

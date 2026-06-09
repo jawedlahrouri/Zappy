@@ -6,6 +6,7 @@
 */
 
 #include "Server/Server.hpp"
+#include "GameEngine/GameEngine.hpp"
 
 Client::Client(Socket clientSocket)
     : socket(clientSocket), type(ClientType::PENDING)
