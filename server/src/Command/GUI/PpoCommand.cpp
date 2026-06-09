@@ -27,7 +27,6 @@ void GuiCommandParser::parse_gui_ppo(std::shared_ptr<GUI> client, const std::str
         PpoCommand cmd;
         cmd.setClient(client);
 
-        // La commande est de la forme "ppo #n" ou "ppo n"
         size_t space_pos = command.find(' ');
         if (space_pos != std::string::npos) {
             std::string id_str = command.substr(space_pos + 1);
