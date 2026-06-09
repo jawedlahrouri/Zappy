@@ -34,7 +34,6 @@ class ZappyCommand:
                 msg = self.system_queue.pop(0)
                 if not expect_incantation:
                     if msg == "Elevation underway" or msg.startswith("Current level"):
-                        print(f"[Réseau] Ignoré (Rituel d'un autre joueur) : {msg}")
                         continue
                 return msg
             messages = self.network.receive_messages()
@@ -110,6 +109,19 @@ class ZappyCommand:
         except Exception:
             pass
         return inventory
+
+    def incantation(self):
+        print("[Agent] commande: Incantation")
+        self.network.send_command("Incantation\n")
+        first_response = self._wait_for_response(expect_incantation=True)
+        print(f"[Agent] Incantation (Début): {first_response}")
+        if first_response == "ko":
+            return False
+        if first_response == "Elevation underway":
+            second_response = self._wait_for_response(expect_incantation=True)
+            print(f"[Agent] Incantation (Fin): {second_response}")
+            return second_response.startswith("Current level")
+        return False
     
     def forward(self):
         print("[Agent] commande: Forward")
@@ -135,20 +147,6 @@ class ZappyCommand:
         print(f"[Agent] commande: Set {obj}")
         self.network.send_command(f"Set {obj}\n")
         return self._wait_for_response() == "ok"
-
-    def incantation(self):
-        print("[Agent] commande: Incantation")
-        self.network.send_command("Incantation\n")
-        first_response = self._wait_for_response(expect_incantation=True)
-        print(f"[Agent] Incantation (Début): {first_response}")
-        if first_response == "ko":
-            return False
-        if first_response == "Elevation underway":
-            second_response = self._wait_for_response(expect_incantation=True)
-            print(f"[Agent] Incantation (Fin): {second_response}")
-            return second_response.startswith("Current level")
-            
-        return False
 
     def connect_nbr(self):
         print("[Agent] commande: Connect_nbr")

@@ -59,7 +59,6 @@ class ZappyNetwork:
             print(f"[Erreur de réception] {e}")
             self.connected = False
             return []
-        
         messages = []
         while '\n' in self.buffer:
             msg, self.buffer = self.buffer.split('\n', 1)

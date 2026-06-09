@@ -6,7 +6,7 @@ from src.server_link import ZappyNetwork
 from src.command import ZappyCommand
 from src.Ai_agent import ZappyAgent
 
-def handshake(net, team_name):
+def wait_for_welcome(net):
     print("[Handshake] En attente du WELCOME...")
     welcome_received = False
     timeout = 0
@@ -18,47 +18,58 @@ def handshake(net, team_name):
             if msg == "WELCOME":
                 welcome_received = True
                 print("[Handshake] WELCOME reçu")
-                break
+                return True
         if not welcome_received:
             time.sleep(0.1)
             timeout += 100
-    
-    if not welcome_received:
-        print("[Erreur] WELCOME pas reçu du serveur (timeout)")
-        return False
-    print(f"[Handshake] Envoi du nom de team: {team_name}")
-    if not net.send_command(team_name):
-        print("[Erreur] Impossible d'envoyer le team")
-        return False
+    print("[Erreur] WELCOME pas reçu du serveur (timeout)")
+    return False
+
+def wait_for_infos(net):
     print("[Handshake] En attente de CLIENT-NUM et dimensions...")
     client_num = None
     dimensions = None
     timeout = 0
     max_timeout = 5000 
     
-    while timeout < max_timeout and (not client_num or not dimensions):
+    while timeout < max_timeout and (client_num is None or dimensions is None):
         messages = net.receive_messages()
         for msg in messages:
+            if msg == "ko":
+                print("[Erreur] Le serveur a refusé la team (ko). Nom invalide ou équipe pleine ?")
+                return False, None, None
             try:
-                if not client_num and msg.isdigit():
+                if client_num is None and msg.isdigit():
                     client_num = int(msg)
                     print(f"[Handshake] CLIENT-NUM: {client_num}")
-                elif not dimensions and ' ' in msg:
+                    if client_num == 0:
+                        print("[Erreur] L'équipe est pleine (0 slots restants).")
+                        return False, 0, None
+                elif dimensions is None and ' ' in msg:
                     parts = msg.split()
                     if len(parts) == 2 and all(p.isdigit() for p in parts):
                         dimensions = (int(parts[0]), int(parts[1]))
                         print(f"[Handshake] Dimensions: {dimensions[0]}x{dimensions[1]}")
             except (ValueError, IndexError):
                 pass
-        
-        if not client_num or not dimensions:
+        if client_num is None or dimensions is None:
             time.sleep(0.1)
             timeout += 100
-    
-    if not client_num or not dimensions:
+    if client_num is None or dimensions is None:
         print(f"[Erreur] Handshake incomplet (CLIENT-NUM: {client_num}, Dimensions: {dimensions})")
+        return False, None, None
+    return True, client_num, dimensions
+
+def handshake(net, team_name):
+    if not wait_for_welcome(net):
         return False
-    
+    print(f"[Handshake] Envoi du nom de team: {team_name}")
+    if not net.send_command(team_name):
+        print("[Erreur] Impossible d'envoyer le team")
+        return False
+    success, client_num, dimensions = wait_for_infos(net)
+    if not success:
+        return False
     print("[Handshake] Succès! Démarrage de l'agent...")
     return True
 
@@ -73,7 +84,7 @@ def main(port, machine, team_name):
         return 84
     if not handshake(net, team_name):
         net.close()
-        return 84
+        return 84 
     try:
         cmd_interface = ZappyCommand(net)
         agent = ZappyAgent(cmd_interface, team_name)

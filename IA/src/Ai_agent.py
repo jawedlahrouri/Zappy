@@ -5,18 +5,13 @@ import time
 import sys
 import subprocess
 from enum import Enum
-from src.command import ZappyCommand
 from src.agent_submodules.pathfinding import Pathfinder
 from src.agent_submodules.farm import Farmer
 from src.agent_submodules.grouping import Grouper
 from src.agent_submodules.stealth_comms import StealthComms
-
-class AgentState(Enum):
-    SURVIVAL = 1
-    FARMING = 2
-    GROUPING = 3
-    ELEVATION = 4
-    FORKING = 5
+from src.agent_submodules.agent_state import StateComportment, AgentState 
+from src.command import ZappyCommand
+from src.utils import utils
 
 class ZappyAgent:
     def __init__(self, command_interface: ZappyCommand, team_name: str):
@@ -25,6 +20,8 @@ class ZappyAgent:
         self.farmer = Farmer()
         self.comms = StealthComms()
         self.grouper = Grouper(self.cmd, self.comms)
+        self.utils = utils(self.cmd, team_name)
+        self.comportment = StateComportment(self) 
 
         self.team_name = team_name
         self.unread_messages = []
@@ -45,20 +42,17 @@ class ZappyAgent:
             self.is_alive = False
             print("[Agent] Connexion perdue.")
             return
-        
         response = self.cmd.look()
         if response == "dead":
             self.is_alive = False
             return
         self.vision = response
-        
         response = self.cmd.inventory()
         if response == "dead":
             self.is_alive = False
             return
         self.inventory = response
         self.unread_messages = self.cmd.get_unread_broadcasts()
-
         self.decoded_messages = []
         for msg in self.unread_messages:
             try:
@@ -107,86 +101,52 @@ class ZappyAgent:
             self.state = AgentState.GROUPING
             return
         if self.farmer.can_elevate(self.level, self.inventory):
-            if food < (self.food_minimum + 3):
-                print("[Agent] Pierres OK, mais nourriture insuffisante pour le rituel. Survie !")
-                self.state = AgentState.SURVIVAL
-                return
-            print(f"[Agent] Ressources d'élévation prêtes pour le Niveau {self.level} ! Passage en mode ÉLÉVATION.")
-            if self.level == 1:
-                self.state = AgentState.ELEVATION
-            else:
-                self.state = AgentState.GROUPING
-            return
-            
+            return self.elevate_conditions(food)
         current_population = len(self.team_roster) + 1
         if current_population < self.population_target:
-            is_queen = True
-            for ally_id in self.team_roster.keys():
-                if ally_id > self.agent_id:
-                    is_queen = False
-                    break
-            if is_queen and food > self.food_safe:
-                if not self.is_food_critical_for_action(42):
-                    print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
-                    self.state = AgentState.FORKING
-                    return
-
+            if self.check_population(food, current_population) == 1: 
+                return
         if food > self.food_safe:
             self.state = AgentState.FARMING
             return
         self.state = AgentState.SURVIVAL
 
+    def check_population(self, food, current_population):
+        is_queen = True
+        for ally_id in self.team_roster.keys():
+            if ally_id > self.agent_id:
+                is_queen = False
+                break
+        if is_queen and food > self.food_safe:
+            if not self.is_food_critical_for_action(42):
+                print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
+                self.state = AgentState.FORKING
+                return 1
+        return 0
+
+    def elevate_conditions(self, food):
+        if food < (self.food_minimum + 3):
+            print("[Agent] Pierres OK, mais nourriture insuffisante pour le rituel. Survie !")
+            self.state = AgentState.SURVIVAL
+            return
+        print(f"[Agent] Ressources d'élévation prêtes pour le Niveau {self.level} ! Passage en mode ÉLÉVATION.")
+        if self.level == 1:
+            self.state = AgentState.ELEVATION
+        else:
+            self.state = AgentState.GROUPING
+        return
+
     def act_based_on_state(self):
         if self.state == AgentState.SURVIVAL:
-            success = self.pathfinder.search_and_take_items(['food'], self.vision)
-            if not success:
-                self.pathfinder.explore(self.level)
+            self.state = self.comportment.act_survival()
         elif self.state == AgentState.FARMING:
-            missing = self.farmer.get_missing_stones(self.level, self.inventory)
-            if missing:
-                success = self.pathfinder.search_and_take_items(missing, self.vision)
-                if not success:
-                    self.pathfinder.explore(self.level)
-            else:
-                self.pathfinder.explore(self.level)
-
+            self.state = self.comportment.act_farming()
         elif self.state == AgentState.GROUPING:
-            is_grouped = self.grouper.process_grouping(self.level, self.agent_id, self.vision)            
-            if is_grouped:
-                print("[Agent] Regroupement validé ! Passage en phase d'Incantation.")
-                self.state = AgentState.ELEVATION
-
+            self.state = self.comportment.act_grouping()
         elif self.state == AgentState.ELEVATION:
-            print(f"[Agent] Mode ÉLÉVATION (Niveau {self.level}) : préparation du rituel.")
-            if self.level == 1 or self.grouper.role == 'LEADER':
-                required_stones = self.farmer.requirements.get(self.level, {})
-                for stone_name, amount in required_stones.items():
-                    for _ in range(amount):
-                        self.cmd.set_object(stone_name)
-                success = self.cmd.incantation()
-                if success:
-                    self.level += 1
-                    print(f"[Agent] SUCCÈS, passe au Niveau {self.level} !")
-                else:
-                    print("[Agent] Échec de l'incantation.")
-                
-            elif self.grouper.role == 'FOLLOWER':
-                success = self.cmd.wait_for_incantation_follower()
-                if success:
-                    self.level += 1
-                    print(f"[Agent] FOLLOWER passe au Niveau {self.level} !")
-            self.grouper.role = None
-            self.state = AgentState.SURVIVAL
-
+            self.state = self.comportment.act_elevating()
         elif self.state == AgentState.FORKING:
-            success = self.cmd.fork()
-            if success:
-                print("[Agent] Un œuf a été pondu.")
-                print("[Agent] Lancement d'un nouveau clone en arrière-plan...")
-                port = str(self.cmd.network.port)
-                machine = self.cmd.network.machine
-                subprocess.Popen([sys.executable, "main.py", "-p", port, "-h", machine, "-n", self.team_name])
-            self.state = AgentState.SURVIVAL
+            self.state = self.comportment.act_forking()
 
     def run(self):
         print("[Agent] Démarrage du cycle.")
