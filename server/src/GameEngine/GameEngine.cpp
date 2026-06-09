@@ -16,10 +16,6 @@
 GameEngine::GameEngine(int width, int height)
     : _width(width), _height(height)
 {
-    try {
-    } catch (const std::exception &e) {
-        throw Exception_Server(std::string("GameEngine::GameEngine: ") + e.what());
-    }
 }
 
 void GameEngine::update(Server &server)
@@ -29,13 +25,7 @@ void GameEngine::update(Server &server)
     const auto &clients = server.get_clients();
 
     for (auto &[fd, client] : clients) {
-        if (client->type != ClientType::AI)
-            continue;
-        auto ai = std::dynamic_pointer_cast<AI>(client);
-        if (!handle_ai_survival(fd, ai, server, clients_to_remove))
-            continue;
-        handle_ai_active_command(ai, server);
-        handle_ai_next_command(ai, server);
+        client->update(client, server, *this, clients_to_remove);
     }
 
     for (int fd : clients_to_remove) {
@@ -43,6 +33,18 @@ void GameEngine::update(Server &server)
     }
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GameEngine::update: ") + e.what());
+    }
+}
+
+void GameEngine::update_ai(std::shared_ptr<AI> ai, Server &server, std::vector<int> &clients_to_remove)
+{
+    try {
+    if (!handle_ai_survival(ai->id, ai, server, clients_to_remove))
+        return;
+    handle_ai_active_command(ai, server);
+    handle_ai_next_command(ai, server);
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("GameEngine::update_ai: ") + e.what());
     }
 }
 

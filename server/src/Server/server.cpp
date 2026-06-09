@@ -22,34 +22,7 @@
 #include "Parsing/Respond.hpp"
 #include "Server/login.hpp"
 
-Client::Client(Socket clientSocket)
-    : socket(clientSocket), type(ClientType::PENDING)
-{
-    try {
-    } catch (const std::exception &e) {
-        throw Exception_Server(std::string("Client::Client: ") + e.what());
-    }
-}
 
-AI::AI(Socket clientSocket, int player_id)
-    : Client(clientSocket), id(player_id), level(1), orientation(1), food_ticks(126)
-{
-    try {
-    type = ClientType::AI;
-    } catch (const std::exception &e) {
-        throw Exception_Server(std::string("AI::AI: ") + e.what());
-    }
-}
-
-GUI::GUI(Socket clientSocket)
-    : Client(clientSocket)
-{
-    try {
-    type = ClientType::GUI;
-    } catch (const std::exception &e) {
-        throw Exception_Server(std::string("GUI::GUI: ") + e.what());
-    }
-}
 
 Server::Server() = default;
 
@@ -64,25 +37,11 @@ Server::~Server()
 
 void Server::send_event(const IEventElement &event)
 {
+    try {
     EventVisitor visitor(*this);
     event.Accept(&visitor);
-}
-
-bool Server::get_next_line(std::string &buffer, std::string &line)
-{
-    try {
-        size_t newline_pos = buffer.find('\n');
-        if (newline_pos == std::string::npos)
-            return false;
-
-        line = buffer.substr(0, newline_pos);
-        if (!line.empty() && line.back() == '\r') {
-            line.pop_back();
-        }
-        buffer.erase(0, newline_pos + 1);
-        return true;
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("get_next_line: ") + e.what());
+        throw Exception_Server(std::string("Server::send_event: ") + e.what());
     }
 }
 
@@ -97,7 +56,7 @@ void Server::detect_client_type(int client_socket)
             return;
 
         std::shared_ptr<Client> &client = it->second;
-        if (!get_next_line(client->buffer, line))
+        if (!client->extract_line(line))
             return;
         if (line == "GRAPHIC") {
             auto gui_client = std::make_shared<GUI>(std::move(client->socket));
@@ -124,7 +83,7 @@ void Server::detect_client_type(int client_socket)
             }
         }
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("detect_client_type: ") + e.what());
+        throw Exception_Server(std::string("Server::detect_client_type: ") + e.what());
     }
 }
 
@@ -141,7 +100,7 @@ void Server::accept_client()
             Respond::send_response(*this, fd, "WELCOME");
         }
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] " << Exception_Server(std::string("accept_client: ") + e.what()).what() << std::endl;
+        throw Exception_Server(std::string("Server::accept_client: ") + e.what());
     }
 }
 
@@ -155,9 +114,9 @@ void Server::remove_client(int client_socket)
                 if (ai)
                     send_event(PdiEvent(ai->id));
             }
-            if (!it->second->write_buffer.empty()) {
+            if (!it->second->get_write_buffer().empty()) {
                 try {
-                    it->second->socket.send_data(it->second->write_buffer);
+                    it->second->socket.send_data(it->second->get_write_buffer());
                 } catch (...) {}
             }
             it->second->socket.close_socket();
@@ -166,7 +125,7 @@ void Server::remove_client(int client_socket)
         _poll.remove_fd(client_socket);
         std::cout << "Client " << client_socket << " disconnected" << std::endl;
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] " << Exception_Server(std::string("remove_client: ") + e.what()).what() << std::endl;
+        throw Exception_Server(std::string("Server::remove_client: ") + e.what());
     }
 }
 
@@ -180,20 +139,24 @@ bool Server::handle_writable(size_t index)
             return false;
         }
 
-        auto &buffer = it->second->write_buffer;
+        const auto &buffer = it->second->get_write_buffer();
         if (buffer.empty()) {
             _poll.remove_events(client_socket, POLLOUT);
             return false;
         }
 
+    try {
         it->second->socket.send_data(buffer);
-        buffer.clear();
+        it->second->clear_write_buffer();
         _poll.remove_events(client_socket, POLLOUT);
-        return false;
     } catch (const std::exception &e) {
         std::cerr << "[ERROR] " << Exception_Server(std::string("handle_writable: ") + e.what()).what() << std::endl;
-        remove_client(_poll.get_fd(index));
+        remove_client(client_socket);
         return true;
+    }
+    return false;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("Server::handle_writable: ") + e.what());
     }
 }
 
@@ -211,12 +174,12 @@ bool Server::handle_client_data(size_t poll_index)
             remove_client(client_socket);
             return true;
         } else {
-            it->second->buffer += data;
+            it->second->append_to_buffer(data);
             if (it->second->type == ClientType::PENDING) {
                 detect_client_type(client_socket);
             } else {
                 std::string line;
-                while (get_next_line(it->second->buffer, line)) {
+                while (it->second->extract_line(line)) {
                     if (it->second->type == ClientType::GUI) {
                         auto gui_client = std::dynamic_pointer_cast<GUI>(it->second);
                         Parsing::parse_gui_command(gui_client, line, *this);
@@ -229,9 +192,7 @@ bool Server::handle_client_data(size_t poll_index)
         }
         return false;
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] " << Exception_Server(std::string("handle_client_data: ") + e.what()).what() << std::endl;
-        remove_client(_poll.get_fd(poll_index));
-        return true;
+        throw Exception_Server(std::string("Server::handle_client_data: ") + e.what());
     }
 }
 
@@ -244,7 +205,7 @@ void Server::cleanup()
         _clients.clear();
         _master_socket.close_socket();
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] " << Exception_Server(std::string("cleanup: ") + e.what()).what() << std::endl;
+        throw Exception_Server(std::string("Server::cleanup: ") + e.what());
     }
 }
 
@@ -267,7 +228,7 @@ void Server::process_poll_event(size_t &i)
             }
         }
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("process_poll_event: ") + e.what());
+        throw Exception_Server(std::string("Server::process_poll_event: ") + e.what());
     }
 }
 
