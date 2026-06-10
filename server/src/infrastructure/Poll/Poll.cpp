@@ -9,86 +9,100 @@
 #include "Poll/Poll.hpp"
 #include "Poll/Sys_Poll.hpp"
 
-void Poll::add_fd(int fd, short events)
+static short eventToSys(NetworkEvent event) {
+    if (event == NetworkEvent::Input) {
+        return SysPoll::EventIn;
+    }
+    if (event == NetworkEvent::Output) {
+        return SysPoll::EventOut;
+    }
+    return 0;
+}
+
+void Poll::addFd(int fd, NetworkEvent event)
 {
     SysPoll::PollFd pfd{};
     pfd.fd = fd;
-    pfd.events = events;
+    pfd.events = eventToSys(event);
     pfd.revents = 0;
-    _pollfds.push_back(pfd);
+    m_pollfds.push_back(pfd);
 }
 
-void Poll::remove_fd(int fd)
+void Poll::removeFd(int fd)
 {
-    for (auto it = _pollfds.begin(); it != _pollfds.end(); ++it) {
+    for (auto it = m_pollfds.begin(); it != m_pollfds.end(); ++it) {
         if (it->fd == fd) {
-            _pollfds.erase(it);
+            m_pollfds.erase(it);
             break;
         }
     }
 }
 
-void Poll::add_events(int fd, short events)
+void Poll::addEvents(int fd, NetworkEvent event)
 {
-    for (auto &pfd : _pollfds) {
+    for (auto &pfd : m_pollfds) {
         if (pfd.fd == fd) {
-            pfd.events |= events;
+            pfd.events |= eventToSys(event);
             break;
         }
     }
 }
 
-void Poll::remove_events(int fd, short events)
+void Poll::removeEvents(int fd, NetworkEvent event)
 {
-    for (auto &pfd : _pollfds) {
+    for (auto &pfd : m_pollfds) {
         if (pfd.fd == fd) {
-            pfd.events &= ~events;
+            pfd.events &= ~eventToSys(event);
             break;
         }
     }
 }
 
-int Poll::run_poll(int timeout)
+int Poll::runPoll(int timeout)
 {
-    for (auto &pfd : _pollfds) {
+    for (auto &pfd : m_pollfds) {
         pfd.revents = 0;
     }
-    return SysPoll::poll(_pollfds, timeout);
+    int ret = SysPoll::poll(m_pollfds, timeout);
+    if (ret == -1 && SysPoll::isInterrupted()) {
+        return 0;
+    }
+    return ret;
 }
 
-bool Poll::is_readable(size_t index) const
+bool Poll::isReadable(size_t index) const
 {
-    if (index >= _pollfds.size()) {
+    if (index >= m_pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & SysPoll::EventIn) != 0;
+    return (m_pollfds[index].revents & SysPoll::EventIn) != 0;
 }
 
-bool Poll::is_writable(size_t index) const
+bool Poll::isWritable(size_t index) const
 {
-    if (index >= _pollfds.size()) {
+    if (index >= m_pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & SysPoll::EventOut) != 0;
+    return (m_pollfds[index].revents & SysPoll::EventOut) != 0;
 }
 
-bool Poll::is_error(size_t index) const
+bool Poll::isError(size_t index) const
 {
-    if (index >= _pollfds.size()) {
+    if (index >= m_pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup)) != 0;
+    return (m_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup)) != 0;
 }
 
-int Poll::get_fd(size_t index) const
+int Poll::getFd(size_t index) const
 {
-    if (index >= _pollfds.size()) {
+    if (index >= m_pollfds.size()) {
         return -1;
     }
-    return _pollfds[index].fd;
+    return m_pollfds[index].fd;
 }
 
-size_t Poll::get_size() const
+size_t Poll::getSize() const
 {
-    return _pollfds.size();
+    return m_pollfds.size();
 }

@@ -16,10 +16,12 @@
 #include "Event/GUI/IEventElement.hpp"
 #include "Client/AI.hpp"
 #include "Client/GUI.hpp"
-#include "Poll/Sys_Poll.hpp"
 #include <chrono>
 
-Server::Server(ILogger& logger) : m_logger(logger), m_clientManager(*this, logger) {}
+Server::Server(ILogger& logger, std::unique_ptr<ISocket> masterSocket, std::unique_ptr<IPoll> poll)
+    : m_logger(logger), m_masterSocket(std::move(masterSocket)), m_poll(std::move(poll)), m_clientManager(*this, logger)
+{
+}
 
 Server::~Server()
 {
@@ -60,16 +62,16 @@ const std::unordered_map<int, std::shared_ptr<Client>>& Server::getClients() con
     return m_clientManager.getClients();
 }
 
-void Server::addPollEvent(int fd, short events)
+void Server::addPollEvent(int fd, NetworkEvent event)
 {
-    m_poll.add_events(fd, events);
+    m_poll->addEvents(fd, event);
 }
 
 void Server::removeClient(int clientSocket)
 {
     try {
         m_clientManager.removeClient(clientSocket);
-        m_poll.remove_fd(clientSocket);
+        m_poll->removeFd(clientSocket);
         m_logger.info("Client " + std::to_string(clientSocket) + " disconnected");
     } catch (const std::exception &e) {
         throw ServerException(std::string("Server::removeClient: ") + e.what());
@@ -79,26 +81,26 @@ void Server::removeClient(int clientSocket)
 bool Server::handleWritable(size_t index)
 {
     try {
-        int client_socket = m_poll.get_fd(index);
+        int client_socket = m_poll->getFd(index);
         auto client = m_clientManager.getClient(client_socket);
         if (!client) {
-            m_poll.remove_events(client_socket, SysPoll::EventOut);
+            m_poll->removeEvents(client_socket, NetworkEvent::Output);
             return false;
         }
 
         const auto &buffer = client->getWriteBuffer();
         if (buffer.empty()) {
-            m_poll.remove_events(client_socket, SysPoll::EventOut);
+            m_poll->removeEvents(client_socket, NetworkEvent::Output);
             return false;
         }
 
         try {
-            size_t sent = client->getSocket().send_data(buffer);
+            size_t sent = client->getSocket().sendData(buffer);
             if (sent > 0) {
                 client->removeFromWriteBuffer(sent);
             }
             if (!client->hasWriteData()) {
-                m_poll.remove_events(client_socket, SysPoll::EventOut);
+                m_poll->removeEvents(client_socket, NetworkEvent::Output);
             }
         } catch (const std::exception &e) {
             m_logger.error("handleWritable: " + std::string(e.what()));
@@ -115,14 +117,14 @@ bool Server::handleWritable(size_t index)
 bool Server::handleClientData(size_t pollIndex)
 {
     try {
-        int client_socket = m_poll.get_fd(pollIndex);
+        int client_socket = m_poll->getFd(pollIndex);
         auto client = m_clientManager.getClient(client_socket);
         if (!client) {
             return false;
         }
         std::string data;
         try {
-            data = client->getSocket().recv_data(1024);
+            data = client->getSocket().recvData(1024);
         } catch (const std::exception &e) {
             m_logger.info("Client " + std::to_string(client_socket) + " disconnected: " + e.what());
             removeClient(client_socket);
@@ -166,7 +168,7 @@ void Server::cleanup()
 {
     try {
         m_clientManager.disconnectAll();
-        m_masterSocket.close_socket();
+        m_masterSocket->closeSocket();
     } catch (const std::exception &e) {
         throw ServerException(std::string("Server::cleanup: ") + e.what());
     }
@@ -175,16 +177,16 @@ void Server::cleanup()
 void Server::processPollEvent(size_t &i)
 {
     try {
-        if (m_poll.is_error(i)) {
+        if (m_poll->isError(i)) {
             if (i > 0) {
-                removeClient(m_poll.get_fd(i));
+                removeClient(m_poll->getFd(i));
                 --i;
             }
             return;
         }
-        if (m_poll.is_readable(i)) {
+        if (m_poll->isReadable(i)) {
             if (i == 0) {
-                ConnectionHandler::acceptClient(m_masterSocket, m_poll, m_clientManager, m_logger);
+                ConnectionHandler::acceptClient(*m_masterSocket, *m_poll, m_clientManager, m_logger);
             } else {
                 if (handleClientData(i)) {
                     --i;
@@ -192,7 +194,7 @@ void Server::processPollEvent(size_t &i)
                 }
             }
         }
-        if (i > 0 && i < m_poll.get_size() && m_poll.is_writable(i)) {
+        if (i > 0 && i < m_poll->getSize() && m_poll->isWritable(i)) {
             if (handleWritable(i)) {
                 --i;
             }
@@ -216,15 +218,12 @@ void Server::runPollLoop()
                 timeout_ms = 0;
             }
 
-            int poll_count = m_poll.run_poll(timeout_ms);
+            int poll_count = m_poll->runPoll(timeout_ms);
             if (poll_count == -1) {
-                if (SysPoll::isInterrupted()) {
-                    continue;
-                }
-                throw ServerException(std::string("poll failed: ") + SysPoll::getLastError());
+                throw ServerException(std::string("poll failed"));
             }
 
-            for (size_t i = 0; i < m_poll.get_size(); ++i) {
+            for (size_t i = 0; i < m_poll->getSize(); ++i) {
                 processPollEvent(i);
             }
 
@@ -256,12 +255,12 @@ void Server::openServer(int port, int clientsNb, const std::vector<std::string> 
         m_teamNames = teamNames;
         m_freq = freq;
         try {
-            m_masterSocket.create_socket(port, clientsNb);
-            m_masterSocket.bind_socket();
-            m_masterSocket.receive_data();
+            m_masterSocket->createSocket(port, clientsNb);
+            m_masterSocket->bindSocket();
+            m_masterSocket->receiveData();
 
             m_logger.info("Server opened on port " + std::to_string(m_port));
-            m_poll.add_fd(m_masterSocket.getSocket(), SysPoll::EventIn);
+            m_poll->addFd(m_masterSocket->getSocket(), NetworkEvent::Input);
 
             m_gameEngine = std::make_unique<GameEngine>(width, height, m_logger);
 

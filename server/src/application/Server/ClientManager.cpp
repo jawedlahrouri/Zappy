@@ -11,7 +11,6 @@
 #include "Event/GUI/PdiEvent.hpp"
 #include "Client/AI.hpp"
 #include "ServerException.hpp"
-#include "Poll/Sys_Poll.hpp"
 
 ClientManager::ClientManager(INetworkProvider& network, ILogger& logger)
     : m_network(network), m_logger(logger)
@@ -34,12 +33,12 @@ void ClientManager::removeClient(int fd)
         }
         if (!it->second->getWriteBuffer().empty()) {
             try {
-                it->second->getSocket().send_data(it->second->getWriteBuffer());
+                it->second->getSocket().sendData(it->second->getWriteBuffer());
             } catch (const std::exception& e) {
                 m_logger.warn("Failed to flush write buffer for client " + std::to_string(fd) + " before disconnect: " + e.what());
             }
         }
-        it->second->getSocket().close_socket();
+        it->second->getSocket().closeSocket();
         m_clients.erase(it);
     }
 }
@@ -68,7 +67,7 @@ void ClientManager::sendResponse(int clientId, const std::string& message)
         auto it = m_clients.find(clientId);
         if (it != m_clients.end()) {
             it->second->appendToWriteBuffer(msg_to_send);
-            m_network.addPollEvent(clientId, SysPoll::EventOut);
+            m_network.addPollEvent(clientId, NetworkEvent::Output);
         }
     } catch (const std::exception &e) {
         m_logger.error(std::string("[ERROR] sendResponse exception: ") + e.what());
@@ -117,7 +116,7 @@ void ClientManager::broadcastEvent(const std::string& message, int excludeClient
 void ClientManager::disconnectAll()
 {
     for (auto &[fd, client] : m_clients) {
-        client->getSocket().close_socket();
+        client->getSocket().closeSocket();
     }
     m_clients.clear();
 }

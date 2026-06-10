@@ -13,6 +13,8 @@
 #include <memory>
 #include "Server/Server.hpp"
 
+class AI;
+
 class AiCommandParser {
     public:
         AiCommandParser() = default;

@@ -9,8 +9,8 @@
 #include "Network/INetworkProvider.hpp"
 #include "GameEngine/GameEngine.hpp"
 
-AI::AI(Socket clientSocket, int playerId)
-    : Client(std::move(clientSocket)), m_id(playerId), m_level(1), m_orientation(1), m_foodTicks(126)
+AI::AI(std::unique_ptr<ISocket> clientSocket, int playerId)
+    : Client(std::move(clientSocket), playerId), m_level(1), m_orientation(1), m_foodTicks(126)
 {
     setType(ClientType::AI);
 }

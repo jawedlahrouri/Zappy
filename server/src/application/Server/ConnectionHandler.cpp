@@ -10,23 +10,22 @@
 #include "Network/INetworkProvider.hpp"
 #include "shared/ILogger.hpp"
 #include "Server/login.hpp"
-#include "Socket/Socket.hpp"
-#include "Poll/Poll.hpp"
-#include "Poll/Sys_Poll.hpp"
+#include "Network/ISocket.hpp"
+#include "Network/IPoll.hpp"
 #include "Client/AI.hpp"
 #include "Client/GUI.hpp"
 #include "ServerException.hpp"
 
-void ConnectionHandler::acceptClient(Socket& masterSocket, Poll& poll, ClientManager& clientManager, ILogger& logger)
+void ConnectionHandler::acceptClient(ISocket& masterSocket, IPoll& poll, ClientManager& clientManager, ILogger& logger)
 {
     try {
-        Socket client_socket = masterSocket.accept_connection();
-        int fd = client_socket.getSocket();
+        std::unique_ptr<ISocket> client_socket = masterSocket.acceptConnection();
+        int fd = client_socket->getSocket();
         
         if (fd != -1) {
-            client_socket.set_non_blocking(true);
-            poll.add_fd(fd, SysPoll::EventIn);
-            clientManager.addClient(fd, std::make_shared<Client>(std::move(client_socket)));
+            client_socket->setNonBlocking(true);
+            poll.addFd(fd, NetworkEvent::Input);
+            clientManager.addClient(fd, std::make_shared<Client>(std::move(client_socket), fd));
             logger.info("New client connected on socket " + std::to_string(fd));
             clientManager.sendResponse(fd, "WELCOME");
         }
@@ -48,7 +47,7 @@ void ConnectionHandler::detectClientType(int clientSocket, ClientManager& client
         if (!client->extractLine(line))
             return;
         if (line == "GRAPHIC") {
-            auto gui_client = std::make_shared<GUI>(std::move(client->getSocket()));
+            auto gui_client = std::make_shared<GUI>(client->releaseSocket(), clientSocket);
             clientManager.addClient(clientSocket, gui_client);
             Login::login_gui(gui_client, network);
             logger.info("Client " + std::to_string(clientSocket) + " authenticated as GUI");
@@ -61,7 +60,7 @@ void ConnectionHandler::detectClientType(int clientSocket, ClientManager& client
             }
             if (teamExists) {
                 int playerId = clientSocket;
-                auto ai_client = std::make_shared<AI>(std::move(client->getSocket()), playerId);
+                auto ai_client = std::make_shared<AI>(client->releaseSocket(), playerId);
                 ai_client->setTeamName(line);
                 clientManager.addClient(clientSocket, ai_client);
                 Login::login_ai(ai_client, line, network);

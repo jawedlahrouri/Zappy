@@ -9,6 +9,7 @@
 #include <vector>
 #include "ServerException.hpp"
 #include "Socket/Socket.hpp"
+#include "Poll/Poll.hpp"
 #include "Server/Server.hpp"
 #include "shared/ConsoleLogger.hpp"
 
@@ -77,7 +78,9 @@ int main (int argc, char** argv) {
     try {
     ConsoleLogger logger;
     ServerConfig config;
-    Server server(logger);
+    auto masterSocket = std::make_unique<Socket>();
+    auto poll = std::make_unique<Poll>();
+    Server server(logger, std::move(masterSocket), std::move(poll));
     
     if (argc == 2 && std::string(argv[1]) == "--help") {
         print_help();

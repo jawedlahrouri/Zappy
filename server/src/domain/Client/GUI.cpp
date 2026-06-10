@@ -7,8 +7,8 @@
 
 #include "Client/GUI.hpp"
 
-GUI::GUI(Socket clientSocket)
-    : Client(std::move(clientSocket))
+GUI::GUI(std::unique_ptr<ISocket> clientSocket, int id)
+    : Client(std::move(clientSocket), id)
 {
     setType(ClientType::GUI);
 }

@@ -8,29 +8,29 @@
 #ifndef POLL_HPP_
 #define POLL_HPP_
 
-#include <vector>
+#include "Network/IPoll.hpp"
 #include "Poll/Sys_Poll.hpp"
 
-class Poll {
+class Poll : public IPoll {
     public:
         Poll() = default;
-        ~Poll() = default;
+        ~Poll() override = default;
 
-        void add_fd(int fd, short events);
-        void remove_fd(int fd);
-        void add_events(int fd, short events);
-        void remove_events(int fd, short events);
-        int run_poll(int timeout = -1);
+        void addFd(int fd, NetworkEvent event) override;
+        void removeFd(int fd) override;
+        void addEvents(int fd, NetworkEvent event) override;
+        void removeEvents(int fd, NetworkEvent event) override;
+        int runPoll(int timeout = -1) override;
 
-        bool is_readable(size_t index) const;
-        bool is_writable(size_t index) const;
-        bool is_error(size_t index) const;
+        bool isReadable(size_t index) const override;
+        bool isWritable(size_t index) const override;
+        bool isError(size_t index) const override;
 
-        int get_fd(size_t index) const;
-        size_t get_size() const;
+        int getFd(size_t index) const override;
+        size_t getSize() const override;
 
     private:
-        std::vector<SysPoll::PollFd> _pollfds;
+        std::vector<SysPoll::PollFd> m_pollfds;
 };
 
 #endif /* !POLL_HPP_ */

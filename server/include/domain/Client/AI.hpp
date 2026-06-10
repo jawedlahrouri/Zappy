@@ -16,10 +16,8 @@
 
 class AI : public Client {
     public:
-        AI(Socket clientSocket, int playerId);
+        AI(std::unique_ptr<ISocket> clientSocket, int playerId);
         void update(std::shared_ptr<Client> self, INetworkProvider& network, GameEngine& engine, std::vector<int>& clientsToRemove) override;
-        
-        int getId() const { return m_id; }
         
         const std::string& getTeamName() const { return m_teamName; }
         void setTeamName(const std::string& name) { m_teamName = name; }
@@ -49,7 +47,6 @@ class AI : public Client {
         void setFoodTicks(int ticks) { m_foodTicks = ticks; }
 
     private:
-        int m_id;
         std::string m_teamName;
         int m_x = 0;
         int m_y = 0;

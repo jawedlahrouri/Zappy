@@ -34,7 +34,7 @@ void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetw
     }
     int slots = network.getClientsNb() - count;
 
-    int fd = ai->getSocket().getSocket();
+    int fd = ai->getId();
     network.sendResponse(fd, std::to_string(slots));
     if (network.getGameEngine()) {
         network.sendResponse(fd, std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
@@ -57,7 +57,7 @@ void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetw
 void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
 {
     try {
-    int fd = gui->getSocket().getSocket();
+    int fd = gui->getId();
 
     if (network.getGameEngine()) {
         network.sendResponse(fd, "msz " + std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));

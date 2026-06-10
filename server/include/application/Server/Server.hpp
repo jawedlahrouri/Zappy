@@ -11,9 +11,9 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Socket/Socket.hpp"
+#include "Network/ISocket.hpp"
 #include "shared/ILogger.hpp"
-#include "Poll/Poll.hpp"
+#include "Network/IPoll.hpp"
 
 #include "Network/INetworkProvider.hpp"
 #include "Server/ClientManager.hpp"
@@ -23,7 +23,7 @@ class GameEngine;
 
 class Server : public INetworkProvider {
     public:
-        explicit Server(ILogger& logger);
+        Server(ILogger& logger, std::unique_ptr<ISocket> masterSocket, std::unique_ptr<IPoll> poll);
         ~Server() override;
 
         void openServer(int port, int clientsNb, const std::vector<std::string>& teamNames, int freq, int width, int height);
@@ -40,7 +40,7 @@ class Server : public INetworkProvider {
         void broadcastEvent(const std::string& message, int excludeClientId = -1) override;
         void sendEvent(const class IEventElement& event) override;
         const std::unordered_map<int, std::shared_ptr<class Client>>& getClients() const override;
-        void addPollEvent(int fd, short events) override;
+        void addPollEvent(int fd, NetworkEvent event) override;
 
     private:
         void runPollLoop();
@@ -51,8 +51,8 @@ class Server : public INetworkProvider {
         void removeClient(int clientSocket);
 
         ILogger& m_logger;
-        Socket m_masterSocket;
-        Poll m_poll;
+        std::unique_ptr<ISocket> m_masterSocket;
+        std::unique_ptr<IPoll> m_poll;
         ClientManager m_clientManager;
         std::unique_ptr<GameEngine> m_gameEngine;
 

@@ -40,7 +40,7 @@ void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &co
 
         std::string action = tokens[0];
         if (ai_cmds.find(action) == ai_cmds.end()) {
-            network.sendResponse(client->getSocket().getSocket(), "ko");
+            network.sendResponse(client->getId(), "ko");
             return;
         }
 

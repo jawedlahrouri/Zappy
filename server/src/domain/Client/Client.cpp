@@ -7,8 +7,8 @@
 
 #include "Client/Client.hpp"
 
-Client::Client(Socket clientSocket)
-    : m_socket(std::move(clientSocket)), m_type(ClientType::PENDING)
+Client::Client(std::unique_ptr<ISocket> clientSocket, int id)
+    : m_socket(std::move(clientSocket)), m_id(id), m_type(ClientType::PENDING)
 {
 }
 

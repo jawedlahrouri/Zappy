@@ -8,32 +8,32 @@
 #ifndef SOCKET_HPP_
 #define SOCKET_HPP_
 
-#include <string>
+#include "Network/ISocket.hpp"
 
-class Socket {
+class Socket : public ISocket {
     public:
         Socket();
-        Socket(int fd);
-        ~Socket() = default;
+        explicit Socket(int fd);
+        ~Socket() override = default;
 
-        void create_socket(int port, int backlog);
-        void close_socket();
-        void bind_socket();
-        Socket accept_connection();
-        void receive_data();
-        size_t send_data(const std::string &data);
-        std::string recv_data(size_t max_size);
-        void set_non_blocking(bool non_blocking);
+        void createSocket(int port, int backlog) override;
+        void closeSocket() override;
+        void bindSocket() override;
+        std::unique_ptr<ISocket> acceptConnection() override;
+        void receiveData() override;
+        size_t sendData(const std::string &data) override;
+        std::string recvData(size_t maxSize) override;
+        void setNonBlocking(bool nonBlocking) override;
 
-        int getSocket() const;
-        int get_client_socket() const;
+        int getSocket() const override;
+        int getClientSocket() const override;
 
     private:
-        int _socket;
-        int _port;
-        int _backlog;
-        int _client_socket;
-        std::string _data;
+        int m_socket;
+        int m_port;
+        int m_backlog;
+        int m_clientSocket;
+        std::string m_data;
 };
 
 #endif /* !SOCKET_HPP_ */

@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Socket/Socket.hpp"
+#include "Network/ISocket.hpp"
 #include "shared/CircularBuffer.hpp"
 #include "Network/INetworkProvider.hpp"
 
@@ -25,11 +25,14 @@ enum class ClientType {
 
 class Client {
     public:
-        Client(Socket clientSocket);
+        Client(std::unique_ptr<ISocket> clientSocket, int id);
         virtual ~Client() = default;
 
-        Socket& getSocket() { return m_socket; }
-        const Socket& getSocket() const { return m_socket; }
+        ISocket& getSocket() { return *m_socket; }
+        const ISocket& getSocket() const { return *m_socket; }
+        std::unique_ptr<ISocket> releaseSocket() { return std::move(m_socket); }
+        
+        int getId() const { return m_id; }
         
         ClientType getType() const { return m_type; }
         void setType(ClientType newType) { m_type = newType; }
@@ -45,7 +48,8 @@ class Client {
         virtual void update(std::shared_ptr<Client>, INetworkProvider&, GameEngine&, std::vector<int>&) {}
 
     protected:
-        Socket m_socket;
+        std::unique_ptr<ISocket> m_socket;
+        int m_id;
         ClientType m_type;
 
     private:

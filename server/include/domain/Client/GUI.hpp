@@ -12,7 +12,7 @@
 
 class GUI : public Client {
     public:
-        GUI(Socket clientSocket);
+        GUI(std::unique_ptr<ISocket> clientSocket, int id);
         void update(std::shared_ptr<Client>, INetworkProvider&, GameEngine&, std::vector<int>&) override {}
 };
 
