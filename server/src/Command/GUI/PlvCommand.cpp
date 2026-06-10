@@ -21,12 +21,9 @@ void PlvCommand::Accept(IGuiVisitor *visitor) {
     }
 }
 
-void GuiCommandParser::parse_gui_plv(std::shared_ptr<GUI> client, const std::string &command, Server &server)
+void GuiCommandParser::parse_gui_plv([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)server;
         PlvCommand cmd;
         GuiVisitor visitor(server);
         cmd.Accept(&visitor);
@@ -35,9 +32,8 @@ void GuiCommandParser::parse_gui_plv(std::shared_ptr<GUI> client, const std::str
     }
 }
 
-void GuiVisitor::visit(PlvCommand *element) {
+void GuiVisitor::visit([[maybe_unused]] PlvCommand *element) {
     try {
-    (void)element;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GuiVisitor::visit: ") + e.what());
     }

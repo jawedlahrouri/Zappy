@@ -11,6 +11,7 @@
 #include "Server/Server.hpp"
 #include "Parsing/Respond.hpp"
 #include "Exception_Server.hpp"
+#include "GameEngine/GameEngine.hpp"
 #include <iostream>
 
 void ForwardCommand::Accept(IAiVisitor *visitor) {
@@ -21,13 +22,11 @@ void ForwardCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_forward(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] Server &server)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)server;
         ForwardCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(server);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -35,9 +34,28 @@ void AiCommandParser::parse_forward(std::shared_ptr<AI> client, const std::strin
     }
 }
 
-void AiVisitor::visit(ForwardCommand *element) {
+void AiVisitor::visit([[maybe_unused]] ForwardCommand *element) {
     try {
-    (void)element;
+        auto client = element->getClient();
+        auto engine = _server.get_game_engine().get();
+        int width = engine->get_width();
+        int height = engine->get_height();
+
+        if (client->orientation == 1) {
+            client->y = (client->y - 1 + height) % height;
+        } else if (client->orientation == 2) {
+            client->x = (client->x + 1) % width;
+        } else if (client->orientation == 3) {
+            client->y = (client->y + 1) % height;
+        } else if (client->orientation == 4) {
+            client->x = (client->x - 1 + width) % width;
+        }
+        Respond::send_response(_server, client->socket.get_socket(), "ok");
+        std::string ppo_msg = "ppo " + std::to_string(client->id) + " " +
+                                std::to_string(client->x) + " " +
+                                std::to_string(client->y) + " " +
+                                std::to_string(client->orientation);
+        Respond::send_to_guis(_server, ppo_msg);
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("AiVisitor::visit: ") + e.what());
     }
