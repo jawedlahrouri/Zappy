@@ -23,6 +23,7 @@ __pycache__/
 env/
 venv/
 /IA/logs/
+logs/
 
 .clangd
 compile_flags.txt
