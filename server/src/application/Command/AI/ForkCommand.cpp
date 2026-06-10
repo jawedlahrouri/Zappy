@@ -21,13 +21,10 @@ void ForkCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
-void AiCommandParser::parse_fork(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network)
+void AiCommandParser::parse_fork([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] INetworkProvider &network)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)network;
-        ForkCommand cmd;
+ForkCommand cmd;
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -35,10 +32,9 @@ void AiCommandParser::parse_fork(std::shared_ptr<AI> client, const std::string &
     }
 }
 
-void AiVisitor::visit(ForkCommand *element) {
+void AiVisitor::visit([[maybe_unused]] ForkCommand *element) {
     try {
-    (void)element;
-    } catch (const std::exception &e) {
+} catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
 }

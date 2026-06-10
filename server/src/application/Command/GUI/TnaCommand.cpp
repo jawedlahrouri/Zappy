@@ -21,13 +21,10 @@ void TnaCommand::Accept(IGuiVisitor *visitor) {
     }
 }
 
-void GuiCommandParser::parse_gui_tna(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network)
+void GuiCommandParser::parse_gui_tna([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] INetworkProvider &network)
 {
     try {
-        (void)client;
-        (void)command;
-        (void)network;
-        TnaCommand cmd;
+TnaCommand cmd;
         GuiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -35,10 +32,9 @@ void GuiCommandParser::parse_gui_tna(std::shared_ptr<GUI> client, const std::str
     }
 }
 
-void GuiVisitor::visit(TnaCommand *element) {
+void GuiVisitor::visit([[maybe_unused]] TnaCommand *element) {
     try {
-    (void)element;
-    } catch (const std::exception &e) {
+} catch (const std::exception &e) {
         throw ServerException(std::string("GuiVisitor::visit: ") + e.what());
     }
 }
