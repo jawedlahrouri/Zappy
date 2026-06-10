@@ -40,7 +40,7 @@ class utils:
             -estimated_tu_cost (int): Le coût en TU estimé de l'action risquée que l'on veut faire.
         Retourne True si la nourriture est insuffisante, False sinon."""
 
-        food = self.inventory.get('food', 0)
+        food = inventory.get('food', 0)
         current_tu = food * 126
         minimum_tu_required = (self.food_minimum * 126)
         if current_tu < (estimated_tu_cost + minimum_tu_required):
