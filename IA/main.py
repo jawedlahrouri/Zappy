@@ -98,14 +98,13 @@ def main(port, machine, team_name):
         -team_name (str): Le nom de l'équipe.
     Retourne 0 en cas de succès, 84 en cas d'erreur."""
 
-    ZappyLogger.setup(team_name, debug_mode=True)
+    ZappyLogger.setup(ZappyLogger,team_name, debug_mode=True)
     logger = ZappyLogger.get_logger("Main")
     logger.info(f"Démarrage du client Zappy (Team: {team_name}, Port: {port})")
     net = ZappyNetwork(machine, port)
     try:
         net.connect()
     except Exception as e:
-        print(f"[Erreur] Impossible de se connecter: {e}")
         logger.error(f"Impossible de se connecter: {e}")
         return 84
     if not net.connected:
@@ -117,11 +116,11 @@ def main(port, machine, team_name):
         cmd_interface = ZappyCommand(net)
         agent = ZappyAgent(cmd_interface, team_name)
         agent.run()
-        print("[Agent] Agent terminé correctement")
+        logger.info("[Agent] Agent terminé correctement")
     except KeyboardInterrupt:
-        print("\n[Agent] Arrêt par l'utilisateur")
+        logger.info("\n[Agent] Arrêt par l'utilisateur")
     except Exception as e:
-        print(f"[Erreur] Exception dans l'agent: {e}")
+        logger.error(f"[Erreur] Exception dans l'agent: {e}")
         import traceback
         traceback.print_exc()
         return 84

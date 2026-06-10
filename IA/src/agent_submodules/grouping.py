@@ -54,10 +54,8 @@ class Grouper:
                     if self.role != 'LEADER' or msg_id > my_id:
                         heard_k = k
                         logger.info(f"Agent entend un appel de regroupement pour le niveau {level} de la part de l'agent {msg_id}. Direction du son (k): {k}. Rôle actuel: {self.role}. Décision: Devenir FOLLOWER et se déplacer vers le LEADER.")
-                        print(f"[Grouper] Tie-Breaker PERDU face à {msg_id}. On capitule.")
                     else:
                         logger.info(f"Agent entend un appel de regroupement pour le niveau {level} de la part de l'agent {msg_id}. Direction du son (k): {k}. Rôle actuel: {self.role}. Décision: Devenir LEADER, il ne bouge plus.")
-                        print(f"[Grouper] Tie-Breaker GAGNÉ face à {msg_id}. On l'ignore.")
         return heard_k
 
     def process_grouping(self, level, my_id, vision):
@@ -94,17 +92,14 @@ class Grouper:
             needed = self.player_reqs.get(level, 1)
             if players_on_tile >= needed:
                 logger.info(f"agent {self.agent_id} : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
-                print(f"[Grouper] FOLLOWER : Équipe au complet ({players_on_tile}/{needed}). Prêt pour le rituel !")
                 self.current_k = None
                 return True
             else:
                 logger.info(f"agent {self.agent_id} : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
-                print(f"[Grouper] FOLLOWER : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
                 self.current_k = None
                 return False
         else:
             logger.info(f"agent {self.agent_id} : En route vers K={self.current_k} pour rejoindre le LEADER.")
-            print(f"[Grouper] FOLLOWER : En route vers K={self.current_k}")
             self._move_towards_sound(self.current_k)
             self.current_k = None
             return False
@@ -122,10 +117,8 @@ class Grouper:
         needed = self.player_reqs.get(level, 1)
         if players_on_tile >= needed:
             logger.info(f"agent {self.agent_id} : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
-            print(f"[Grouper] LEADER : Équipe au complet ({players_on_tile}/{needed}).")
             return True
         logger.info(f"agent {self.agent_id} : Attente alliés. Broadcast...")
-        print(f"[Grouper] LEADER (ID: {my_id}) : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
         self.cmd.broadcast_text(secret_msg)
         return False

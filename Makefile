@@ -31,7 +31,7 @@ zappy_gui: $(GUI_OBJ)
 
 zappy_ai: $(AI_EXEC)
 	@echo "#!/bin/bash" > $(AI_EXEC)
-	@echo "python3 main.py \"\$$@\"" >> $(AI_EXEC)
+	@echo "python3 IA/main.py \"\$$@\"" >> $(AI_EXEC)
 	@chmod +x $(AI_EXEC)
 
 %.o: %.cpp

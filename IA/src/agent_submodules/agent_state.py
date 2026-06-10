@@ -51,7 +51,6 @@ class StateComportment:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour l'incantation."""
 
         logger.info(f"agent {self.agent_id} : Mode ÉLÉVATION (Niveau {self.agent.level}) : préparation du rituel.")
-        print(f"[Agent] Mode ÉLÉVATION (Niveau {self.agent.level}) : préparation du rituel.")
         if self.agent.level == 1 or self.agent.grouper.role == 'LEADER':
             required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
             for stone_name, amount in required_stones.items():
@@ -62,16 +61,13 @@ class StateComportment:
             if success:
                 self.agent.level += 1
                 logger.info(f"agent {self.agent_id}: L'Incantation a réussie ! Passage au Niveau {self.agent.level}.")
-                print(f"[Agent] SUCCÈS, passe au Niveau {self.agent.level} !")
             else:
                 logger.warning(f"agent {self.agent_id}: L'Incantation a échouée. Vérifiez les ressources et les alliés présents.")
-                print("[Agent] Échec de l'incantation.")        
         elif self.agent.grouper.role == 'FOLLOWER':
             success = self.agent.cmd.wait_for_incantation_follower()
             if success:
                 self.agent.level += 1
                 logger.info(f"agent {self.agent_id}: L'Incantation a réussie ! Passage au Niveau {self.agent.level}.")
-                print(f"[Agent] FOLLOWER passe au Niveau {self.agent.level} !")
         
         self.agent.grouper.role = None
         return AgentState.SURVIVAL
@@ -86,7 +82,6 @@ class StateComportment:
         is_grouped = self.agent.grouper.process_grouping(self.agent.level, self.agent.agent_id, self.agent.vision)            
         if is_grouped:
             logger.info(f"agent {self.agent_id} : Regroupement validé ! Passage en phase d'Incantation.")
-            print("[Agent] Regroupement validé ! Passage en phase d'Incantation.")
             return AgentState.ELEVATION
         return AgentState.GROUPING
     

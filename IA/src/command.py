@@ -19,7 +19,6 @@ class ZappyCommand:
         Retourne True si l'incantation réussit, False en cas d'échec ou de timeout."""
 
         logger.info(f"l'agent {self.agent_id} attend les messages d'incantation.")
-        print("[Agent] FOLLOWER : En attente du rituel...")
         start_time = time.time()
         first_response = None
         
@@ -29,7 +28,6 @@ class ZappyCommand:
                 break     
         if first_response == "Elevation underway":
             second_response = self._wait_for_response(expect_incantation=True, timeout=300.0)
-            print(f"[Agent] FOLLOWER Incantation (Fin): {second_response}")
             logger.info(f"l'agent {self.agent_id} a reçu les messages d'incantation du leader. Résultat: {second_response}")
             if second_response and second_response.startswith("Current level"):
                 return True
@@ -57,7 +55,6 @@ class ZappyCommand:
                 if msg.startswith("message "):
                     self.broadcast_queue.append(msg)
                 elif msg.startswith("eject: "):
-                    print(f"[Agent] Aïe ! On s'est fait pousser : {msg}")
                     logger.warning(f"l'agent {self.agent_id} a été éjecté par un autre joueur. Détails: {msg}")
                 elif msg == "dead":
                     self.system_queue.append("dead")
@@ -82,10 +79,10 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne la vision analysée ou "dead" si l'agent est mort, ou une liste vide en cas de refus."""
 
-        print("[Agent] commande: Look")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Look")
         self.network.send_command("Look\n")
         response = self._wait_for_response()
-        print(f"[Agent] Réponse: {response}")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: {response}")
         if response == "dead":
             return "dead"
         if response == "ko":
@@ -107,7 +104,7 @@ class ZappyCommand:
             for tile in tiles:
                 parsed_vision.append(tile.strip().split())
         except Exception as e:
-            print(f"[Erreur] Parsing vision échoué sur '{raw_str}': {e}")
+            logger.error(f"[Erreur] Parsing vision échoué sur '{raw_str}': {e}")
         return parsed_vision
     
     def broadcast_text(self, text):
@@ -116,10 +113,10 @@ class ZappyCommand:
             -text (str): Le texte à diffuser.
         Retourne True si la diffusion est confirmée, False sinon."""
 
-        print(f"[Agent] commande: Broadcast '{text}'")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Broadcast '{text}'")
         self.network.send_command(f"Broadcast {text}\n")
         response = self._wait_for_response()
-        print(f"[Agent] Réponse: {response}")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: {response}")
         return response == "ok"
     
     def inventory(self):
@@ -128,10 +125,10 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne l'Inventaire analysée ou "dead" si l'agent est mort, ou une liste vide en cas de refus."""
 
-        print("[Agent] commande: Inventory")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Inventory")
         self.network.send_command("Inventory\n")
         response = self._wait_for_response()
-        print(f"[Agent] Réponse: {response}")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: {response}")
         if response == "dead":
             return "dead"
         if response == "ko":
@@ -163,15 +160,15 @@ class ZappyCommand:
         Params:
             -Aucun paramètre.
         Retourne True si l'incantation est un succès, False sinon."""
-        print("[Agent] commande: Incantation")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Incantation")
         self.network.send_command("Incantation\n")
         first_response = self._wait_for_response(expect_incantation=True)
-        print(f"[Agent] Incantation (Début): {first_response}")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: {first_response}")
         if first_response == "ko":
             return False
         if first_response == "Elevation underway":
             second_response = self._wait_for_response(expect_incantation=True)
-            print(f"[Agent] Incantation (Fin): {second_response}")
+            logger.important(f"l'agent {self.agent_id} envoie la commande: {second_response}")
             return second_response.startswith("Current level")
         return False
     
@@ -181,7 +178,7 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print("[Agent] commande: Forward")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Forward")
         self.network.send_command("Forward\n")
         return self._wait_for_response() == "ok"
     
@@ -191,7 +188,7 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print("[Agent] commande: Right")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Right")
         self.network.send_command("Right\n")
         return self._wait_for_response() == "ok"
     
@@ -201,7 +198,7 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print("[Agent] commande: Left")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Left")
         self.network.send_command("Left\n")
         return self._wait_for_response() == "ok"
     
@@ -211,7 +208,7 @@ class ZappyCommand:
             -obj (str): Le nom de l'objet à prendre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print(f"[Agent] commande: Take {obj}")
+        logger.info(f"l'agent {self.agent_id} envoie la commande:  Take {obj}")
         self.network.send_command(f"Take {obj}\n")
         return self._wait_for_response() == "ok"
     
@@ -221,7 +218,7 @@ class ZappyCommand:
             -obj (str): Le nom de l'objet à poser.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print(f"[Agent] commande: Set {obj}")
+        logger.info(f"l'agent {self.agent_id} envoie la commande:  Set {obj}")
         self.network.send_command(f"Set {obj}\n")
         return self._wait_for_response() == "ok"
 
@@ -231,7 +228,7 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne le nombre de connexions disponibles, ou -1 en cas de refus."""
 
-        print("[Agent] commande: Connect_nbr")
+        logger.info(f"l'agent {self.agent_id} envoie la commande:  Connect_nbr")
         self.network.send_command("Connect_nbr\n")
         response = self._wait_for_response()
         return -1 if response == "ko" else int(response)
@@ -242,7 +239,7 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print("[Agent] commande: Fork")
+        logger.info(f"l'agent {self.agent_id} envoie la commande: Fork")
         self.network.send_command("Fork\n")
         return self._wait_for_response() == "ok"
 
@@ -252,7 +249,6 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print("[Agent] commande: Eject")
         self.network.send_command("Eject\n")
         return self._wait_for_response() == "ok"
     
@@ -262,7 +258,6 @@ class ZappyCommand:
             -Aucun paramètre.
         Retourne True si la commande est confirmée, False sinon."""
 
-        print("[Agent] commande: Death")
         self.network.send_command("Death\n")
-        logger.warning(f"l'agent {self.agent_id} est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
+        logger.warning(f"l'agent {self.agent_id} envoie la commande: death")
         return self._wait_for_response() == "dead"

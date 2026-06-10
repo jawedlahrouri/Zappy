@@ -73,7 +73,6 @@ class Pathfinder:
                 best_score = score
                 best_index = index
         if best_index != -1:
-            print(f"[Agent] Cible optimale: case {best_index} (Score: {best_score}). Déplacement...")
             logger.info(f"Agent se déplace vers la case {best_index} pour ramasser des items. Score de la case: {best_score}. Items ciblés: {target_items}. Contenu de la case: {vision[best_index]}")  
             self.explore_step = 0
             self.go_to_tile(best_index)
@@ -82,7 +81,6 @@ class Pathfinder:
                 count = items_on_tile.count(item)
                 for _ in range(count):
                     logger.info(f"Agent ramasse {item} sur la case {best_index}.")
-                    print(f"[Agent] Ramassage multiple : {item}")
                     self.cmd.take_object(item)
             return True
         return False
@@ -96,23 +94,19 @@ class Pathfinder:
         if level <= 2:
             if self.explore_step < 3:
                 logger.info(f"Agent explore en avançant droit devant. Étape {self.explore_step + 1}/3.")
-                print(f"[Agent Lvl {level}] Exploration : On trace tout droit.")
                 self.cmd.forward()
                 self.explore_step += 1
             else:
                 logger.info(f"Agent explore en virant pour quadriller la zone. Étape {self.explore_step + 1}/3.")
-                print(f"[Agent Lvl {level}] Exploration : Virage pour quadriller la zone.")
                 action = random.choice([self.cmd.right, self.cmd.left])
                 action()
                 self.explore_step = 0 
         else:
             if self.explore_step < 3:
                 logger.info(f"Agent explore en scannant à droite. Étape {self.explore_step + 1}/3.")
-                print(f"[Agent Lvl {level}] Exploration : Scan rotation droite ({self.explore_step + 1}/3)")
                 self.cmd.right()
                 self.explore_step += 1
             else:
                 logger.info(f"Agent explore en avançant après scan. Étape {self.explore_step + 1}/3.")
-                print(f"[Agent Lvl {level}] Exploration : Scan 360° terminé. On avance !")
                 self.cmd.forward()
                 self.explore_step = 0

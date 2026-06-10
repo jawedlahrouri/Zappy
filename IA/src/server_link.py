@@ -24,15 +24,12 @@ class ZappyNetwork:
             self.sock.setblocking(False)
             self.connected = True
             logger.info(f"Connecté au serveur {self.machine}:{self.port}")
-            print(f"[Connexion] Connecté au serveur {self.machine}:{self.port}")
         except ConnectionRefusedError:
             logger.error(f"Connexion refusée par le serveur {self.machine}:{self.port}. Vérifiez que le serveur est en ligne et que les paramètres sont corrects.")
-            print(f"[Erreur] Impossible de se connecter à {self.machine}:{self.port}")
             self.connected = False
             raise
         except socket.timeout:
             logger.error(f"Timeout de connexion à {self.machine}:{self.port}. Vérifiez la connectivité réseau et que le serveur est en ligne.")
-            print(f"[Erreur] Timeout de connexion à {self.machine}:{self.port}")
             self.connected = False
             raise
 
@@ -44,7 +41,7 @@ class ZappyNetwork:
         Retourne True si la commande est envoyée avec succès, False sinon."""
 
         if not self.connected:
-            print("[Erreur] Non connecté au serveur")
+            logger.error("[Erreur] Non connecté au serveur")
             return False
         if not command.endswith('\n'):
             command += '\n'        
@@ -53,7 +50,6 @@ class ZappyNetwork:
             return True
         except socket.error as e:
             logger.error(f"Erreur d'envoi de la commande {command} à {self.machine}:{self.port}: {e}")
-            print(f"[Erreur d'envoi] {e}")
             self.connected = False
             return False
 
@@ -70,7 +66,6 @@ class ZappyNetwork:
             data = self.sock.recv(4096).decode('utf-8')
             if not data:
                 logger.warning(f"Le serveur {self.machine}:{self.port} a fermé la connexion.")
-                print("[Avertissement] Serveur a fermé la connexion")
                 self.connected = False
                 return []
             self.buffer += data
@@ -78,7 +73,6 @@ class ZappyNetwork:
             pass
         except socket.error as e:
             logger.error(f"Erreur de réception des messages du serveur {self.machine}:{self.port}: {e}")
-            print(f"[Erreur de réception] {e}")
             self.connected = False
             return []
         messages = []

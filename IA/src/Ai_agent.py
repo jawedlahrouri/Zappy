@@ -50,7 +50,6 @@ class ZappyAgent:
         if not self.cmd.network.connected:
             self.is_alive = False
             logger.error("Connexion au serveur perdue.")
-            print("[Agent] Connexion perdue.")
             return
         response = self.cmd.look()
         if response == "dead":
@@ -102,7 +101,6 @@ class ZappyAgent:
         dead_ids = [ally_id for ally_id, last_seen in self.team_roster.items() if current_time - last_seen > 40]
         for ally_id in dead_ids:
             logger.warning(f"Allié {ally_id} ne répond plus. Déclaré mort.")
-            print(f"[Agent] L'agent {ally_id} ne répond plus. Déclaré mort.")
             del self.team_roster[ally_id]
 
     def evaluate_situation(self):
@@ -121,7 +119,6 @@ class ZappyAgent:
         call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.decoded_messages)
         if call_k is not None:
             logger.info(f"l'agent {self.agent_id} a reçu un appel radio valide pour le regroupement (K={call_k}).")
-            print(f"[Agent] Appel radio valide reçu (K={call_k}) ! On passe en GROUPING.")
             self.grouper.current_k = call_k
             self.state = AgentState.GROUPING
             return
@@ -151,7 +148,6 @@ class ZappyAgent:
         if is_queen and food > self.food_safe:
             if not self.utils.is_food_critical_for_action(42):
                 logger.info(f"l'agent {self.agent_id} est la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
-                print(f"[Agent] Je suis la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
                 self.state = AgentState.FORKING
                 return 1
         return 0
@@ -164,11 +160,9 @@ class ZappyAgent:
 
         if food < (self.food_minimum + 3):
             logger.warning(f"l'agent {self.agent_id} n'a pas assez de nourriture pour tenter une incantation en toute sécurité (food={food}).")
-            print("[Agent] Pierres OK, mais nourriture insuffisante pour le rituel. Survie !")
             self.state = AgentState.SURVIVAL
             return
         logger.info(f"l'agent {self.agent_id} a toutes les ressources nécessaires pour l'incantation au Niveau {self.level}.")
-        print(f"[Agent] Ressources d'élévation prêtes pour le Niveau {self.level} ! Passage en mode ÉLÉVATION.")
         if self.level == 1:
             self.state = AgentState.ELEVATION
         else:
@@ -199,7 +193,6 @@ class ZappyAgent:
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
-        print("[Agent] Démarrage du cycle.")
         while self.is_alive:
             self.update_internal_state()
             self.evaluate_situation()

@@ -30,8 +30,6 @@ class utils:
         Retourne None."""
         
         logger.info(f"l'agent {self.agent_id} a pondu un nouvel œuf et lance un nouveau clone.")
-        print("[Agent] Un œuf a été pondu.")
-        print("[Agent] Lancement d'un nouveau clone en arrière-plan...")
         port = str(self.cmd.network.port)
         machine = self.cmd.network.machine
         subprocess.Popen(["./zappy_ai", "-p", port, "-h", machine, "-n", self.team_name])
