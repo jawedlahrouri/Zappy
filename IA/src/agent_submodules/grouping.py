@@ -91,15 +91,15 @@ class Grouper:
             players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
             needed = self.player_reqs.get(level, 1)
             if players_on_tile >= needed:
-                logger.info(f"agent {self.agent_id} : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
+                logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
                 self.current_k = None
                 return True
             else:
-                logger.info(f"agent {self.agent_id} : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
+                logger.info(f"agent : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
                 self.current_k = None
                 return False
         else:
-            logger.info(f"agent {self.agent_id} : En route vers K={self.current_k} pour rejoindre le LEADER.")
+            logger.info(f"agent : En route vers K={self.current_k} pour rejoindre le LEADER.")
             self._move_towards_sound(self.current_k)
             self.current_k = None
             return False
@@ -116,9 +116,9 @@ class Grouper:
         players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
         needed = self.player_reqs.get(level, 1)
         if players_on_tile >= needed:
-            logger.info(f"agent {self.agent_id} : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
+            logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
             return True
-        logger.info(f"agent {self.agent_id} : Attente alliés. Broadcast...")
+        logger.info(f"agent : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
         self.cmd.broadcast_text(secret_msg)
         return False
