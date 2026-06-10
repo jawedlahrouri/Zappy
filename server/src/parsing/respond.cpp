@@ -20,8 +20,8 @@ void Respond::send_response(Server &server, int client_socket, const std::string
         const auto &clients = server.get_clients();
         auto it = clients.find(client_socket);
         if (it != clients.end()) {
-            it->second->write_buffer += msg_to_send;
-            server.add_poll_event(client_socket, POLLOUT);
+            it->second->append_to_write_buffer(msg_to_send);
+            server.add_poll_event(client_socket, SysPoll::EventOut);
         }
     } catch (const std::exception &e) {
         std::cout << "[ERROR] send_response exception: " << e.what() << std::endl;

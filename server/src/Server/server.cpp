@@ -94,7 +94,7 @@ void Server::accept_client()
         int fd = client_socket.get_socket();
         
         if (fd != -1) {
-            _poll.add_fd(fd, POLLIN);
+            _poll.add_fd(fd, SysPoll::EventIn);
             _clients[fd] = std::make_shared<Client>(std::move(client_socket));
             std::cout << "New client connected on socket " << fd << std::endl;
             Respond::send_response(*this, fd, "WELCOME");
@@ -135,20 +135,20 @@ bool Server::handle_writable(size_t index)
         int client_socket = _poll.get_fd(index);
         auto it = _clients.find(client_socket);
         if (it == _clients.end()) {
-            _poll.remove_events(client_socket, POLLOUT);
+            _poll.remove_events(client_socket, SysPoll::EventOut);
             return false;
         }
 
         const auto &buffer = it->second->get_write_buffer();
         if (buffer.empty()) {
-            _poll.remove_events(client_socket, POLLOUT);
+            _poll.remove_events(client_socket, SysPoll::EventOut);
             return false;
         }
 
     try {
         it->second->socket.send_data(buffer);
         it->second->clear_write_buffer();
-        _poll.remove_events(client_socket, POLLOUT);
+        _poll.remove_events(client_socket, SysPoll::EventOut);
     } catch (const std::exception &e) {
         std::cerr << "[ERROR] " << Exception_Server(std::string("handle_writable: ") + e.what()).what() << std::endl;
         remove_client(client_socket);
@@ -212,6 +212,13 @@ void Server::cleanup()
 void Server::process_poll_event(size_t &i)
 {
     try {
+        if (_poll.is_error(i)) {
+            if (i > 0) {
+                remove_client(_poll.get_fd(i));
+                --i;
+            }
+            return;
+        }
         if (_poll.is_readable(i)) {
             if (i == 0) {
                 accept_client();
@@ -284,7 +291,7 @@ void Server::open_server(int port, int clientsNb, const std::vector<std::string>
         _master_socket.receive_data();
 
         std::cout << "Server opened on port " << _port << std::endl;
-        _poll.add_fd(_master_socket.get_socket(), POLLIN);
+        _poll.add_fd(_master_socket.get_socket(), SysPoll::EventIn);
 
         _game_engine = std::make_unique<GameEngine>(width, height);
 

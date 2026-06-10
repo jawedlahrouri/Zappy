@@ -8,10 +8,23 @@
 #ifndef SYS_POLL_HPP_
 #define SYS_POLL_HPP_
 
-#include <poll.h>
+#include <vector>
 
 namespace SysPoll {
-    int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+    enum Event : short {
+        EventIn = 1 << 0,
+        EventOut = 1 << 1,
+        EventErr = 1 << 2,
+        EventHup = 1 << 3,
+    };
+
+    struct PollFd {
+        int fd;
+        short events;
+        short revents;
+    };
+
+    int poll(std::vector<PollFd> &fds, int timeout);
 }
 
 #endif /* !SYS_POLL_HPP_ */

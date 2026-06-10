@@ -18,7 +18,9 @@
 #include "Parsing/Respond.hpp"
 #include "Poll/Poll.hpp"
 
-#include "server_utils.hpp"
+#include "Client/Client.hpp"
+#include "Client/AI.hpp"
+#include "Client/GUI.hpp"
 
 class Server {
     public:

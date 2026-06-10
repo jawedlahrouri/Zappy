@@ -12,7 +12,7 @@
 void Poll::add_fd(int fd, short events)
 {
     try {
-    pollfd pfd{};
+    SysPoll::PollFd pfd{};
     pfd.fd = fd;
     pfd.events = events;
     pfd.revents = 0;
@@ -67,7 +67,7 @@ void Poll::remove_events(int fd, short events)
 int Poll::run_poll(int timeout)
 {
     try {
-    return SysPoll::poll(_pollfds.data(), _pollfds.size(), timeout);
+    return SysPoll::poll(_pollfds, timeout);
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Poll::run_poll: ") + e.what());
     }
@@ -79,7 +79,7 @@ bool Poll::is_readable(size_t index) const
     if (index >= _pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & POLLIN) != 0;
+    return (_pollfds[index].revents & SysPoll::EventIn) != 0;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Poll::is_readable: ") + e.what());
     }
@@ -91,9 +91,21 @@ bool Poll::is_writable(size_t index) const
     if (index >= _pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & POLLOUT) != 0;
+    return (_pollfds[index].revents & SysPoll::EventOut) != 0;
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Poll::is_writable: ") + e.what());
+    }
+}
+
+bool Poll::is_error(size_t index) const
+{
+    try {
+    if (index >= _pollfds.size()) {
+        return false;
+    }
+    return (_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup)) != 0;
+    } catch (const std::exception &e) {
+        throw Exception_Server(std::string("Poll::is_error: ") + e.what());
     }
 }
 

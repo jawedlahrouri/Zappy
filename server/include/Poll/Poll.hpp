@@ -9,7 +9,7 @@
 #define POLL_HPP_
 
 #include <vector>
-#include <poll.h>
+#include "Poll/Sys_Poll.hpp"
 
 class Poll {
     public:
@@ -24,11 +24,13 @@ class Poll {
 
         bool is_readable(size_t index) const;
         bool is_writable(size_t index) const;
+        bool is_error(size_t index) const;
+
         int get_fd(size_t index) const;
         size_t get_size() const;
 
     private:
-        std::vector<pollfd> _pollfds;
+        std::vector<SysPoll::PollFd> _pollfds;
 };
 
 #endif /* !POLL_HPP_ */
