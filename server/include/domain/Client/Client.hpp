@@ -12,7 +12,7 @@
 #include <vector>
 #include <memory>
 #include "Socket/Socket.hpp"
-#include "Server/CircularBuffer.hpp"
+#include "shared/CircularBuffer.hpp"
 
 class GameEngine;
 class Server;

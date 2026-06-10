@@ -5,7 +5,7 @@
 ** CircularBuffer.cpp
 */
 
-#include "Server/CircularBuffer.hpp"
+#include "shared/CircularBuffer.hpp"
 #include <algorithm>
 
 CircularBuffer::CircularBuffer(size_t capacity)

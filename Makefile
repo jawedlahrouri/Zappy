@@ -6,7 +6,7 @@
 ##
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Iserver/include -IGameEngine/include
+CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Iserver/include -Iserver/include/domain -Iserver/include/application -Iserver/include/infrastructure -Iserver/include/presentation -Iserver/include/shared -IGameEngine/include
 
 SERVER_DIR = server
 SERVER_SRC = $(shell find $(SERVER_DIR) -name "*.cpp")
