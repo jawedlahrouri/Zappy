@@ -18,6 +18,7 @@ class NetworkManager {
         bool connectToServer(const std::string &ip, unsigned short port);
         bool authenticateAsGraphic();
         std::string receiveData();
+        bool sendCommand(const std::string& command);
         
         bool isConnected() const;
 

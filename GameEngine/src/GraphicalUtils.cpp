@@ -69,26 +69,29 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
 
 void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, float tileSize, float offsetX, float offsetY)
 {
-    // Un cercle à 3 côtés est un triangle en SFML
-    sf::CircleShape triangle(12.0f, 3); 
-    triangle.setFillColor(sf::Color::Cyan);
-    
-    // On définit le centre du triangle pour que la rotation se fasse proprement
-    triangle.setOrigin(12.0f, 12.0f);
-
-    // Position calculée au centre de la case du joueur
     float centerX = player.x * tileSize + offsetX + (tileSize / 2.0f);
     float centerY = player.y * tileSize + offsetY + (tileSize / 2.0f);
-    triangle.setPosition(centerX, centerY);
 
+    const TextureManager& tm = TextureManager::getInstance();
+    std::string texKey;
     // Orientation : 1: N, 2: E, 3: S, 4: W
-    // Par défaut, le triangle SFML pointe vers le haut (Nord = 0°).
-    if (player.orientation == 1) triangle.setRotation(0.0f);
-    else if (player.orientation == 2) triangle.setRotation(90.0f);
-    else if (player.orientation == 3) triangle.setRotation(180.0f);
-    else if (player.orientation == 4) triangle.setRotation(270.0f);
+    if (player.orientation == 1) texKey = "playerBack";
+    else if (player.orientation == 2) texKey = "playerRight";
+    else if (player.orientation == 3) texKey = "playerFace";
+    else if (player.orientation == 4) texKey = "playerLeft";
+    else texKey = "playerFace";
 
-    target.draw(triangle);
+    sf::Sprite playerSprite(tm.getTexture(texKey));
+    sf::Vector2u texSize = tm.getTexture(texKey).getSize();
+    if (texSize.x > 0 && texSize.y > 0) {
+        float desired = tileSize * 0.5f;
+        float scaleX = desired / static_cast<float>(texSize.x);
+        float scaleY = desired / static_cast<float>(texSize.y);
+        playerSprite.setScale(scaleX, scaleY);
+        playerSprite.setOrigin(static_cast<float>(texSize.x) / 2.0f, static_cast<float>(texSize.y) / 2.0f);
+    }
+    playerSprite.setPosition(centerX, centerY);
+    target.draw(playerSprite);
 }
 
 void GraphicalUtils::drawEgg(sf::RenderTarget& target, const Egg& egg, float tileSize, float offsetX, float offsetY)

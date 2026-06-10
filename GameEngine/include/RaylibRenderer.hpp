@@ -10,7 +10,9 @@
 
     #include "GameWorld.hpp"
     #include <memory>
+    #include <optional>
     #include <string>
+    #include <utility>
 
     class RaylibRenderer {
     public:
@@ -26,6 +28,8 @@
 
         bool isOpen() const;
         bool shouldToggleTo2D() const;
+        void handleInput(const GameWorld& world);
+        std::optional<std::pair<int, int>> consumeTileRequest();
 
         void beginFrame();
         void drawWorld(const GameWorld& world);

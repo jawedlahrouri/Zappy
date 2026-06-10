@@ -13,7 +13,6 @@
     #include "WindowManager.hpp"
     #include <sstream>
     #include <chrono>
-    #include <thread>
 
     class Core {
     public:
@@ -23,6 +22,7 @@
 
     private:
         void parseCommand(const std::string& command);
+        void sendPendingTileRequest();
 
         WindowManager _windowManager;
         NetworkManager _network;
