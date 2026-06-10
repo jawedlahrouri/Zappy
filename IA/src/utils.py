@@ -34,7 +34,7 @@ class utils:
         machine = self.cmd.network.machine
         subprocess.Popen(["./zappy_ai", "-p", port, "-h", machine, "-n", self.team_name])
 
-    def is_food_critical_for_action(self, estimated_tu_cost):
+    def is_food_critical_for_action(self, estimated_tu_cost, inventory):
         """Vérifie si la nourriture actuelle est insuffisante pour effectuer une action risquée\n
         Params:
             -estimated_tu_cost (int): Le coût en TU estimé de l'action risquée que l'on veut faire.

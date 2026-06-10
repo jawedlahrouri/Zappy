@@ -146,7 +146,7 @@ class ZappyAgent:
                 is_queen = False
                 break
         if is_queen and food > self.food_safe:
-            if not self.utils.is_food_critical_for_action(42):
+            if not self.utils.is_food_critical_for_action(42, self.inventory):
                 logger.info(f"l'agent {self.agent_id} est la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
                 self.state = AgentState.FORKING
                 return 1
