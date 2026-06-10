@@ -90,7 +90,7 @@ void CircularBuffer::append(const std::string& data)
         m_head = (m_head + 1) % m_capacity;
     }
 
-    if (size() == m_capacity) {
+    if (to_write > 0 && m_head == m_tail) {
         m_full = true;
     }
 }
