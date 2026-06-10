@@ -14,9 +14,10 @@
 #include <iostream>
 #include <random>
 #include <cmath>
+#include "shared/ILogger.hpp"
 
-GameEngine::GameEngine(int width, int height)
-    : _width(width), _height(height)
+GameEngine::GameEngine(int width, int height, ILogger& logger)
+    : _logger(logger), _width(width), _height(height)
 {
     try {
         _map.resize(_height, std::vector<Tile>(_width));
@@ -58,7 +59,7 @@ void GameEngine::update(Server &server)
                 }
             }
             _resource_spawn_ticks = 0;
-            std::cout << "[MAP] Resources respawn cycle triggered and pushed to GUIs." << std::endl;
+            _logger.info("[MAP] Resources respawn cycle triggered and pushed to GUIs.");
         }
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GameEngine::update: ") + e.what());
@@ -225,7 +226,7 @@ void GameEngine::generate_initial_resources()
                 _map[rand_y][rand_x].resources[i]++;
             }
         }
-        std::cout << "[MAP] Initial resources generated successfully." << std::endl;
+        _logger.info("[MAP] Initial resources generated successfully.");
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("GameEngine::generate_initial_resources: ") + e.what());
     }

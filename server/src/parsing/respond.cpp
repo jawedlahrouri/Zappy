@@ -8,7 +8,7 @@
 #include "Parsing/Respond.hpp"
 #include "Server/Server.hpp"
 #include "Exception_Server.hpp"
-#include <iostream>
+
 
 void Respond::send_response(Server &server, int client_socket, const std::string &message)
 {
@@ -24,7 +24,7 @@ void Respond::send_response(Server &server, int client_socket, const std::string
             server.add_poll_event(client_socket, SysPoll::EventOut);
         }
     } catch (const std::exception &e) {
-        std::cout << "[ERROR] send_response exception: " << e.what() << std::endl;
+        server.get_logger().error(std::string("[ERROR] send_response exception: ") + e.what());
     }
 }
 
@@ -37,7 +37,7 @@ void Respond::broadcast_event(Server &server, const std::string &message, int ex
             }
         }
     } catch (const std::exception &e) {
-        std::cout << "[ERROR] broadcast_event exception: " << e.what() << std::endl;
+        server.get_logger().error(std::string("[ERROR] broadcast_event exception: ") + e.what());
     }
 }
 
@@ -50,7 +50,7 @@ void Respond::send_to_guis(Server &server, const std::string &message)
             }
         }
     } catch (const std::exception &e) {
-        std::cout << "[ERROR] send_to_guis exception: " << e.what() << std::endl;
+        server.get_logger().error(std::string("[ERROR] send_to_guis exception: ") + e.what());
     }
 }
 
@@ -63,6 +63,6 @@ void Respond::send_to_ai(Server &server, const std::string &message)
             }
         }
     } catch (const std::exception &e) {
-        std::cout << "[ERROR] send_to_ai exception: " << e.what() << std::endl;
+        server.get_logger().error(std::string("[ERROR] send_to_ai exception: ") + e.what());
     }
 }

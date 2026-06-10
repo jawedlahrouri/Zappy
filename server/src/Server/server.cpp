@@ -24,14 +24,14 @@
 
 
 
-Server::Server() = default;
+Server::Server(ILogger& logger) : _logger(logger) {}
 
 Server::~Server()
 {
     try {
         cleanup();
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] " << Exception_Server(std::string("Server::~Server: ") + e.what()).what() << std::endl;
+        _logger.error(Exception_Server(std::string("Server::~Server: ") + e.what()).what());
     }
 }
 
@@ -62,7 +62,7 @@ void Server::detect_client_type(int client_socket)
             auto gui_client = std::make_shared<GUI>(std::move(client->socket));
             _clients[client_socket] = gui_client;
             Login::login_gui(gui_client, *this);
-            std::cout << "Client " << client_socket << " authenticated as GUI" << std::endl;
+            _logger.info("Client " + std::to_string(client_socket) + " authenticated as GUI");
         } else {
             for (const auto &team : _teamNames) {
                 if (line == team) {
@@ -76,7 +76,7 @@ void Server::detect_client_type(int client_socket)
                 ai_client->teamName = line;
                 _clients[client_socket] = ai_client;
                 Login::login_ai(ai_client, line, *this);
-                std::cout << "Client " << client_socket << " authenticated as AI in team " << line << std::endl;
+                _logger.info("Client " + std::to_string(client_socket) + " authenticated as AI in team " + line);
             } else {
                 Respond::send_response(*this, client_socket, "ko");
                 remove_client(client_socket);
@@ -96,7 +96,7 @@ void Server::accept_client()
         if (fd != -1) {
             _poll.add_fd(fd, SysPoll::EventIn);
             _clients[fd] = std::make_shared<Client>(std::move(client_socket));
-            std::cout << "New client connected on socket " << fd << std::endl;
+            _logger.info("New client connected on socket " + std::to_string(fd));
             Respond::send_response(*this, fd, "WELCOME");
         }
     } catch (const std::exception &e) {
@@ -123,7 +123,7 @@ void Server::remove_client(int client_socket)
             _clients.erase(it);
         }
         _poll.remove_fd(client_socket);
-        std::cout << "Client " << client_socket << " disconnected" << std::endl;
+        _logger.info("Client " + std::to_string(client_socket) + " disconnected");
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Server::remove_client: ") + e.what());
     }
@@ -150,7 +150,7 @@ bool Server::handle_writable(size_t index)
         it->second->clear_write_buffer();
         _poll.remove_events(client_socket, SysPoll::EventOut);
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] " << Exception_Server(std::string("handle_writable: ") + e.what()).what() << std::endl;
+        _logger.error(Exception_Server(std::string("handle_writable: ") + e.what()).what());
         remove_client(client_socket);
         return true;
     }
@@ -242,7 +242,7 @@ void Server::process_poll_event(size_t &i)
 void Server::run_poll_loop()
 {
     try {
-        std::cout << "Waiting for connections..." << std::endl;
+        _logger.info("Waiting for connections...");
         std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / _freq);
         auto next_tick_time = std::chrono::steady_clock::now();
 
@@ -290,10 +290,10 @@ void Server::open_server(int port, int clientsNb, const std::vector<std::string>
         _master_socket.bind_socket();
         _master_socket.receive_data();
 
-        std::cout << "Server opened on port " << _port << std::endl;
+        _logger.info("Server opened on port " + std::to_string(_port));
         _poll.add_fd(_master_socket.get_socket(), SysPoll::EventIn);
 
-        _game_engine = std::make_unique<GameEngine>(width, height);
+        _game_engine = std::make_unique<GameEngine>(width, height, _logger);
 
         run_poll_loop();
     } catch (const std::exception &e) {
@@ -302,4 +302,39 @@ void Server::open_server(int port, int clientsNb, const std::vector<std::string>
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("Server::open_server: ") + e.what());
     }
+}
+
+const std::unordered_map<int, std::shared_ptr<Client>>& Server::get_clients() const
+{
+    return _clients;
+}
+
+void Server::add_poll_event(int fd, short events)
+{
+    _poll.add_events(fd, events);
+}
+
+int Server::get_clients_nb() const
+{
+    return _clientsNb;
+}
+
+int Server::get_freq() const
+{
+    return _freq;
+}
+
+const std::vector<std::string>& Server::get_team_names() const
+{
+    return _teamNames;
+}
+
+const std::unique_ptr<GameEngine>& Server::get_game_engine() const
+{
+    return _game_engine;
+}
+
+ILogger& Server::get_logger() const
+{
+    return _logger;
 }

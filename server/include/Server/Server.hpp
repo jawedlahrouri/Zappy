@@ -21,23 +21,26 @@
 #include "Client/Client.hpp"
 #include "Client/AI.hpp"
 #include "Client/GUI.hpp"
+#include "shared/ILogger.hpp"
 
 class Server {
     public:
-        Server();
+        explicit Server(ILogger& logger);
         ~Server();
 
         void open_server(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq, int width, int height);
         void remove_client(int client_socket);
-        const std::unordered_map<int, std::shared_ptr<Client>>& get_clients() const { return _clients; }
-        void add_poll_event(int fd, short events) { _poll.add_events(fd, events); }
-        int get_clients_nb() const { return _clientsNb; }
-        int get_freq() const { return _freq; }
-        const std::vector<std::string> &get_team_names() const { return _teamNames; }
-        const std::unique_ptr<GameEngine>& get_game_engine() const { return _game_engine; }
+        const std::unordered_map<int, std::shared_ptr<Client>>& get_clients() const;
+        void add_poll_event(int fd, short events);
+        int get_clients_nb() const;
+        int get_freq() const;
+        const std::vector<std::string> &get_team_names() const;
+        const std::unique_ptr<GameEngine>& get_game_engine() const;
         void send_event(const class IEventElement &event);
+        ILogger& get_logger() const;
 
     private:
+        ILogger& _logger;
         void detect_client_type(int client_socket);
         void run_poll_loop();
         void process_poll_event(size_t &i);

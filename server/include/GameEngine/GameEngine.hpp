@@ -15,6 +15,7 @@
 
 class AI;
 class Server;
+class ILogger;
 
 enum ResourceType {
     FOOD = 0,
@@ -34,7 +35,7 @@ struct Tile {
 
 class GameEngine {
     public:
-        GameEngine(int width, int height);
+        GameEngine(int width, int height, ILogger& logger);
         ~GameEngine() = default;
 
         void update(Server &server);
@@ -57,6 +58,7 @@ class GameEngine {
         void execute_ai_action(std::shared_ptr<AI> ai, Server &server);
         int get_command_duration(const std::string &command);
 
+        ILogger& _logger;
         int _width;
         int _height;
 

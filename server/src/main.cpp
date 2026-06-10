@@ -10,6 +10,7 @@
 #include "Exception_Server.hpp"
 #include "Socket/Socket.hpp"
 #include "Server/Server.hpp"
+#include "shared/ConsoleLogger.hpp"
 
 struct ServerConfig {
     int port = 0;
@@ -74,8 +75,9 @@ ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
 
 int main (int argc, char** argv) {
     try {
+    ConsoleLogger logger;
     ServerConfig config;
-    Server server;
+    Server server(logger);
     
     if (argc == 2 && std::string(argv[1]) == "--help") {
         print_help();

@@ -5,6 +5,8 @@
 ** Exception_Server.hpp
 */
 
+#pragma once
+
 #include <exception>
 #include <string>
 

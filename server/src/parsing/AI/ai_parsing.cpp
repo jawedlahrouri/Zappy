@@ -7,7 +7,7 @@
 
 #include "Parsing/Parsing.hpp"
 #include "Server/Server.hpp"
-#include <iostream>
+#include "shared/ILogger.hpp"
 #include <sstream>
 #include <algorithm>
 #include "Parsing/ai_execute_cmds.hpp"
@@ -46,9 +46,9 @@ void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &co
         // queue 10 commands
         if (client->commandQueue.size() < 10) {
             client->commandQueue.push(command);
-            std::cout << "AI [#" << client->id << "] queued command: " << command << std::endl;
+            server.get_logger().debug("AI [#" + std::to_string(client->id) + "] queued command: " + command);
         } else {
-            std::cout << "AI [#" << client->id << "] command queue full, command dropped" << std::endl;
+            server.get_logger().debug("AI [#" + std::to_string(client->id) + "] command queue full, command dropped");
         }
     } catch (const std::exception &e) {
         throw Exception_Server(std::string("parse_ai_command failed: ") + e.what());
