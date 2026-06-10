@@ -5,16 +5,15 @@
 ** RaylibRenderer
 */
 
-#ifndef RAYLIBRENDERER_HPP_
-    #define RAYLIBRENDERER_HPP_
+#pragma once
 
-    #include "GameWorld.hpp"
-    #include <memory>
-    #include <optional>
-    #include <string>
-    #include <utility>
+#include "GameWorld.hpp"
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 
-    class RaylibRenderer {
+class RaylibRenderer {
     public:
         RaylibRenderer();
         ~RaylibRenderer();
@@ -37,8 +36,5 @@
 
     private:
         struct Impl;
-
         std::unique_ptr<Impl> _impl;
-    };
-
-#endif /* !RAYLIBRENDERER_HPP_ */
+};

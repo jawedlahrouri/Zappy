@@ -8,20 +8,11 @@
 #include "RaylibRenderer.hpp"
 #include <algorithm>
 #include <cmath>
-
-#ifndef ZAPPY_HAS_RAYLIB
-    #define ZAPPY_HAS_RAYLIB 0
-#endif
-
-#if ZAPPY_HAS_RAYLIB
-    #include <raylib.h>
-#endif
+#include <raylib.h>
 
 namespace {
     constexpr float TILE_SIZE = 2.0f;
     constexpr float RESOURCE_RADIUS = 0.12f;
-
-#if ZAPPY_HAS_RAYLIB
     constexpr float CAMERA_INITIAL_YAW = 0.785398f;
     constexpr float CAMERA_INITIAL_PITCH = 0.55f;
     constexpr float CAMERA_MIN_PITCH = 0.20f;
@@ -109,11 +100,9 @@ namespace {
         drawResourceStack(center, tile.resources.thystame,
             {0.30f, 0.0f, 0.58f}, RESOURCE_RADIUS, RED);
     }
-#endif
 }
 
 struct RaylibRenderer::Impl {
-#if ZAPPY_HAS_RAYLIB
     bool initialized = false;
     bool frameStarted = false;
     int lastMapWidth = 0;
@@ -217,7 +206,7 @@ struct RaylibRenderer::Impl {
             mouse.y <= static_cast<float>(INFO_PANEL_MARGIN + INFO_PANEL_HEIGHT))
             return;
 
-        const Ray ray = GetMouseRay(mouse, camera);
+        const Ray ray = GetScreenToWorldRay(mouse, camera);
         if (std::fabs(ray.direction.y) < 0.0001f)
             return;
 
@@ -279,7 +268,6 @@ struct RaylibRenderer::Impl {
         textY += 25;
         DrawText(TextFormat("thystame: %i", resources.thystame), textX, textY, 16, RAYWHITE);
     }
-#endif
 };
 
 RaylibRenderer::RaylibRenderer() : _impl(std::make_unique<Impl>())
@@ -293,13 +281,12 @@ RaylibRenderer::~RaylibRenderer()
 
 bool RaylibRenderer::isAvailable() const
 {
-    return ZAPPY_HAS_RAYLIB != 0;
+    return true;
 }
 
 void RaylibRenderer::open(unsigned int width, unsigned int height,
     const std::string& title)
 {
-#if ZAPPY_HAS_RAYLIB
     if (_impl->initialized)
         return;
 
@@ -307,46 +294,30 @@ void RaylibRenderer::open(unsigned int width, unsigned int height,
     SetTargetFPS(60);
     _impl->initialized = true;
     _impl->configureCamera(10, 10);
-#else
-    (void)width;
-    (void)height;
-    (void)title;
-#endif
 }
 
 void RaylibRenderer::close()
 {
-#if ZAPPY_HAS_RAYLIB
     if (_impl->initialized) {
         CloseWindow();
         _impl->initialized = false;
         _impl->frameStarted = false;
     }
-#endif
 }
 
 bool RaylibRenderer::isOpen() const
 {
-#if ZAPPY_HAS_RAYLIB
     return _impl->initialized && !WindowShouldClose();
-#else
-    return false;
-#endif
 }
 
 bool RaylibRenderer::shouldToggleTo2D() const
 {
-#if ZAPPY_HAS_RAYLIB
     return _impl->initialized &&
         (IsKeyPressed(KEY_TAB) || IsKeyPressed(KEY_V));
-#else
-    return false;
-#endif
 }
 
 void RaylibRenderer::handleInput(const GameWorld& world)
 {
-#if ZAPPY_HAS_RAYLIB
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
 
@@ -358,38 +329,28 @@ void RaylibRenderer::handleInput(const GameWorld& world)
     }
     _impl->updateCameraControls();
     _impl->updateTileSelection(mapWidth, mapHeight);
-#else
-    (void)world;
-#endif
 }
 
 std::optional<std::pair<int, int>> RaylibRenderer::consumeTileRequest()
 {
-#if ZAPPY_HAS_RAYLIB
     std::optional<std::pair<int, int>> request = _impl->pendingTileRequest;
 
     _impl->pendingTileRequest.reset();
     return request;
-#else
-    return std::nullopt;
-#endif
 }
 
 void RaylibRenderer::beginFrame()
 {
-#if ZAPPY_HAS_RAYLIB
     if (!_impl->initialized)
         return;
 
     BeginDrawing();
     ClearBackground({20, 23, 26, 255});
     _impl->frameStarted = true;
-#endif
 }
 
 void RaylibRenderer::drawWorld(const GameWorld& world)
 {
-#if ZAPPY_HAS_RAYLIB
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
 
@@ -463,18 +424,13 @@ void RaylibRenderer::drawWorld(const GameWorld& world)
         static_cast<int>(world.getPlayers().size())), 20, 46, 18,
         Color{210, 220, 225, 255});
     _impl->drawInfoPanel(world);
-#else
-    (void)world;
-#endif
 }
 
 void RaylibRenderer::endFrame()
 {
-#if ZAPPY_HAS_RAYLIB
     if (!_impl->initialized || !_impl->frameStarted)
         return;
 
     EndDrawing();
     _impl->frameStarted = false;
-#endif
 }

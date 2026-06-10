@@ -391,7 +391,8 @@ void WindowManager::switchTo3D()
 {
     if (!_renderer3D->isAvailable()) {
         if (!_raylibWarningPrinted) {
-            std::cerr << "[WindowManager] Raylib indisponible: installez raylib pour activer la vue 3D." << std::endl;
+            std::cerr << "[WindowManager] Impossible de lancer la vue 3D "
+                "sans la lib raylib." << std::endl;
             _raylibWarningPrinted = true;
         }
         return;
