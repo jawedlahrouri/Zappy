@@ -17,7 +17,7 @@ class AI;
 class Server;
 
 struct AiCommand {
-    void (AiCommandParser::*func)(std::shared_ptr<AI> client, const std::string &command, Server &server);
+    void (AiCommandParser::*func)(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network);
     int duration;
 };
 

@@ -14,7 +14,7 @@
 #include <array>
 
 class AI;
-class Server;
+class INetworkProvider;
 class ILogger;
 
 enum ResourceType {
@@ -38,33 +38,33 @@ class GameEngine {
         GameEngine(int width, int height, ILogger& logger);
         ~GameEngine() = default;
 
-        void update(Server &server);
-        void update_ai(std::shared_ptr<AI> ai, Server &server, std::vector<int> &clients_to_remove);
+        void update(INetworkProvider& network);
+        void updateAi(std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove);
 
-        int get_width() const { return _width; }
-        int get_height() const { return _height; }
+        int getWidth() const { return m_width; }
+        int getHeight() const { return m_height; }
         
-        const Tile& get_tile(int x, int y) const;
-        void add_resource_to_tile(int x, int y, ResourceType type, int quantity);
-        void remove_resource_from_tile(int x, int y, ResourceType type, int quantity);
+        const Tile& getTile(int x, int y) const;
+        void addResourceToTile(int x, int y, ResourceType type, int quantity);
+        void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
 
-        void generate_initial_resources();
-        void spawn_resources_cycle();
+        void generateInitialResources();
+        void spawnResourcesCycle();
 
     private:
-        bool handle_ai_survival(int fd, std::shared_ptr<AI> ai, Server &server, std::vector<int> &clients_to_remove);
-        void handle_ai_active_command(std::shared_ptr<AI> ai, Server &server);
-        void handle_ai_next_command(std::shared_ptr<AI> ai, Server &server);
-        void execute_ai_action(std::shared_ptr<AI> ai, Server &server);
-        int get_command_duration(const std::string &command);
+        bool handleAiSurvival(int fd, std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove);
+        void handleAiActiveCommand(std::shared_ptr<AI> ai, INetworkProvider& network);
+        void handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& network);
+        void executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& network);
+        int getCommandDuration(const std::string& command);
 
-        ILogger& _logger;
-        int _width;
-        int _height;
+        ILogger& m_logger;
+        int m_width;
+        int m_height;
 
-        std::vector<std::vector<Tile>> _map;
-        int _resource_spawn_ticks = 0;
-        const std::array<double, RESOURCE_COUNT> _densities = {0.5, 0.3, 0.15, 0.1, 0.1, 0.08, 0.05};
+        std::vector<std::vector<Tile>> m_map;
+        int m_resourceSpawnTicks = 0;
+        const std::array<double, RESOURCE_COUNT> m_densities = {0.5, 0.3, 0.15, 0.1, 0.1, 0.08, 0.05};
 };
 
 #endif /* !GAME_ENGINE_HPP_ */

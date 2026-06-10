@@ -1,13 +1,14 @@
+#include "Network/INetworkProvider.hpp"
 #ifndef AIVISITOR_HPP_
 #define AIVISITOR_HPP_
 
 #include "IAiVisitor.hpp"
 
-class Server;
+class INetworkProvider;
 
 class AiVisitor : public IAiVisitor {
 public:
-    AiVisitor(Server &server) : _server(server) {}
+    AiVisitor(INetworkProvider &network) : _network(network) {}
     ~AiVisitor() override = default;
 
     void visit(ForwardCommand *element) override;
@@ -24,7 +25,7 @@ public:
     void visit(IncantationCommand *element) override;
 
 private:
-    Server &_server;
+    INetworkProvider &_network;
 };
 
 #endif /* !AIVISITOR_HPP_ */

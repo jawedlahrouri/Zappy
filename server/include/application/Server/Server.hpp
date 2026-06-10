@@ -15,49 +15,57 @@
 #include <unordered_map>
 #include <memory>
 #include "Socket/Socket.hpp"
-#include "Parsing/Respond.hpp"
+#include "shared/ILogger.hpp"
 #include "Poll/Poll.hpp"
 
+#include "Network/INetworkProvider.hpp"
 #include "Client/Client.hpp"
-#include "Client/AI.hpp"
-#include "Client/GUI.hpp"
-#include "shared/ILogger.hpp"
 
-class Server {
+class AI;
+class GUI;
+class GameEngine;
+
+class Server : public INetworkProvider {
     public:
         explicit Server(ILogger& logger);
-        ~Server();
+        ~Server() override;
 
-        void open_server(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq, int width, int height);
-        void remove_client(int client_socket);
-        const std::unordered_map<int, std::shared_ptr<Client>>& get_clients() const;
-        void add_poll_event(int fd, short events);
-        int get_clients_nb() const;
-        int get_freq() const;
-        const std::vector<std::string> &get_team_names() const;
-        const std::unique_ptr<GameEngine>& get_game_engine() const;
-        void send_event(const class IEventElement &event);
-        ILogger& get_logger() const;
+        void openServer(int port, int clientsNb, const std::vector<std::string>& teamNames, int freq, int width, int height);
+        void removeClient(int clientSocket);
+        const std::unordered_map<int, std::shared_ptr<Client>>& getClients() const;
+        void addPollEvent(int fd, short events);
+        int getClientsNb() const;
+        int getFreq() const;
+        const std::vector<std::string>& getTeamNames() const;
+        const std::unique_ptr<GameEngine>& getGameEngine() const;
+        void sendEvent(const class IEventElement& event);
+        ILogger& getLogger() const;
+
+        // INetworkProvider Implementation
+        void sendResponse(int clientId, const std::string& message) override;
+        void sendToGuis(const std::string& message) override;
+        void broadcastEvent(const std::string& message, int excludeClientId = -1) override;
+        void sendToAi(const std::string& message);
 
     private:
-        ILogger& _logger;
-        void detect_client_type(int client_socket);
-        void run_poll_loop();
-        void process_poll_event(size_t &i);
-        void accept_client();
-        bool handle_client_data(size_t poll_index);
-        bool handle_writable(size_t index);
+        ILogger& m_logger;
+        void detectClientType(int clientSocket);
+        void runPollLoop();
+        void processPollEvent(size_t& i);
+        void acceptClient();
+        bool handleClientData(size_t pollIndex);
+        bool handleWritable(size_t index);
         void cleanup();
 
-        Socket _master_socket;
-        Poll _poll;
-        std::unordered_map<int, std::shared_ptr<Client>> _clients;
-        std::unique_ptr<GameEngine> _game_engine;
+        Socket m_masterSocket;
+        Poll m_poll;
+        std::unordered_map<int, std::shared_ptr<Client>> m_clients;
+        std::unique_ptr<GameEngine> m_gameEngine;
 
-        int _port = 0;
-        int _clientsNb = 0;
-        std::vector<std::string> _teamNames;
-        int _freq = 0;
+        int m_port = 0;
+        int m_clientsNb = 0;
+        std::vector<std::string> m_teamNames;
+        int m_freq = 0;
 };
 
 #endif /* !SERVER_HPP_ */

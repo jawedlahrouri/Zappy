@@ -8,41 +8,41 @@
 #include "Client/Client.hpp"
 
 Client::Client(Socket clientSocket)
-    : socket(std::move(clientSocket)), type(ClientType::PENDING)
+    : m_socket(std::move(clientSocket)), m_type(ClientType::PENDING)
 {
 }
 
-void Client::append_to_buffer(const std::string& data)
+void Client::appendToBuffer(const std::string& data)
 {
-    _read_buffer.append(data);
+    m_readBuffer.append(data);
 }
 
-bool Client::extract_line(std::string& line)
+bool Client::extractLine(std::string& line)
 {
-    return _read_buffer.extract_line(line);
+    return m_readBuffer.extract_line(line);
 }
 
-void Client::append_to_write_buffer(const std::string& data)
+void Client::appendToWriteBuffer(const std::string& data)
 {
-    _write_buffer.append(data);
+    m_writeBuffer.append(data);
 }
 
-std::string Client::get_write_buffer() const
+std::string Client::getWriteBuffer() const
 {
-    return _write_buffer.peek_all();
+    return m_writeBuffer.peek_all();
 }
 
-bool Client::has_write_data() const
+bool Client::hasWriteData() const
 {
-    return !_write_buffer.is_empty();
+    return !m_writeBuffer.is_empty();
 }
 
-void Client::clear_write_buffer()
+void Client::clearWriteBuffer()
 {
-    _write_buffer.clear();
+    m_writeBuffer.clear();
 }
 
-void Client::remove_from_write_buffer(size_t len)
+void Client::removeFromWriteBuffer(size_t len)
 {
-    _write_buffer.pop(len);
+    m_writeBuffer.pop(len);
 }

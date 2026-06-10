@@ -7,10 +7,8 @@
 
 #include "Socket/Socket.hpp"
 #include "Socket/Sys_Socket.hpp"
-#include "Exception_Server.hpp"
+#include "ServerException.hpp"
 #include <vector>
-#include <cstring>
-#include <cerrno>
 
 Socket::Socket()
     : _socket(-1), _port(0), _backlog(0), _client_socket(-1)
@@ -26,10 +24,10 @@ void Socket::create_socket(int port, int backlog)
 {
     _socket = SysSocket::createInetSocket();
     if (_socket == -1) {
-        throw Exception_Server(std::string("Socket creation failed: ") + std::strerror(errno));
+        throw ServerException(std::string("Socket creation failed: ") + SysSocket::getLastError());
     }
     if (SysSocket::setReuseAddr(_socket, true) == -1) {
-        throw Exception_Server(std::string("setsockopt SO_REUSEADDR failed: ") + std::strerror(errno));
+        throw ServerException(std::string("setsockopt SO_REUSEADDR failed: ") + SysSocket::getLastError());
     }
     _port = port;
     _backlog = backlog;
@@ -39,14 +37,14 @@ void Socket::create_socket(int port, int backlog)
 void Socket::bind_socket()
 {
     if (SysSocket::bindInet(_socket, _port) == -1) {
-        throw Exception_Server(std::string("Socket binding failed: ") + std::strerror(errno));
+        throw ServerException(std::string("Socket binding failed: ") + SysSocket::getLastError());
     }
 }
 
 void Socket::receive_data()
 {
     if (SysSocket::listen(_socket, _backlog) == -1) {
-        throw Exception_Server(std::string("Socket listening failed: ") + std::strerror(errno));
+        throw ServerException(std::string("Socket listening failed: ") + SysSocket::getLastError());
     }
 }
 
@@ -54,19 +52,19 @@ Socket Socket::accept_connection()
 {
     int fd = SysSocket::acceptInet(_socket);
     if (fd == -1) {
-        throw Exception_Server(std::string("Socket acceptance failed: ") + std::strerror(errno));
+        throw ServerException(std::string("Socket acceptance failed: ") + SysSocket::getLastError());
     }
     return Socket(fd);
 }
 
 size_t Socket::send_data(const std::string &data)
 {
-    ssize_t sent = SysSocket::send(_socket, data.c_str(), data.length(), MSG_NOSIGNAL);
+    ssize_t sent = SysSocket::send(_socket, data.c_str(), data.length());
     if (sent == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        if (SysSocket::wouldBlock()) {
             return 0;
         }
-        throw Exception_Server(std::string("Socket sending failed: ") + std::strerror(errno));
+        throw ServerException(std::string("Socket sending failed: ") + SysSocket::getLastError());
     }
     return static_cast<size_t>(sent);
 }
@@ -74,15 +72,15 @@ size_t Socket::send_data(const std::string &data)
 std::string Socket::recv_data(size_t max_size)
 {
     std::vector<char> buf(max_size + 1, 0);
-    ssize_t bytes_read = SysSocket::recv(_socket, buf.data(), max_size, 0);
+    ssize_t bytes_read = SysSocket::recv(_socket, buf.data(), max_size);
     if (bytes_read == 0) {
-        throw Exception_Server("Connection closed by peer");
+        throw ServerException("Connection closed by peer");
     }
     if (bytes_read == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        if (SysSocket::wouldBlock()) {
             return "";
         }
-        throw Exception_Server(std::string("Socket recv failed: ") + std::strerror(errno));
+        throw ServerException(std::string("Socket recv failed: ") + SysSocket::getLastError());
     }
     return std::string(buf.data(), bytes_read);
 }
@@ -90,7 +88,7 @@ std::string Socket::recv_data(size_t max_size)
 void Socket::set_non_blocking(bool non_blocking)
 {
     if (SysSocket::setNonBlocking(_socket, non_blocking) == -1) {
-        throw Exception_Server(std::string("set non blocking failed: ") + std::strerror(errno));
+        throw ServerException(std::string("set non blocking failed: ") + SysSocket::getLastError());
     }
 }
 
@@ -106,7 +104,7 @@ void Socket::close_socket()
     }
 }
 
-int Socket::get_socket() const
+int Socket::getSocket() const
 {
     return _socket;
 }

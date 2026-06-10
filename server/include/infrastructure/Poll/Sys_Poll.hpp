@@ -9,6 +9,7 @@
 #define SYS_POLL_HPP_
 
 #include <vector>
+#include <string>
 
 namespace SysPoll {
     enum Event : short {
@@ -25,6 +26,9 @@ namespace SysPoll {
     };
 
     int poll(std::vector<PollFd> &fds, int timeout);
+    bool isInterrupted();
+    std::string getLastError();
+
 }
 
 #endif /* !SYS_POLL_HPP_ */

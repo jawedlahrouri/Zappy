@@ -1,13 +1,14 @@
+#include "Network/INetworkProvider.hpp"
 #ifndef GUIVISITOR_HPP_
 #define GUIVISITOR_HPP_
 
 #include "IGuiVisitor.hpp"
 
-class Server;
+class INetworkProvider;
 
 class GuiVisitor : public IGuiVisitor {
 public:
-    GuiVisitor(Server &server) : _server(server) {}
+    GuiVisitor(INetworkProvider &network) : _network(network) {}
     ~GuiVisitor() override = default;
 
     void visit(MszCommand *element) override;
@@ -22,7 +23,7 @@ public:
     void visit(SstCommand *element) override;
 
 private:
-    Server &_server;
+    INetworkProvider &_network;
 };
 
 #endif /* !GUIVISITOR_HPP_ */

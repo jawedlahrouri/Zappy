@@ -6,8 +6,8 @@
 */
 
 #include "Event/GUI/EventVisitor.hpp"
-#include "Parsing/Respond.hpp"
-#include "Exception_Server.hpp"
+
+#include "ServerException.hpp"
 #include "Event/GUI/PdiEvent.hpp"
 #include <string>
 
@@ -23,8 +23,8 @@ int PdiEvent::getPlayerId() const {
 
 void EventVisitor::visit(PdiEvent *event) {
     try {
-        Respond::send_to_guis(_server, "pdi " + std::to_string(event->getPlayerId()));
+        _network.sendToGuis("pdi " + std::to_string(event->getPlayerId()));
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("EventVisitor::visit(PdiEvent): ") + e.what());
+        throw ServerException(std::string("EventVisitor::visit(PdiEvent): ") + e.what());
     }
 }

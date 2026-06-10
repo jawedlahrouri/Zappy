@@ -1,3 +1,4 @@
+#include "Client/AI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -11,8 +12,8 @@
 #include <sstream>
 #include <algorithm>
 #include "Parsing/ai_execute_cmds.hpp"
-#include "Exception_Server.hpp"
-#include "Parsing/Respond.hpp"
+#include "ServerException.hpp"
+
 
 std::vector<std::string> Parsing::split_command(const std::string &command)
 {
@@ -26,11 +27,11 @@ std::vector<std::string> Parsing::split_command(const std::string &command)
         }
         return tokens;
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("split_command failed: ") + e.what());
+        throw ServerException(std::string("split_command failed: ") + e.what());
     }
 }
 
-void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &command, Server &server)
+void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network)
 {
     try {
         std::vector<std::string> tokens = split_command(command);
@@ -39,18 +40,18 @@ void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &co
 
         std::string action = tokens[0];
         if (ai_cmds.find(action) == ai_cmds.end()) {
-            Respond::send_response(server, client->socket.get_socket(), "ko");
+            network.sendResponse(client->getSocket().getSocket(), "ko");
             return;
         }
 
         // queue 10 commands
-        if (client->commandQueue.size() < 10) {
-            client->commandQueue.push(command);
-            server.get_logger().debug("AI [#" + std::to_string(client->id) + "] queued command: " + command);
+        if (client->getCommandQueue().size() < 10) {
+            client->getCommandQueue().push(command);
+            network.getLogger().debug("AI [#" + std::to_string(client->getId()) + "] queued command: " + command);
         } else {
-            server.get_logger().debug("AI [#" + std::to_string(client->id) + "] command queue full, command dropped");
+            network.getLogger().debug("AI [#" + std::to_string(client->getId()) + "] command queue full, command dropped");
         }
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("parse_ai_command failed: ") + e.what());
+        throw ServerException(std::string("parse_ai_command failed: ") + e.what());
     }
 }

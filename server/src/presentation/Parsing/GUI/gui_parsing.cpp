@@ -1,3 +1,4 @@
+#include "Client/GUI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -10,10 +11,10 @@
 #include "Parsing/gui_execute_cmds.hpp"
 #include "Server/Server.hpp"
 #include <iostream>
-#include "Exception_Server.hpp"
-#include "Parsing/Respond.hpp"
+#include "ServerException.hpp"
 
-void Parsing::parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, Server &server)
+
+void Parsing::parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network)
 {
     try {
         std::vector<std::string> tokens = split_command(command);
@@ -25,11 +26,11 @@ void Parsing::parse_gui_command(std::shared_ptr<GUI> client, const std::string &
         if (it != gui_cmds.end()) {
             GuiCommandParser parser;
             auto func = it->second;
-            (parser.*func)(client, command, server);
+            (parser.*func)(client, command, network);
         } else {
-            Respond::send_response(server, client->socket.get_socket(), "suc");
+            network.sendResponse(client->getSocket().getSocket(), "suc");
         }
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("parse_gui_command failed: ") + e.what());
+        throw ServerException(std::string("parse_gui_command failed: ") + e.what());
     }
 }

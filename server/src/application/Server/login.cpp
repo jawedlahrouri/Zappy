@@ -1,3 +1,5 @@
+#include "Client/AI.hpp"
+#include "Client/GUI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -5,10 +7,10 @@
 ** login.cpp
 */
 
-#include "Exception_Server.hpp"
+#include "ServerException.hpp"
 #include "Server/Server.hpp"
 #include "Server/login.hpp"
-#include "Parsing/Respond.hpp"
+
 #include "GameEngine/GameEngine.hpp"
 #include "Event/GUI/EventVisitor.hpp"
 #include "Event/GUI/PnwEvent.hpp"
@@ -18,31 +20,31 @@
 // --> TEAM-NAME
 // <-- CLIENT-NUM (unused slots)
 // <-- X Y (map dimensions)
-void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, Server &server)
+void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network)
 {
     try {
     int count = 0;
-    for (const auto &[fd_client, client] : server.get_clients()) {
-        if (client->type == ClientType::AI) {
+    for (const auto &[fd_client, client] : network.getClients()) {
+        if (client->getType() == ClientType::AI) {
             auto ai_client = std::dynamic_pointer_cast<AI>(client);
-            if (ai_client && ai_client->teamName == team_name) {
+            if (ai_client && ai_client->getTeamName() == team_name) {
                 count++;
             }
         }
     }
-    int slots = server.get_clients_nb() - count;
+    int slots = network.getClientsNb() - count;
 
-    int fd = ai->socket.get_socket();
-    Respond::send_response(server, fd, std::to_string(slots));
-    if (server.get_game_engine()) {
-        Respond::send_response(server, fd, std::to_string(server.get_game_engine()->get_width()) + " " + std::to_string(server.get_game_engine()->get_height()));
+    int fd = ai->getSocket().getSocket();
+    network.sendResponse(fd, std::to_string(slots));
+    if (network.getGameEngine()) {
+        network.sendResponse(fd, std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
     } else {
-        Respond::send_response(server, fd, "0 0");
+        network.sendResponse(fd, "0 0");
     }
     
-    server.send_event(PnwEvent(ai));
+    network.sendEvent(PnwEvent(ai));
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("Login::login_ai: ") + e.what());
+        throw ServerException(std::string("Login::login_ai: ") + e.what());
     }
 }
 
@@ -52,33 +54,33 @@ void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, Serve
 // <-- msz X Y\n
 // <-- sgt T\n
 // <-- tna N\n * nbr_teams
-void Login::login_gui(std::shared_ptr<GUI> gui, Server &server)
+void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
 {
     try {
-    int fd = gui->socket.get_socket();
+    int fd = gui->getSocket().getSocket();
 
-    if (server.get_game_engine()) {
-        Respond::send_response(server, fd, "msz " + std::to_string(server.get_game_engine()->get_width()) + " " + std::to_string(server.get_game_engine()->get_height()));
+    if (network.getGameEngine()) {
+        network.sendResponse(fd, "msz " + std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
     } else {
-        Respond::send_response(server, fd, "msz 0 0");
+        network.sendResponse(fd, "msz 0 0");
     }
-    Respond::send_response(server, fd, "sgt " + std::to_string(server.get_freq()));
-    for (const auto &team : server.get_team_names()) {
-        Respond::send_response(server, fd, "tna " + team);
+    network.sendResponse(fd, "sgt " + std::to_string(network.getFreq()));
+    for (const auto &team : network.getTeamNames()) {
+        network.sendResponse(fd, "tna " + team);
     }
-    for (const auto &[client_fd, client] : server.get_clients()) {
-        if (client->type == ClientType::AI) {
+    for (const auto &[client_fd, client] : network.getClients()) {
+        if (client->getType() == ClientType::AI) {
             auto ai = std::dynamic_pointer_cast<AI>(client);
             if (ai) {
-                std::string pnw_msg = "pnw " + std::to_string(ai->id) + " " +
-                                    std::to_string(ai->x) + " " + std::to_string(ai->y) + " " +
-                                    std::to_string(ai->orientation) + " " +
-                                    std::to_string(ai->level) + " " + ai->teamName;
-                Respond::send_response(server, fd, pnw_msg);
+                std::string pnw_msg = "pnw " + std::to_string(ai->getId()) + " " +
+                                    std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
+                                    std::to_string(ai->getOrientation()) + " " +
+                                    std::to_string(ai->getLevel()) + " " + ai->getTeamName();
+                network.sendResponse(fd, pnw_msg);
             }
         }
     }
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("Login::login_gui: ") + e.what());
+        throw ServerException(std::string("Login::login_gui: ") + e.what());
     }
 }

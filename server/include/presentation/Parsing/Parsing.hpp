@@ -7,6 +7,7 @@
 
 #ifndef PARSING_HPP_
 #define PARSING_HPP_
+#include "Network/INetworkProvider.hpp"
 
 #include <string>
 #include <vector>
@@ -21,8 +22,8 @@ class Parsing {
         Parsing() = default;
         ~Parsing() = default;
 
-        static void parse_ai_command(std::shared_ptr<AI> client, const std::string &command, Server &server);
-        static void parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, Server &server);
+        static void parse_ai_command(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network);
+        static void parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network);
 
     private:
         static std::vector<std::string> split_command(const std::string &command);

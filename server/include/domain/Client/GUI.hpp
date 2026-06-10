@@ -13,7 +13,7 @@
 class GUI : public Client {
     public:
         GUI(Socket clientSocket);
-        void update(std::shared_ptr<Client>, Server&, GameEngine&, std::vector<int>&) override {}
+        void update(std::shared_ptr<Client>, INetworkProvider&, GameEngine&, std::vector<int>&) override {}
 };
 
 #endif /* !GUI_HPP_ */

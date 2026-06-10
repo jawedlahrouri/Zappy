@@ -10,5 +10,5 @@
 GUI::GUI(Socket clientSocket)
     : Client(std::move(clientSocket))
 {
-    type = ClientType::GUI;
+    setType(ClientType::GUI);
 }

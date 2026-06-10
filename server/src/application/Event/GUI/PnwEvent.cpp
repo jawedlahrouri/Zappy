@@ -1,3 +1,4 @@
+#include "Client/AI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -7,8 +8,8 @@
 
 #include "Event/GUI/PnwEvent.hpp"
 #include "Event/GUI/EventVisitor.hpp"
-#include "Parsing/Respond.hpp"
-#include "Exception_Server.hpp"
+
+#include "ServerException.hpp"
 #include <string>
 
 PnwEvent::PnwEvent(std::shared_ptr<AI> ai) : _ai(ai) {}
@@ -24,12 +25,12 @@ std::shared_ptr<AI> PnwEvent::getAi() const {
 void EventVisitor::visit(PnwEvent *event) {
     try {
         auto ai = event->getAi();
-        std::string payload = "pnw " + std::to_string(ai->id) + " " + 
-                            std::to_string(ai->x) + " " + std::to_string(ai->y) + " " +
-                            std::to_string(static_cast<int>(ai->orientation)) + " " + 
-                            std::to_string(ai->level) + " " + ai->teamName;
-        Respond::send_to_guis(_server, payload);
+        std::string payload = "pnw " + std::to_string(ai->getId()) + " " + 
+                            std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
+                            std::to_string(static_cast<int>(ai->getOrientation())) + " " + 
+                            std::to_string(ai->getLevel()) + " " + ai->getTeamName();
+        _network.sendToGuis(payload);
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("EventVisitor::visit(PnwEvent): ") + e.what());
+        throw ServerException(std::string("EventVisitor::visit(PnwEvent): ") + e.what());
     }
 }

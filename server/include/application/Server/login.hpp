@@ -13,8 +13,8 @@
 
 class Login {
     public:
-        static void login_ai(std::shared_ptr<AI> ai, const std::string &team_name, Server &server);
-        static void login_gui(std::shared_ptr<GUI> gui, Server &server);
+        static void login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network);
+        static void login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network);
 };
 
 #endif /* !LOGIN_HPP_ */

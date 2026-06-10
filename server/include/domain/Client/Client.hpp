@@ -13,9 +13,9 @@
 #include <memory>
 #include "Socket/Socket.hpp"
 #include "shared/CircularBuffer.hpp"
+#include "Network/INetworkProvider.hpp"
 
 class GameEngine;
-class Server;
 
 enum class ClientType {
     PENDING,
@@ -27,22 +27,30 @@ class Client {
     public:
         Client(Socket clientSocket);
         virtual ~Client() = default;
-        Socket socket;
-        ClientType type;
 
-        void append_to_buffer(const std::string& data);
-        bool extract_line(std::string& line);
-        void append_to_write_buffer(const std::string& data);
-        std::string get_write_buffer() const;
-        bool has_write_data() const;
-        void clear_write_buffer();
-        void remove_from_write_buffer(size_t len);
+        Socket& getSocket() { return m_socket; }
+        const Socket& getSocket() const { return m_socket; }
+        
+        ClientType getType() const { return m_type; }
+        void setType(ClientType newType) { m_type = newType; }
 
-        virtual void update(std::shared_ptr<Client>, Server&, GameEngine&, std::vector<int>&) {}
+        void appendToBuffer(const std::string& data);
+        bool extractLine(std::string& line);
+        void appendToWriteBuffer(const std::string& data);
+        std::string getWriteBuffer() const;
+        bool hasWriteData() const;
+        void clearWriteBuffer();
+        void removeFromWriteBuffer(size_t len);
+
+        virtual void update(std::shared_ptr<Client>, INetworkProvider&, GameEngine&, std::vector<int>&) {}
+
+    protected:
+        Socket m_socket;
+        ClientType m_type;
 
     private:
-        CircularBuffer _read_buffer;
-        CircularBuffer _write_buffer;
+        CircularBuffer m_readBuffer;
+        CircularBuffer m_writeBuffer;
 };
 
 #endif /* !CLIENT_HPP_ */

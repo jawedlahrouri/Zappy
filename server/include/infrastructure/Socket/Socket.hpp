@@ -25,7 +25,7 @@ class Socket {
         std::string recv_data(size_t max_size);
         void set_non_blocking(bool non_blocking);
 
-        int get_socket() const;
+        int getSocket() const;
         int get_client_socket() const;
 
     private:

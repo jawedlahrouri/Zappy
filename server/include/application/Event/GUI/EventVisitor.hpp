@@ -1,3 +1,4 @@
+#include "Network/INetworkProvider.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -10,11 +11,11 @@
 
 #include "IEventVisitor.hpp"
 
-class Server;
+
 
 class EventVisitor : public IEventVisitor {
 public:
-    EventVisitor(Server &server) : _server(server) {}
+    EventVisitor(INetworkProvider &network) : _network(network) {}
     ~EventVisitor() override = default;
 
     void visit(PdiEvent *event) override;
@@ -22,7 +23,7 @@ public:
     void visit(PnwEvent *event) override;
 
 private:
-    Server &_server;
+    INetworkProvider &_network;
 };
 
 #endif /* !EVENTVISITOR_HPP_ */

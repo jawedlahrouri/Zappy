@@ -7,8 +7,8 @@
 
 #include "Event/GUI/PdrEvent.hpp"
 #include "Event/GUI/EventVisitor.hpp"
-#include "Parsing/Respond.hpp"
-#include "Exception_Server.hpp"
+
+#include "ServerException.hpp"
 #include <string>
 
 PdrEvent::PdrEvent(int playerId, int resource) : _playerId(playerId), _resource(resource) {}
@@ -27,8 +27,8 @@ int PdrEvent::getResource() const {
 
 void EventVisitor::visit(PdrEvent *event) {
     try {
-        Respond::send_to_guis(_server, "pdr " + std::to_string(event->getPlayerId()) + " " + std::to_string(event->getResource()));
+        _network.sendToGuis("pdr " + std::to_string(event->getPlayerId()) + " " + std::to_string(event->getResource()));
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("EventVisitor::visit(PdrEvent): ") + e.what());
+        throw ServerException(std::string("EventVisitor::visit(PdrEvent): ") + e.what());
     }
 }

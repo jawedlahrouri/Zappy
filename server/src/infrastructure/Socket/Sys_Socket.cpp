@@ -6,46 +6,31 @@
 */
 
 #include "Socket/Sys_Socket.hpp"
+#include <sys/socket.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <cerrno>
 
 namespace SysSocket {
-    int socket(int domain, int type, int protocol) {
-        return ::socket(domain, type, protocol);
-    }
-
-    int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-        return ::bind(sockfd, addr, addrlen);
-    }
-
     int listen(int sockfd, int backlog) {
         return ::listen(sockfd, backlog);
     }
 
-    int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-        return ::accept(sockfd, addr, addrlen);
-    }
-
-    ssize_t send(int sockfd, const void *buf, size_t len, int flags) {
+    ssize_t send(int sockfd, const void *buf, size_t len) {
+        int flags = MSG_NOSIGNAL;
         return ::send(sockfd, buf, len, flags);
     }
 
-    ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
+    ssize_t recv(int sockfd, void *buf, size_t len) {
+        int flags = 0;
         return ::recv(sockfd, buf, len, flags);
     }
 
     int close(int fd) {
         return ::close(fd);
-    }
-
-    int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
-        return ::setsockopt(sockfd, level, optname, optval, optlen);
-    }
-
-    int fcntl(int fd, int cmd, int arg) {
-        return ::fcntl(fd, cmd, arg);
     }
 
     int createInetSocket() {
@@ -83,5 +68,13 @@ namespace SysSocket {
             flags &= ~O_NONBLOCK;
         }
         return ::fcntl(sockfd, F_SETFL, flags);
+    }
+
+    std::string getLastError() {
+        return std::strerror(errno);
+    }
+
+    bool wouldBlock() {
+        return (errno == EAGAIN || errno == EWOULDBLOCK);
     }
 }
