@@ -50,6 +50,9 @@ void Poll::remove_events(int fd, short events)
 
 int Poll::run_poll(int timeout)
 {
+    for (auto &pfd : _pollfds) {
+        pfd.revents = 0;
+    }
     return SysPoll::poll(_pollfds, timeout);
 }
 
