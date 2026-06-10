@@ -10,6 +10,9 @@
 
 #include "Server/Server.hpp"
 #include <memory>
+class AI;
+class GUI;
+class INetworkProvider;
 
 class Login {
     public:

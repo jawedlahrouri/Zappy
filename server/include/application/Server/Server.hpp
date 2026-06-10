@@ -8,21 +8,17 @@
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
 
-#include <map>
-#include <queue>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <memory>
 #include "Socket/Socket.hpp"
 #include "shared/ILogger.hpp"
 #include "Poll/Poll.hpp"
 
 #include "Network/INetworkProvider.hpp"
-#include "Client/Client.hpp"
+#include "Server/ClientManager.hpp"
+#include "Server/ConnectionHandler.hpp"
 
-class AI;
-class GUI;
 class GameEngine;
 
 class Server : public INetworkProvider {
@@ -31,35 +27,33 @@ class Server : public INetworkProvider {
         ~Server() override;
 
         void openServer(int port, int clientsNb, const std::vector<std::string>& teamNames, int freq, int width, int height);
-        void removeClient(int clientSocket);
-        const std::unordered_map<int, std::shared_ptr<Client>>& getClients() const;
-        void addPollEvent(int fd, short events);
+
         int getClientsNb() const;
         int getFreq() const;
         const std::vector<std::string>& getTeamNames() const;
         const std::unique_ptr<GameEngine>& getGameEngine() const;
-        void sendEvent(const class IEventElement& event);
         ILogger& getLogger() const;
 
         // INetworkProvider Implementation
         void sendResponse(int clientId, const std::string& message) override;
         void sendToGuis(const std::string& message) override;
         void broadcastEvent(const std::string& message, int excludeClientId = -1) override;
-        void sendToAi(const std::string& message);
+        void sendEvent(const class IEventElement& event) override;
+        const std::unordered_map<int, std::shared_ptr<class Client>>& getClients() const override;
+        void addPollEvent(int fd, short events) override;
 
     private:
-        ILogger& m_logger;
-        void detectClientType(int clientSocket);
         void runPollLoop();
         void processPollEvent(size_t& i);
-        void acceptClient();
         bool handleClientData(size_t pollIndex);
         bool handleWritable(size_t index);
         void cleanup();
+        void removeClient(int clientSocket);
 
+        ILogger& m_logger;
         Socket m_masterSocket;
         Poll m_poll;
-        std::unordered_map<int, std::shared_ptr<Client>> m_clients;
+        ClientManager m_clientManager;
         std::unique_ptr<GameEngine> m_gameEngine;
 
         int m_port = 0;

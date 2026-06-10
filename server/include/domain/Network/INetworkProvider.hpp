@@ -25,6 +25,7 @@ class INetworkProvider {
         virtual void sendEvent(const class IEventElement& event) = 0;
         virtual const std::unordered_map<int, std::shared_ptr<class Client>>& getClients() const = 0;
         virtual class ILogger& getLogger() const = 0;
+        virtual void addPollEvent(int fd, short events) = 0;
     
 
         virtual void sendResponse(int clientId, const std::string& message) = 0;
