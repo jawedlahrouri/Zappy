@@ -22,6 +22,8 @@ __pycache__/
 *.pyd
 env/
 venv/
+/IA/logs/
+
 .clangd
 compile_flags.txt
 **/compile_flags.txt
