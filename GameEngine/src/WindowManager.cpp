@@ -25,17 +25,14 @@ namespace {
 }
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
-    : _renderer3D(std::make_unique<RaylibRenderer>()),
-    _renderMode(RenderMode::TwoD),
-    _viewCenter(static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f),
+    : _viewCenter(static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f),
     _selectedTile(std::nullopt),
     _pendingTileRequest(std::nullopt),
     _zoomLevel(1.0f),
     _width(width),
     _height(height),
     _title(title),
-    _fontLoaded(false),
-    _raylibWarningPrinted(false)
+    _fontLoaded(false)
 {
     create2DWindow(width, height);
     loadTextures();
@@ -85,13 +82,10 @@ WindowManager::~WindowManager()
     if (_window.isOpen()) {
         _window.close();
     }
-    _renderer3D->close();
 }
 
 bool WindowManager::isOpen() const
 {
-    if (_renderMode == RenderMode::ThreeD)
-        return _renderer3D->isOpen();
     return _window.isOpen();
 }
 
@@ -106,7 +100,6 @@ void WindowManager::create2DWindow(unsigned int width, unsigned int height)
     _window.setFramerateLimit(60);
     _viewCenter = {static_cast<float>(width) / 2.0f,
         static_cast<float>(height) / 2.0f};
-    _renderMode = RenderMode::TwoD;
     _panClock.restart();
     updateView(width, height);
 }
@@ -145,7 +138,7 @@ void WindowManager::update2DPan()
     const float panStep = PAN_SPEED * _zoomLevel * deltaTime;
     sf::Vector2f movement(0.0f, 0.0f);
 
-    if (_renderMode != RenderMode::TwoD || !_window.isOpen())
+    if (!_window.isOpen())
         return;
     if (!_window.hasFocus())
         return;
@@ -206,18 +199,6 @@ std::optional<std::pair<int, int>> WindowManager::consumeTileRequest()
 
 void WindowManager::handleEvents(const GameWorld& world)
 {
-    if (_renderMode == RenderMode::ThreeD) {
-        _renderer3D->handleInput(world);
-        if (std::optional<std::pair<int, int>> request =
-            _renderer3D->consumeTileRequest()) {
-            _selectedTile = request;
-            _pendingTileRequest = request;
-        }
-        if (_renderer3D->shouldToggleTo2D())
-            switchTo2D();
-        return;
-    }
-
     sf::Event event;
     while (_window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -240,9 +221,6 @@ void WindowManager::handleEvents(const GameWorld& world)
                 zoomView(ZOOM_STEP);
             } else if (event.key.code == sf::Keyboard::R) {
                 resetZoom();
-            } else if (event.key.code == sf::Keyboard::Tab ||
-                event.key.code == sf::Keyboard::V) {
-                switchTo3D();
             }
         } else if (event.type == sf::Event::MouseButtonPressed &&
             event.mouseButton.button == sf::Mouse::Left) {
@@ -254,29 +232,16 @@ void WindowManager::handleEvents(const GameWorld& world)
 
 void WindowManager::clear()
 {
-    if (_renderMode == RenderMode::ThreeD) {
-        _renderer3D->beginFrame();
-        return;
-    }
     _window.clear(sf::Color(30, 30, 30));
 }
 
 void WindowManager::display()
 {
-    if (_renderMode == RenderMode::ThreeD) {
-        _renderer3D->endFrame();
-        return;
-    }
     _window.display();
 }
 
 void WindowManager::drawWorld(const GameWorld& world)
 {
-    if (_renderMode == RenderMode::ThreeD) {
-        _renderer3D->drawWorld(world);
-        return;
-    }
-
     int mapWidth = world.getWidth();
     int mapHeight = world.getHeight();
 
@@ -379,32 +344,4 @@ void WindowManager::drawInfoPanel2D(const GameWorld& world)
     drawLine("phiras: " + std::to_string(resources.phiras), 7);
     drawLine("thystame: " + std::to_string(resources.thystame), 8);
     _window.setView(previousView);
-}
-
-void WindowManager::switchTo2D()
-{
-    _renderer3D->close();
-    create2DWindow(_width, _height);
-}
-
-void WindowManager::switchTo3D()
-{
-    if (!_renderer3D->isAvailable()) {
-        if (!_raylibWarningPrinted) {
-            std::cerr << "[WindowManager] Impossible de lancer la vue 3D "
-                "sans la lib raylib." << std::endl;
-            _raylibWarningPrinted = true;
-        }
-        return;
-    }
-
-    if (_window.isOpen()) {
-        const sf::Vector2u size = _window.getSize();
-
-        _width = size.x;
-        _height = size.y;
-        _window.close();
-    }
-    _renderer3D->open(_width, _height, _title + " - 3D");
-    _renderMode = RenderMode::ThreeD;
 }

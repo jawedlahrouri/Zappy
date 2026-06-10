@@ -10,8 +10,6 @@
 
 #include <SFML/Graphics.hpp>
 #include "GameWorld.hpp"
-#include "RaylibRenderer.hpp"
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -32,11 +30,6 @@ public:
     void drawWorld(const GameWorld& world);
 
     private:
-        enum class RenderMode {
-            TwoD,
-            ThreeD
-        };
-
         void create2DWindow(unsigned int width, unsigned int height);
         void loadTextures();
         void loadFont();
@@ -46,14 +39,10 @@ public:
         void update2DPan();
         void select2DTile(const GameWorld& world, int mouseX, int mouseY);
         void drawInfoPanel2D(const GameWorld& world);
-        void switchTo2D();
-        void switchTo3D();
 
         sf::RenderWindow _window;
         sf::View _worldView;
         sf::Font _font;
-        std::unique_ptr<RaylibRenderer> _renderer3D;
-        RenderMode _renderMode;
         sf::Vector2f _viewCenter;
         sf::Clock _panClock;
         std::optional<std::pair<int, int>> _selectedTile;
@@ -63,7 +52,6 @@ public:
         unsigned int _height;
         std::string _title;
         bool _fontLoaded;
-        bool _raylibWarningPrinted;
         sf::Texture _tileTexture;
         sf::Texture _linemateTexture;
     };
