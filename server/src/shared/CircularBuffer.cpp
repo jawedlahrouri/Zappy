@@ -28,6 +28,31 @@ size_t CircularBuffer::available_space() const
     return m_capacity - size();
 }
 
+
+void CircularBuffer::resize(size_t new_capacity)
+{
+    if (new_capacity <= m_capacity) return;
+    
+    std::vector<char> new_buffer(new_capacity);
+    size_t current_size = size();
+    
+    if (current_size > 0) {
+        if (m_head > m_tail || (m_head == m_tail && !m_full)) {
+            std::copy(m_buffer.begin() + m_tail, m_buffer.begin() + m_tail + current_size, new_buffer.begin());
+        } else {
+            size_t first_part = m_capacity - m_tail;
+            std::copy(m_buffer.begin() + m_tail, m_buffer.end(), new_buffer.begin());
+            std::copy(m_buffer.begin(), m_buffer.begin() + m_head, new_buffer.begin() + first_part);
+        }
+    }
+    
+    m_buffer = std::move(new_buffer);
+    m_capacity = new_capacity;
+    m_tail = 0;
+    m_head = current_size % m_capacity;
+    m_full = false;
+}
+
 void CircularBuffer::clear()
 {
     m_head = 0;
@@ -49,7 +74,11 @@ void CircularBuffer::append(const std::string& data)
         return;
 
     if (data.size() > available_space()) {
-        throw std::overflow_error("CircularBuffer overflow");
+        size_t new_capacity = m_capacity * 2;
+        while (new_capacity - size() < data.size()) {
+            new_capacity *= 2;
+        }
+        resize(new_capacity);
     }
 
     // Only copy what fits (if a single packet is larger than capacity, we truncate it)
