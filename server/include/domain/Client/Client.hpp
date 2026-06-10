@@ -36,6 +36,7 @@ class Client {
         std::string get_write_buffer() const;
         bool has_write_data() const;
         void clear_write_buffer();
+        void remove_from_write_buffer(size_t len);
 
         virtual void update(std::shared_ptr<Client>, Server&, GameEngine&, std::vector<int>&) {}
 

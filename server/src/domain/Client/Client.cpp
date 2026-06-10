@@ -41,3 +41,8 @@ void Client::clear_write_buffer()
 {
     _write_buffer.clear();
 }
+
+void Client::remove_from_write_buffer(size_t len)
+{
+    _write_buffer.pop(len);
+}

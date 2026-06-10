@@ -94,13 +94,14 @@ void Server::accept_client()
         int fd = client_socket.get_socket();
         
         if (fd != -1) {
+            client_socket.set_non_blocking(true);
             _poll.add_fd(fd, SysPoll::EventIn);
             _clients[fd] = std::make_shared<Client>(std::move(client_socket));
             _logger.info("New client connected on socket " + std::to_string(fd));
             Respond::send_response(*this, fd, "WELCOME");
         }
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("Server::accept_client: ") + e.what());
+        _logger.error("Failed to accept client connection: " + std::string(e.what()));
     }
 }
 
@@ -145,18 +146,23 @@ bool Server::handle_writable(size_t index)
             return false;
         }
 
-    try {
-        it->second->socket.send_data(buffer);
-        it->second->clear_write_buffer();
-        _poll.remove_events(client_socket, SysPoll::EventOut);
+        try {
+            size_t sent = it->second->socket.send_data(buffer);
+            if (sent > 0) {
+                it->second->remove_from_write_buffer(sent);
+            }
+            if (!it->second->has_write_data()) {
+                _poll.remove_events(client_socket, SysPoll::EventOut);
+            }
+        } catch (const std::exception &e) {
+            _logger.error("handle_writable: " + std::string(e.what()));
+            remove_client(client_socket);
+            return true;
+        }
+        return false;
     } catch (const std::exception &e) {
-        _logger.error(Exception_Server(std::string("handle_writable: ") + e.what()).what());
-        remove_client(client_socket);
-        return true;
-    }
-    return false;
-    } catch (const std::exception &e) {
-        throw Exception_Server(std::string("Server::handle_writable: ") + e.what());
+        _logger.error("Server::handle_writable exception: " + std::string(e.what()));
+        return false;
     }
 }
 
@@ -168,31 +174,45 @@ bool Server::handle_client_data(size_t poll_index)
         if (it == _clients.end()) {
             return false;
         }
-        std::string data = it->second->socket.recv_data(1024);
-
-        if (data.empty()) {
+        std::string data;
+        try {
+            data = it->second->socket.recv_data(1024);
+        } catch (const std::exception &e) {
+            _logger.info("Client " + std::to_string(client_socket) + " disconnected: " + e.what());
             remove_client(client_socket);
             return true;
-        } else {
+        }
+
+        if (data.empty()) {
+            return false;
+        }
+
+        try {
             it->second->append_to_buffer(data);
-            if (it->second->type == ClientType::PENDING) {
-                detect_client_type(client_socket);
-            } else {
-                std::string line;
-                while (it->second->extract_line(line)) {
-                    if (it->second->type == ClientType::GUI) {
-                        auto gui_client = std::dynamic_pointer_cast<GUI>(it->second);
-                        Parsing::parse_gui_command(gui_client, line, *this);
-                    } else if (it->second->type == ClientType::AI) {
-                        auto ai_client = std::dynamic_pointer_cast<AI>(it->second);
-                        Parsing::parse_ai_command(ai_client, line, *this);
-                    }
+        } catch (const std::overflow_error &e) {
+            _logger.error("Client " + std::to_string(client_socket) + " buffer overflow: " + e.what());
+            remove_client(client_socket);
+            return true;
+        }
+
+        if (it->second->type == ClientType::PENDING) {
+            detect_client_type(client_socket);
+        } else {
+            std::string line;
+            while (it->second->extract_line(line)) {
+                if (it->second->type == ClientType::GUI) {
+                    auto gui_client = std::dynamic_pointer_cast<GUI>(it->second);
+                    Parsing::parse_gui_command(gui_client, line, *this);
+                } else if (it->second->type == ClientType::AI) {
+                    auto ai_client = std::dynamic_pointer_cast<AI>(it->second);
+                    Parsing::parse_ai_command(ai_client, line, *this);
                 }
             }
         }
         return false;
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("Server::handle_client_data: ") + e.what());
+        _logger.error("Server::handle_client_data exception: " + std::string(e.what()));
+        return false;
     }
 }
 

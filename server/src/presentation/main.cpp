@@ -93,6 +93,7 @@ int main (int argc, char** argv) {
 
     return 0;
     } catch (const std::exception &e) {
-        throw Exception_Server(std::string("main: ") + e.what());
+        std::cerr << "Initialization error: " << e.what() << std::endl;
+        return 84;
     }
 }

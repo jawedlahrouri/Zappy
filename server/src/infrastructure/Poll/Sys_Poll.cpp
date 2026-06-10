@@ -23,9 +23,12 @@ namespace SysPoll {
 
         int ret = ::poll(sys_fds.data(), sys_fds.size(), timeout);
 
+        for (size_t i = 0; i < fds.size(); ++i) {
+            fds[i].revents = 0;
+        }
+
         if (ret > 0) {
             for (size_t i = 0; i < fds.size(); ++i) {
-                fds[i].revents = 0;
                 if (sys_fds[i].revents & POLLIN) fds[i].revents |= EventIn;
                 if (sys_fds[i].revents & POLLOUT) fds[i].revents |= EventOut;
                 if (sys_fds[i].revents & POLLERR) fds[i].revents |= EventErr;

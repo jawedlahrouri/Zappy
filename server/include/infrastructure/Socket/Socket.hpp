@@ -8,7 +8,6 @@
 #ifndef SOCKET_HPP_
 #define SOCKET_HPP_
 
-#include <netinet/in.h>
 #include <string>
 
 class Socket {
@@ -22,8 +21,9 @@ class Socket {
         void bind_socket();
         Socket accept_connection();
         void receive_data();
-        void send_data(const std::string &data);
+        size_t send_data(const std::string &data);
         std::string recv_data(size_t max_size);
+        void set_non_blocking(bool non_blocking);
 
         int get_socket() const;
         int get_client_socket() const;

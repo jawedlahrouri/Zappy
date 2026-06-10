@@ -19,6 +19,14 @@ namespace SysSocket {
     ssize_t send(int sockfd, const void *buf, size_t len, int flags);
     ssize_t recv(int sockfd, void *buf, size_t len, int flags);
     int close(int fd);
+    int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+    int fcntl(int fd, int cmd, int arg);
+
+    int createInetSocket();
+    int bindInet(int sockfd, int port);
+    int acceptInet(int sockfd);
+    int setReuseAddr(int sockfd, bool reuse);
+    int setNonBlocking(int sockfd, bool non_blocking);
 }
 
 #endif /* !SYS_SOCKET_HPP_ */

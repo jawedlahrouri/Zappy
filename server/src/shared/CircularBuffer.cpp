@@ -7,6 +7,7 @@
 
 #include "shared/CircularBuffer.hpp"
 #include <algorithm>
+#include <stdexcept>
 
 CircularBuffer::CircularBuffer(size_t capacity)
     : m_buffer(capacity), m_head(0), m_tail(0), m_full(false), m_capacity(capacity)
@@ -34,14 +35,21 @@ void CircularBuffer::clear()
     m_full = false;
 }
 
+void CircularBuffer::pop(size_t len)
+{
+    size_t s = size();
+    size_t to_pop = std::min(len, s);
+    m_tail = (m_tail + to_pop) % m_capacity;
+    m_full = false;
+}
+
 void CircularBuffer::append(const std::string& data)
 {
     if (data.empty())
         return;
 
-    // If data is larger than capacity or available space, we clear buffer as per user preference (DoS protection)
     if (data.size() > available_space()) {
-        clear();
+        throw std::overflow_error("CircularBuffer overflow");
     }
 
     // Only copy what fits (if a single packet is larger than capacity, we truncate it)

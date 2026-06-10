@@ -12,11 +12,12 @@
 
 class CircularBuffer {
     public:
-        explicit CircularBuffer(size_t capacity = 1024);
+        explicit CircularBuffer(size_t capacity = 65536);
         ~CircularBuffer() = default;
 
         void append(const std::string& data);
         bool extract_line(std::string& line);
+        void pop(size_t len);
         
         bool is_empty() const;
         std::string peek_all() const;
