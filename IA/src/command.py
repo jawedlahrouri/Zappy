@@ -168,7 +168,7 @@ class ZappyCommand:
             return False
         if first_response == "Elevation underway":
             second_response = self._wait_for_response(expect_incantation=True)
-            logger.important(f"l'agent envoie la commande: {second_response}")
+            logger.info(f"l'agent envoie la commande: {second_response}")
             return second_response.startswith("Current level")
         return False
     
