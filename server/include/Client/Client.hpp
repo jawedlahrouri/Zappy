@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 #include "Socket/Socket.hpp"
+#include "Server/CircularBuffer.hpp"
 
 class GameEngine;
 class Server;
@@ -32,14 +33,15 @@ class Client {
         void append_to_buffer(const std::string& data);
         bool extract_line(std::string& line);
         void append_to_write_buffer(const std::string& data);
-        const std::string& get_write_buffer() const;
+        std::string get_write_buffer() const;
+        bool has_write_data() const;
         void clear_write_buffer();
 
         virtual void update(std::shared_ptr<Client>, Server&, GameEngine&, std::vector<int>&) {}
 
     private:
-        std::string _buffer;
-        std::string _write_buffer;
+        CircularBuffer _read_buffer;
+        CircularBuffer _write_buffer;
 };
 
 #endif /* !CLIENT_HPP_ */

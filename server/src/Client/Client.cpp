@@ -14,30 +14,27 @@ Client::Client(Socket clientSocket)
 
 void Client::append_to_buffer(const std::string& data)
 {
-    _buffer += data;
+    _read_buffer.append(data);
 }
 
 bool Client::extract_line(std::string& line)
 {
-    size_t newline_pos = _buffer.find('\n');
-    if (newline_pos == std::string::npos)
-        return false;
-    line = _buffer.substr(0, newline_pos);
-    if (!line.empty() && line.back() == '\r') {
-        line.pop_back();
-    }
-    _buffer.erase(0, newline_pos + 1);
-    return true;
+    return _read_buffer.extract_line(line);
 }
 
 void Client::append_to_write_buffer(const std::string& data)
 {
-    _write_buffer += data;
+    _write_buffer.append(data);
 }
 
-const std::string& Client::get_write_buffer() const
+std::string Client::get_write_buffer() const
 {
-    return _write_buffer;
+    return _write_buffer.peek_all();
+}
+
+bool Client::has_write_data() const
+{
+    return !_write_buffer.is_empty();
 }
 
 void Client::clear_write_buffer()
