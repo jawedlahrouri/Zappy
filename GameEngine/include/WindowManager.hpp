@@ -12,7 +12,9 @@
 #include "GameWorld.hpp"
 #include "RaylibRenderer.hpp"
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 
 class WindowManager {
 public:
@@ -21,7 +23,8 @@ public:
 
     bool isOpen() const;
 
-    void handleEvents();
+    void handleEvents(const GameWorld& world);
+    std::optional<std::pair<int, int>> consumeTileRequest();
 
     void clear();
     void display();
@@ -36,20 +39,30 @@ public:
 
         void create2DWindow(unsigned int width, unsigned int height);
         void loadTextures();
+        void loadFont();
         void updateView(unsigned int width, unsigned int height);
         void zoomView(float factor);
         void resetZoom();
+        void update2DPan();
+        void select2DTile(const GameWorld& world, int mouseX, int mouseY);
+        void drawInfoPanel2D(const GameWorld& world);
         void switchTo2D();
         void switchTo3D();
 
         sf::RenderWindow _window;
         sf::View _worldView;
+        sf::Font _font;
         std::unique_ptr<RaylibRenderer> _renderer3D;
         RenderMode _renderMode;
+        sf::Vector2f _viewCenter;
+        sf::Clock _panClock;
+        std::optional<std::pair<int, int>> _selectedTile;
+        std::optional<std::pair<int, int>> _pendingTileRequest;
         float _zoomLevel;
         unsigned int _width;
         unsigned int _height;
         std::string _title;
+        bool _fontLoaded;
         bool _raylibWarningPrinted;
         sf::Texture _tileTexture;
         sf::Texture _linemateTexture;

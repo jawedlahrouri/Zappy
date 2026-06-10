@@ -98,3 +98,11 @@ std::string NetworkManager::receiveData()
 
     return "";
 }
+
+bool NetworkManager::sendCommand(const std::string& command)
+{
+    if (!_isConnected)
+        return false;
+
+    return _socket.send(command.c_str(), command.size()) == sf::Socket::Done;
+}

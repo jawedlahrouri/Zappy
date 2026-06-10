@@ -29,7 +29,8 @@ int Core::run(int ac, char** av) {
     std::cout << "[Core] Moteur démarré. Écoute du serveur..." << std::endl;
 
     while (_windowManager.isOpen()) {
-        _windowManager.handleEvents();
+        _windowManager.handleEvents(_world);
+        sendPendingTileRequest();
 
         std::string command = _network.receiveData();
         if (!command.empty()) {
@@ -44,6 +45,19 @@ int Core::run(int ac, char** av) {
     }
 
     return 0;
+}
+
+void Core::sendPendingTileRequest()
+{
+    std::optional<std::pair<int, int>> request = _windowManager.consumeTileRequest();
+
+    if (!request.has_value())
+        return;
+
+    const std::string command = "bct " + std::to_string(request->first) +
+        " " + std::to_string(request->second) + "\n";
+
+    _network.sendCommand(command);
 }
 
 void Core::parseCommand(const std::string& command) {
