@@ -17,18 +17,18 @@
 class IAiVisitor {
 public:
     virtual ~IAiVisitor() = default;
-    virtual void visit(ForwardCommand *element) = 0;
-    virtual void visit(RightCommand *element) = 0;
-    virtual void visit(LeftCommand *element) = 0;
-    virtual void visit(LookCommand *element) = 0;
-    virtual void visit(InventoryCommand *element) = 0;
-    virtual void visit(BroadcastCommand *element) = 0;
-    virtual void visit(ConnectNbrCommand *element) = 0;
-    virtual void visit(ForkCommand *element) = 0;
-    virtual void visit(EjectCommand *element) = 0;
-    virtual void visit(TakeCommand *element) = 0;
-    virtual void visit(SetCommand *element) = 0;
-    virtual void visit(IncantationCommand *element) = 0;
+    virtual void visit(class ForwardCommand *element) = 0;
+    virtual void visit(class RightCommand *element) = 0;
+    virtual void visit(class LeftCommand *element) = 0;
+    virtual void visit(class LookCommand *element) = 0;
+    virtual void visit(class InventoryCommand *element) = 0;
+    virtual void visit(class BroadcastCommand *element) = 0;
+    virtual void visit(class ConnectNbrCommand *element) = 0;
+    virtual void visit(class ForkCommand *element) = 0;
+    virtual void visit(class EjectCommand *element) = 0;
+    virtual void visit(class TakeCommand *element) = 0;
+    virtual void visit(class SetCommand *element) = 0;
+    virtual void visit(class IncantationCommand *element) = 0;
 };
 
 #endif /* !IAIVISITOR_HPP_ */

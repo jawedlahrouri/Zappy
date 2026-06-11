@@ -12,8 +12,7 @@
 #include <memory>
 #include "Server/Server.hpp"
 #include "Network/INetworkProvider.hpp"
-
-class AI;
+#include "Client/AI.hpp"
 
 class AiCommandParser {
     public:

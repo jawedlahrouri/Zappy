@@ -9,18 +9,17 @@
 #define TAKECOMMAND_HPP_
 
 #include "Command/AI/IAiCommandElement.hpp"
-#include <memory>
-class AI;
-
-class IAiVisitor;
+#include "application/Command/AI/IAiVisitor.hpp"
+#include "domain/Client/AI.hpp"
 
 class TakeCommand : public IAiCommandElement {
 public:
-    void Accept(IAiVisitor *visitor) override;
-    void setClient(std::shared_ptr<AI> client) { _client = client; }
-    std::shared_ptr<AI> getClient() const { return _client; }
+  void Accept(IAiVisitor *visitor) override;
+  void setClient(std::shared_ptr<AI> client) { _client = client; }
+  std::shared_ptr<AI> getClient() const { return _client; }
+
 private:
-    std::shared_ptr<AI> _client;
+  std::shared_ptr<AI> _client;
 };
 
 #endif /* !TAKECOMMAND_HPP_ */

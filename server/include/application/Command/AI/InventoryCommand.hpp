@@ -9,10 +9,8 @@
 #define INVENTORYCOMMAND_HPP_
 
 #include "Command/AI/IAiCommandElement.hpp"
-#include <memory>
-class AI;
-
-class IAiVisitor;
+#include "domain/Client/AI.hpp"
+#include "application/Command/AI/IAiVisitor.hpp"
 
 class InventoryCommand : public IAiCommandElement {
 public:
