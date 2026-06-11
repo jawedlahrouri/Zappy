@@ -21,6 +21,7 @@ GUI_OBJ = $(GUI_SRC:.cpp=.o)
 
 AI_DIR = IA
 AI_SRC = $(AI_DIR)/main.py
+AI_EXEC = zappy_ai
 
 all: zappy_server zappy_gui zappy_ai
 
@@ -31,9 +32,10 @@ zappy_gui: $(GUI_OBJ)
 	$(CXX) $(CXXFLAGS) -o zappy_gui $(GUI_OBJ) \
 	-lsfml-network -lsfml-system -lsfml-graphics -lsfml-window
 
-zappy_ai: $(AI_SRC)
-	cp $(AI_SRC) zappy_ai
-	chmod +x zappy_ai
+zappy_ai: $(AI_EXEC)
+	@echo "#!/bin/bash" > $(AI_EXEC)
+	@echo "python3 IA/main.py \"\$$@\"" >> $(AI_EXEC)
+	@chmod +x $(AI_EXEC)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
