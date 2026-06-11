@@ -6,22 +6,19 @@
 */
 
 #include "WindowManager.hpp"
-#include "GraphicalUtils.hpp"
+#include "Menu.hpp"
 #include "TextureManager.hpp"
+#include "World.hpp"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <iostream>
 
 namespace {
-    constexpr float TILE_SIZE = 64.0f;
     constexpr float ZOOM_STEP = 1.1f;
     constexpr float MIN_ZOOM = 0.35f;
     constexpr float MAX_ZOOM = 3.0f;
     constexpr float PAN_SPEED = 650.0f;
-    constexpr float INFO_PANEL_WIDTH = 270.0f;
-    constexpr float INFO_PANEL_HEIGHT = 250.0f;
-    constexpr float INFO_PANEL_MARGIN = 20.0f;
 }
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
@@ -43,6 +40,7 @@ void WindowManager::loadTextures()
 {
     TextureManager& tm = TextureManager::getInstance();
     
+    tm.loadTexture("menuBackground", "background_menu.png");
     tm.loadTexture("ground", "ground.png");
     tm.loadTexture("food", "food.png");
     tm.loadTexture("linemate",  "brique.png");
@@ -169,19 +167,22 @@ void WindowManager::select2DTile(const GameWorld& world, int mouseX, int mouseY)
 
     const sf::Vector2u windowSize = _window.getSize();
     const float panelLeft = static_cast<float>(windowSize.x) -
-        INFO_PANEL_WIDTH - INFO_PANEL_MARGIN;
+        WorldRenderer::INFO_PANEL_WIDTH - WorldRenderer::INFO_PANEL_MARGIN;
     if (_selectedTile.has_value() && static_cast<float>(mouseX) >= panelLeft &&
-        static_cast<float>(mouseY) <= INFO_PANEL_MARGIN + INFO_PANEL_HEIGHT)
+        static_cast<float>(mouseY) <= WorldRenderer::INFO_PANEL_MARGIN +
+        WorldRenderer::INFO_PANEL_HEIGHT)
         return;
 
     const sf::Vector2f worldPos = _window.mapPixelToCoords(
         {mouseX, mouseY}, _worldView);
-    const float totalMapWidth = static_cast<float>(mapWidth) * TILE_SIZE;
-    const float totalMapHeight = static_cast<float>(mapHeight) * TILE_SIZE;
+    const float totalMapWidth = static_cast<float>(mapWidth) * WorldRenderer::TILE_SIZE;
+    const float totalMapHeight = static_cast<float>(mapHeight) * WorldRenderer::TILE_SIZE;
     const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
     const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
-    const int tileX = static_cast<int>(std::floor((worldPos.x - offsetX) / TILE_SIZE));
-    const int tileY = static_cast<int>(std::floor((worldPos.y - offsetY) / TILE_SIZE));
+    const int tileX = static_cast<int>(std::floor((worldPos.x - offsetX) /
+        WorldRenderer::TILE_SIZE));
+    const int tileY = static_cast<int>(std::floor((worldPos.y - offsetY) /
+        WorldRenderer::TILE_SIZE));
 
     if (tileX < 0 || tileX >= mapWidth || tileY < 0 || tileY >= mapHeight)
         return;
@@ -197,37 +198,79 @@ std::optional<std::pair<int, int>> WindowManager::consumeTileRequest()
     return request;
 }
 
-void WindowManager::handleEvents(const GameWorld& world)
+bool WindowManager::handleWindowEvent(const sf::Event& event)
+{
+    if (event.type == sf::Event::Closed) {
+        _window.close();
+        return true;
+    }
+    if (event.type == sf::Event::Resized) {
+        _width = event.size.width;
+        _height = event.size.height;
+        updateView(event.size.width, event.size.height);
+        return true;
+    }
+    return false;
+}
+
+bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& world)
+{
+    if (event.type == sf::Event::MouseWheelScrolled) {
+        if (event.mouseWheelScroll.delta > 0)
+            zoomView(1.0f / ZOOM_STEP);
+        else if (event.mouseWheelScroll.delta < 0)
+            zoomView(ZOOM_STEP);
+    } else if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::Escape)
+            return true;
+        if (event.key.code == sf::Keyboard::Add || event.key.code == sf::Keyboard::Equal ||
+            event.key.code == sf::Keyboard::PageUp) {
+            zoomView(1.0f / ZOOM_STEP);
+        } else if (event.key.code == sf::Keyboard::Subtract || event.key.code == sf::Keyboard::Hyphen ||
+            event.key.code == sf::Keyboard::PageDown) {
+            zoomView(ZOOM_STEP);
+        } else if (event.key.code == sf::Keyboard::R) {
+            resetZoom();
+        }
+    } else if (event.type == sf::Event::MouseButtonPressed &&
+        event.mouseButton.button == sf::Mouse::Left) {
+        select2DTile(world, event.mouseButton.x, event.mouseButton.y);
+    }
+    return false;
+}
+
+bool WindowManager::handleMenuEvents()
 {
     sf::Event event;
+    bool startGame = false;
+
     while (_window.pollEvent(event)) {
-        if (event.type == sf::Event::Closed) {
+        if (handleWindowEvent(event))
+            continue;
+        if (event.type != sf::Event::KeyPressed)
+            continue;
+        if (event.key.code == sf::Keyboard::Enter)
+            startGame = true;
+        else if (event.key.code == sf::Keyboard::Escape)
             _window.close();
-        } else if (event.type == sf::Event::Resized) {
-            _width = event.size.width;
-            _height = event.size.height;
-            updateView(event.size.width, event.size.height);
-        } else if (event.type == sf::Event::MouseWheelScrolled) {
-            if (event.mouseWheelScroll.delta > 0)
-                zoomView(1.0f / ZOOM_STEP);
-            else if (event.mouseWheelScroll.delta < 0)
-                zoomView(ZOOM_STEP);
-        } else if (event.type == sf::Event::KeyPressed) {
-            if (event.key.code == sf::Keyboard::Add || event.key.code == sf::Keyboard::Equal ||
-                event.key.code == sf::Keyboard::PageUp) {
-                zoomView(1.0f / ZOOM_STEP);
-            } else if (event.key.code == sf::Keyboard::Subtract || event.key.code == sf::Keyboard::Hyphen ||
-                event.key.code == sf::Keyboard::PageDown) {
-                zoomView(ZOOM_STEP);
-            } else if (event.key.code == sf::Keyboard::R) {
-                resetZoom();
-            }
-        } else if (event.type == sf::Event::MouseButtonPressed &&
-            event.mouseButton.button == sf::Mouse::Left) {
-            select2DTile(world, event.mouseButton.x, event.mouseButton.y);
-        }
     }
-    update2DPan();
+    return startGame;
+}
+
+bool WindowManager::handleGameEvents(const GameWorld& world)
+{
+    sf::Event event;
+    bool backToMenu = false;
+
+    while (_window.pollEvent(event)) {
+        if (handleWindowEvent(event))
+            continue;
+        if (handleGameEvent(event, world))
+            backToMenu = true;
+    }
+    if (!backToMenu)
+        update2DPan();
+    return backToMenu;
 }
 
 void WindowManager::clear()
@@ -240,108 +283,13 @@ void WindowManager::display()
     _window.display();
 }
 
-void WindowManager::drawWorld(const GameWorld& world)
+void WindowManager::drawMenu()
 {
-    int mapWidth = world.getWidth();
-    int mapHeight = world.getHeight();
-
-    if (mapWidth <= 0 || mapHeight <= 0 || world.getMap().empty()) return;
-
-    _window.setView(_worldView);
-
-    sf::Vector2u windowSize = _window.getSize();
-    float totalMapWidth = mapWidth * TILE_SIZE;
-    float totalMapHeight = mapHeight * TILE_SIZE;
-    float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
-    float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
-
-    const TextureManager& tm = TextureManager::getInstance();
-
-    sf::Sprite tileSprite(tm.getTexture("ground"));
-
-    const auto& map = world.getMap();
-    
-    for (int x = 0; x < mapWidth; x++) {
-        for (int y = 0; y < mapHeight; y++) {
-            float posX = x * TILE_SIZE + offsetX;
-            float posY = y * TILE_SIZE + offsetY;
-
-            tileSprite.setPosition(posX, posY);
-            _window.draw(tileSprite);
-            
-
-            GraphicalUtils::drawResources(_window, map[x][y], TILE_SIZE, offsetX, offsetY);
-            if (_selectedTile.has_value() && _selectedTile->first == x &&
-                _selectedTile->second == y) {
-                sf::RectangleShape selection({TILE_SIZE, TILE_SIZE});
-
-                selection.setPosition(posX, posY);
-                selection.setFillColor(sf::Color::Transparent);
-                selection.setOutlineColor(sf::Color(255, 220, 80));
-                selection.setOutlineThickness(3.0f);
-                _window.draw(selection);
-            }
-        }
-    }
-
-    const auto& players = world.getPlayers();
-    for (const auto& pair : players) {
-        GraphicalUtils::drawPlayer(_window, pair.second, TILE_SIZE, offsetX, offsetY);
-    }
-
-    const auto& eggs = world.getEggs();
-    for (const auto& pair : eggs) {
-        GraphicalUtils::drawEgg(_window, pair.second, TILE_SIZE, offsetX, offsetY);
-    }
-    drawInfoPanel2D(world);
+    Menu::draw(_window, _font, _fontLoaded);
 }
 
-void WindowManager::drawInfoPanel2D(const GameWorld& world)
+void WindowManager::drawWorld(const GameWorld& world)
 {
-    if (!_selectedTile.has_value() || !_fontLoaded)
-        return;
-
-    const int x = _selectedTile->first;
-    const int y = _selectedTile->second;
-
-    if (x < 0 || y < 0 || x >= world.getWidth() || y >= world.getHeight() ||
-        world.getMap().empty())
-        return;
-
-    const Resources& resources = world.getMap()[x][y].resources;
-    const sf::View previousView = _window.getView();
-    const sf::Vector2u windowSize = _window.getSize();
-    const float panelX = static_cast<float>(windowSize.x) -
-        INFO_PANEL_WIDTH - INFO_PANEL_MARGIN;
-    const float panelY = INFO_PANEL_MARGIN;
-    sf::RectangleShape panel({INFO_PANEL_WIDTH, INFO_PANEL_HEIGHT});
-    sf::Text text;
-
-    _window.setView(_window.getDefaultView());
-    panel.setPosition(panelX, panelY);
-    panel.setFillColor(sf::Color(18, 24, 30, 225));
-    panel.setOutlineColor(sf::Color(255, 220, 80, 230));
-    panel.setOutlineThickness(2.0f);
-    _window.draw(panel);
-
-    text.setFont(_font);
-    text.setCharacterSize(16);
-    text.setFillColor(sf::Color(235, 240, 245));
-
-    const auto drawLine = [&](const std::string& value, int row, unsigned int size = 16) {
-        text.setString(value);
-        text.setCharacterSize(size);
-        text.setPosition(panelX + 18.0f, panelY + 16.0f + static_cast<float>(row) * 25.0f);
-        _window.draw(text);
-    };
-
-    drawLine("Case " + std::to_string(x) + " " + std::to_string(y), 0, 20);
-    drawLine("food: " + std::to_string(resources.food), 2);
-    drawLine("linemate: " + std::to_string(resources.linemate), 3);
-    drawLine("deraumere: " + std::to_string(resources.deraumere), 4);
-    drawLine("sibur: " + std::to_string(resources.sibur), 5);
-    drawLine("mendiane: " + std::to_string(resources.mendiane), 6);
-    drawLine("phiras: " + std::to_string(resources.phiras), 7);
-    drawLine("thystame: " + std::to_string(resources.thystame), 8);
-    _window.setView(previousView);
+    WorldRenderer::draw(_window, _worldView, world, _selectedTile, _font,
+        _fontLoaded);
 }
