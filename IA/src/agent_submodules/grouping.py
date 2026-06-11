@@ -18,20 +18,20 @@ class Grouper:
         Ne retourne rien."""
 
         if k == 1:
-            self.cmd.forward()
+            self.cmd.send_command("Forward")
         elif k in [2, 3]:
-            self.cmd.left()
-            self.cmd.forward()
+            self.cmd.send_command("Left")
+            self.cmd.send_command("Forward")
         elif k in [4, 5]:
-            self.cmd.left()
-            self.cmd.left()
-            self.cmd.forward()
+            self.cmd.send_command("Left")
+            self.cmd.send_command("Left")
+            self.cmd.send_command("Forward")
         elif k in [6, 7]:
-            self.cmd.right()
-            self.cmd.forward()
+            self.cmd.send_command("Right")
+            self.cmd.send_command("Forward")
         elif k == 8:
-            self.cmd.right()
-            self.cmd.forward()
+            self.cmd.send_command("Right")
+            self.cmd.send_command("Forward")
 
     def analyze_calls(self, level, my_id, decoded_messages):
         """Analyse les messages de regroupement reçus pour déterminer si l'agent doit être LEADER ou FOLLOWER\n
@@ -120,5 +120,5 @@ class Grouper:
             return True
         logger.info(f"agent : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
-        self.cmd.broadcast_text(secret_msg)
+        self.cmd.send_command(f"Broadcast {secret_msg}")
         return False
