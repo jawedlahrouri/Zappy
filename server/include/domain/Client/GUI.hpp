@@ -8,7 +8,7 @@
 #ifndef GUI_HPP_
 #define GUI_HPP_
 
-#include "Client/Client.hpp"
+#include "Client.hpp"
 
 class GUI : public Client {
     public:

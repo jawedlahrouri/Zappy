@@ -6,8 +6,8 @@
 */
 
 
-#include "Parsing/AiCommandParser.hpp"
-#include "Parsing/ai_execute_cmds.hpp"
+#include "AiCommandParser.hpp"
+#include "ai_execute_cmds.hpp"
 
 std::map<std::string, AiCommand> ai_cmds = {
     {"Forward", {&AiCommandParser::parse_forward, 7}},

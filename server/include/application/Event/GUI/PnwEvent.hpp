@@ -10,7 +10,7 @@
 
 #include "IEventElement.hpp"
 #include "IEventVisitor.hpp"
-#include "Server/Server.hpp"
+#include "application/Server/Server.hpp"
 #include <memory>
 
 class PnwEvent : public IEventElement {

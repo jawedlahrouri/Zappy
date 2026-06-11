@@ -5,10 +5,10 @@
 ** SetCommand.cpp
 */
 
-#include "Command/AI/SetCommand.hpp"
-#include "Command/AI/AiVisitor.hpp"
-#include "Parsing/AiCommandParser.hpp"
-#include "Server/Server.hpp"
+#include "application/Command/AI/SetCommand.hpp"
+#include "application/Command/AI/AiVisitor.hpp"
+#include "AiCommandParser.hpp"
+#include "application/Server/Server.hpp"
 
 #include "ServerException.hpp"
 #include <iostream>

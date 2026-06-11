@@ -5,8 +5,8 @@
 ** Socket.cpp
 */
 
-#include "Socket/Socket.hpp"
-#include "Socket/Sys_Socket.hpp"
+#include "Socket.hpp"
+#include "Sys_Socket.hpp"
 #include "ServerException.hpp"
 #include <vector>
 

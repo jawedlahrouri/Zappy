@@ -5,9 +5,9 @@
 ** AI.cpp
 */
 
-#include "Client/AI.hpp"
-#include "Network/INetworkProvider.hpp"
-#include "GameEngine/GameEngine.hpp"
+#include "AI.hpp"
+#include "INetworkProvider.hpp"
+#include "GameEngine.hpp"
 
 AI::AI(std::unique_ptr<ISocket> clientSocket, int playerId)
     : Client(std::move(clientSocket), playerId), _level(1), _orientation(1), _foodTicks(126)

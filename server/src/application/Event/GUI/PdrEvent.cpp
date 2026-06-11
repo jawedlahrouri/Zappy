@@ -5,8 +5,8 @@
 ** PdrEvent.cpp
 */
 
-#include "Event/GUI/PdrEvent.hpp"
-#include "Event/GUI/EventVisitor.hpp"
+#include "application/Event/GUI/PdrEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 
 #include "ServerException.hpp"
 #include <string>

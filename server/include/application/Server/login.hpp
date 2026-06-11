@@ -8,11 +8,11 @@
 #ifndef LOGIN_HPP_
 #define LOGIN_HPP_
 
-#include "Server/Server.hpp"
+#include "application/Server/Server.hpp"
 #include <memory>
-#include "Network/INetworkProvider.hpp"
-#include "Client/AI.hpp"
-#include "Client/GUI.hpp"
+#include "INetworkProvider.hpp"
+#include "AI.hpp"
+#include "GUI.hpp"
 
 
 class Login {

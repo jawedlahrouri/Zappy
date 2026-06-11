@@ -5,10 +5,10 @@
 ** IncantationCommand.cpp
 */
 
-#include "Command/AI/IncantationCommand.hpp"
-#include "Command/AI/AiVisitor.hpp"
-#include "Parsing/AiCommandParser.hpp"
-#include "Server/Server.hpp"
+#include "application/Command/AI/IncantationCommand.hpp"
+#include "application/Command/AI/AiVisitor.hpp"
+#include "AiCommandParser.hpp"
+#include "application/Server/Server.hpp"
 
 #include "ServerException.hpp"
 #include <iostream>

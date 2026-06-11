@@ -9,7 +9,7 @@
 #define EVENTVISITOR_HPP_
 
 #include "IEventVisitor.hpp"
-#include "Network/INetworkProvider.hpp"
+#include "INetworkProvider.hpp"
 
 
 

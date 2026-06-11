@@ -8,7 +8,7 @@
 #ifndef SOCKET_HPP_
 #define SOCKET_HPP_
 
-#include "Network/ISocket.hpp"
+#include "ISocket.hpp"
 
 class Socket : public ISocket {
     public:

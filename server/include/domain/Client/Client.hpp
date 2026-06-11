@@ -11,9 +11,9 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Network/ISocket.hpp"
+#include "ISocket.hpp"
 #include "shared/CircularBuffer.hpp"
-#include "Network/INetworkProvider.hpp"
+#include "INetworkProvider.hpp"
 
 class GameEngine;
 

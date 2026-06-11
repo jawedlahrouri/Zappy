@@ -6,8 +6,8 @@
 */
 
 #include "ServerException.hpp"
-#include "Poll/Poll.hpp"
-#include "Poll/Sys_Poll.hpp"
+#include "Poll.hpp"
+#include "Sys_Poll.hpp"
 
 static short eventToSys(NetworkEvent event) {
     if (event == NetworkEvent::Input) {

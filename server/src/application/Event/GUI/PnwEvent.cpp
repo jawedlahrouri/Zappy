@@ -1,4 +1,4 @@
-#include "Client/AI.hpp"
+#include "AI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -6,8 +6,8 @@
 ** PnwEvent.cpp
 */
 
-#include "Event/GUI/PnwEvent.hpp"
-#include "Event/GUI/EventVisitor.hpp"
+#include "application/Event/GUI/PnwEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 
 #include "ServerException.hpp"
 #include <string>

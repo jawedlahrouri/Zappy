@@ -5,17 +5,17 @@
 ** Server.cpp
 */
 
-#include "Server/Server.hpp"
+#include "application/Server/Server.hpp"
 #include <iostream>
 #include "ServerException.hpp"
-#include "Parsing/Parsing.hpp"
-#include "Parsing/AiCommandParser.hpp"
-#include "Parsing/ai_execute_cmds.hpp"
-#include "GameEngine/GameEngine.hpp"
-#include "Event/GUI/EventVisitor.hpp"
-#include "Event/GUI/IEventElement.hpp"
-#include "Client/AI.hpp"
-#include "Client/GUI.hpp"
+#include "Parsing.hpp"
+#include "AiCommandParser.hpp"
+#include "ai_execute_cmds.hpp"
+#include "GameEngine.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
+#include "application/Event/GUI/IEventElement.hpp"
+#include "AI.hpp"
+#include "GUI.hpp"
 #include <chrono>
 
 Server::Server(ILogger& logger, std::unique_ptr<ISocket> masterSocket, std::unique_ptr<IPoll> poll)

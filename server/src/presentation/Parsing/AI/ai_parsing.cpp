@@ -1,4 +1,4 @@
-#include "Client/AI.hpp"
+#include "AI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -6,12 +6,12 @@
 ** ai_parsing.cpp
 */
 
-#include "Parsing/Parsing.hpp"
-#include "Server/Server.hpp"
+#include "Parsing.hpp"
+#include "application/Server/Server.hpp"
 #include "shared/ILogger.hpp"
 #include <sstream>
 #include <algorithm>
-#include "Parsing/ai_execute_cmds.hpp"
+#include "ai_execute_cmds.hpp"
 #include "ServerException.hpp"
 
 

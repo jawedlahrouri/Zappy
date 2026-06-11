@@ -2,7 +2,7 @@
 #define AIVISITOR_HPP_
 
 #include "IAiVisitor.hpp"
-#include "Network/INetworkProvider.hpp"
+#include "INetworkProvider.hpp"
 
 class AiVisitor : public IAiVisitor {
 public:

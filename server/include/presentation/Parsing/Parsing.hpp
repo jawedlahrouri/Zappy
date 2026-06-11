@@ -7,7 +7,7 @@
 
 #ifndef PARSING_HPP_
 #define PARSING_HPP_
-#include "Network/INetworkProvider.hpp"
+#include "INetworkProvider.hpp"
 
 #include <string>
 #include <vector>

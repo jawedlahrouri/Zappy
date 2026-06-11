@@ -8,7 +8,7 @@
 #ifndef BROADCASTCOMMAND_HPP_
 #define BROADCASTCOMMAND_HPP_
 
-#include "Command/AI/IAiCommandElement.hpp"
+#include "application/Command/AI/IAiCommandElement.hpp"
 #include "application/Command/AI/IAiVisitor.hpp"
 #include "domain/Client/AI.hpp"
 #include <memory>

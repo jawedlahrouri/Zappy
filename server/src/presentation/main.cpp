@@ -8,9 +8,9 @@
 #include <iostream>
 #include <vector>
 #include "ServerException.hpp"
-#include "Socket/Socket.hpp"
-#include "Poll/Poll.hpp"
-#include "Server/Server.hpp"
+#include "Socket.hpp"
+#include "Poll.hpp"
+#include "application/Server/Server.hpp"
 #include "shared/ConsoleLogger.hpp"
 
 struct ServerConfig {

@@ -5,7 +5,7 @@
 ** GUI.cpp
 */
 
-#include "Client/GUI.hpp"
+#include "GUI.hpp"
 
 GUI::GUI(std::unique_ptr<ISocket> clientSocket, int id)
     : Client(std::move(clientSocket), id)

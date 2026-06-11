@@ -8,7 +8,7 @@
 #ifndef SSTCOMMAND_HPP_
 #define SSTCOMMAND_HPP_
 
-#include "Command/GUI/IGuiCommandElement.hpp"
+#include "application/Command/GUI/IGuiCommandElement.hpp"
 #include <memory>
 class GUI;
 

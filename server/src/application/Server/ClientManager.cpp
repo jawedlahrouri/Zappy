@@ -5,11 +5,11 @@
 ** ClientManager.cpp
 */
 
-#include "Server/ClientManager.hpp"
-#include "Network/INetworkProvider.hpp"
+#include "application/Server/ClientManager.hpp"
+#include "INetworkProvider.hpp"
 #include "shared/ILogger.hpp"
-#include "Event/GUI/PdiEvent.hpp"
-#include "Client/AI.hpp"
+#include "application/Event/GUI/PdiEvent.hpp"
+#include "AI.hpp"
 #include "ServerException.hpp"
 
 ClientManager::ClientManager(INetworkProvider& network, ILogger& logger)

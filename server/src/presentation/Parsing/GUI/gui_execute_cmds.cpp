@@ -5,10 +5,10 @@
 ** gui_execute_cmds.cpp
 */
 
-#include "Parsing/Parsing.hpp"
-#include "Parsing/GuiCommandParser.hpp"
-#include "Parsing/gui_execute_cmds.hpp"
-#include "Server/Server.hpp"
+#include "Parsing.hpp"
+#include "GuiCommandParser.hpp"
+#include "gui_execute_cmds.hpp"
+#include "application/Server/Server.hpp"
 
 #include <iostream>
 

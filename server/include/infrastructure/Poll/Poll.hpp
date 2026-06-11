@@ -8,8 +8,8 @@
 #ifndef POLL_HPP_
 #define POLL_HPP_
 
-#include "Network/IPoll.hpp"
-#include "Poll/Sys_Poll.hpp"
+#include "IPoll.hpp"
+#include "Sys_Poll.hpp"
 
 class Poll : public IPoll {
     public:

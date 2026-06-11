@@ -1,16 +1,16 @@
 #ifndef IGUIVISITOR_HPP_
 #define IGUIVISITOR_HPP_
 
-#include "Command/GUI/MszCommand.hpp"
-#include "Command/GUI/BctCommand.hpp"
-#include "Command/GUI/MctCommand.hpp"
-#include "Command/GUI/TnaCommand.hpp"
-#include "Command/GUI/PpoCommand.hpp"
-#include "Command/GUI/PlvCommand.hpp"
-#include "Command/GUI/PinCommand.hpp"
+#include "application/Command/GUI/MszCommand.hpp"
+#include "application/Command/GUI/BctCommand.hpp"
+#include "application/Command/GUI/MctCommand.hpp"
+#include "application/Command/GUI/TnaCommand.hpp"
+#include "application/Command/GUI/PpoCommand.hpp"
+#include "application/Command/GUI/PlvCommand.hpp"
+#include "application/Command/GUI/PinCommand.hpp"
 
-#include "Command/GUI/SgtCommand.hpp"
-#include "Command/GUI/SstCommand.hpp"
+#include "application/Command/GUI/SgtCommand.hpp"
+#include "application/Command/GUI/SstCommand.hpp"
 
 class IGuiVisitor {
 public:

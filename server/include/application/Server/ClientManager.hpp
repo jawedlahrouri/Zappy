@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-#include "Client/Client.hpp"
+#include "Client.hpp"
 
 class INetworkProvider;
 class ILogger;

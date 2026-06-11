@@ -10,9 +10,9 @@
 
 #include <string>
 #include <memory>
-#include "Server/Server.hpp"
-#include "Network/INetworkProvider.hpp"
-#include "Client/AI.hpp"
+#include "application/Server/Server.hpp"
+#include "INetworkProvider.hpp"
+#include "AI.hpp"
 
 class AiCommandParser {
     public:

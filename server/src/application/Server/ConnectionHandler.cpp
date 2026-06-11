@@ -5,15 +5,15 @@
 ** ConnectionHandler.cpp
 */
 
-#include "Server/ConnectionHandler.hpp"
-#include "Server/ClientManager.hpp"
-#include "Network/INetworkProvider.hpp"
+#include "application/Server/ConnectionHandler.hpp"
+#include "application/Server/ClientManager.hpp"
+#include "INetworkProvider.hpp"
 #include "shared/ILogger.hpp"
-#include "Server/login.hpp"
-#include "Network/ISocket.hpp"
-#include "Network/IPoll.hpp"
-#include "Client/AI.hpp"
-#include "Client/GUI.hpp"
+#include "application/Server/login.hpp"
+#include "ISocket.hpp"
+#include "IPoll.hpp"
+#include "AI.hpp"
+#include "GUI.hpp"
 #include "ServerException.hpp"
 
 void ConnectionHandler::acceptClient(ISocket& masterSocket, IPoll& poll, ClientManager& clientManager, ILogger& logger)

@@ -10,7 +10,7 @@
 
 #include <string>
 #include <memory>
-#include "Network/INetworkProvider.hpp"
+#include "INetworkProvider.hpp"
 
 class GUI;
 class Server;

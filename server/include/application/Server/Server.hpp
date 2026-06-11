@@ -11,13 +11,13 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Network/ISocket.hpp"
+#include "ISocket.hpp"
 #include "shared/ILogger.hpp"
-#include "Network/IPoll.hpp"
+#include "IPoll.hpp"
 
-#include "Network/INetworkProvider.hpp"
-#include "Server/ClientManager.hpp"
-#include "Server/ConnectionHandler.hpp"
+#include "INetworkProvider.hpp"
+#include "application/Server/ClientManager.hpp"
+#include "application/Server/ConnectionHandler.hpp"
 
 class GameEngine;
 

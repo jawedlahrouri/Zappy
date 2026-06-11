@@ -5,10 +5,10 @@
 ** TnaCommand.cpp
 */
 
-#include "Command/GUI/TnaCommand.hpp"
-#include "Command/GUI/GuiVisitor.hpp"
-#include "Parsing/GuiCommandParser.hpp"
-#include "Server/Server.hpp"
+#include "application/Command/GUI/TnaCommand.hpp"
+#include "application/Command/GUI/GuiVisitor.hpp"
+#include "GuiCommandParser.hpp"
+#include "application/Server/Server.hpp"
 
 #include "ServerException.hpp"
 #include <iostream>

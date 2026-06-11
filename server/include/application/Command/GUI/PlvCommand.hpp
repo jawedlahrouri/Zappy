@@ -8,7 +8,7 @@
 #ifndef PLVCOMMAND_HPP_
 #define PLVCOMMAND_HPP_
 
-#include "Command/GUI/IGuiCommandElement.hpp"
+#include "application/Command/GUI/IGuiCommandElement.hpp"
 #include <memory>
 class GUI;
 

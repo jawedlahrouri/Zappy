@@ -8,7 +8,7 @@
 #ifndef AI_HPP_
 #define AI_HPP_
 
-#include "Client/Client.hpp"
+#include "Client.hpp"
 #include <map>
 #include <queue>
 #include <string>

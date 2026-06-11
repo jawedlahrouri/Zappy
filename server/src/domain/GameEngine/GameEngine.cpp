@@ -6,11 +6,11 @@
 */
 
 #include "ServerException.hpp"
-#include "GameEngine/GameEngine.hpp"
-#include "Network/INetworkProvider.hpp"
-#include "Parsing/AiCommandParser.hpp"
-#include "Parsing/ai_execute_cmds.hpp"
-#include "Client/AI.hpp"
+#include "GameEngine.hpp"
+#include "INetworkProvider.hpp"
+#include "AiCommandParser.hpp"
+#include "ai_execute_cmds.hpp"
+#include "AI.hpp"
 #include <iostream>
 #include <random>
 #include <cmath>

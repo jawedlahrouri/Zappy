@@ -14,7 +14,7 @@ class GameEngine;
 #include <vector>
 #include <unordered_map>
 
-#include "Network/IPoll.hpp"
+#include "IPoll.hpp"
 
 class INetworkProvider {
     public:

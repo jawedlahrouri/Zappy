@@ -5,7 +5,7 @@
 ** Client.cpp
 */
 
-#include "Client/Client.hpp"
+#include "Client.hpp"
 
 Client::Client(std::unique_ptr<ISocket> clientSocket, int id)
     : _socket(std::move(clientSocket)), _id(id), _type(ClientType::PENDING)

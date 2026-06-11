@@ -8,7 +8,7 @@
 #ifndef LOOKCOMMAND_HPP_
 #define LOOKCOMMAND_HPP_
 
-#include "Command/AI/IAiCommandElement.hpp"
+#include "application/Command/AI/IAiCommandElement.hpp"
 #include "domain/Client/AI.hpp"
 #include "application/Command/AI/IAiVisitor.hpp"
 

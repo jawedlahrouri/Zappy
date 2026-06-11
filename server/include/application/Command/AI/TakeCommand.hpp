@@ -8,7 +8,7 @@
 #ifndef TAKECOMMAND_HPP_
 #define TAKECOMMAND_HPP_
 
-#include "Command/AI/IAiCommandElement.hpp"
+#include "application/Command/AI/IAiCommandElement.hpp"
 #include "application/Command/AI/IAiVisitor.hpp"
 #include "domain/Client/AI.hpp"
 

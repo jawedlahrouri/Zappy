@@ -2,7 +2,7 @@
 #define GUIVISITOR_HPP_
 
 #include "IGuiVisitor.hpp"
-#include "Network/INetworkProvider.hpp"
+#include "INetworkProvider.hpp"
 
 class GuiVisitor : public IGuiVisitor {
 public:
