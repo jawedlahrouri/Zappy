@@ -13,7 +13,15 @@ add_compile_options(-Wall -Wextra -Werror)
 file(GLOB_RECURSE SERVER_SOURCES "server/*.cpp")
 
 add_executable(zappy_server ${SERVER_SOURCES})
-target_include_directories(zappy_server PRIVATE server/include GameEngine/include)
+target_include_directories(zappy_server PRIVATE 
+    server/include 
+    server/include/application
+    server/include/domain
+    server/include/infrastructure
+    server/include/presentation
+    server/include/shared
+    GameEngine/include
+)
 
 # ----------------------------------------------------------------======
 # 2. CIBLE : zappy_gui
@@ -22,7 +30,15 @@ target_include_directories(zappy_server PRIVATE server/include GameEngine/includ
 file(GLOB_RECURSE GUI_SOURCES "GameEngine/src/*.cpp")
 
 add_executable(zappy_gui ${GUI_SOURCES})
-target_include_directories(zappy_gui PRIVATE GameEngine/include server/include)
+target_include_directories(zappy_gui PRIVATE 
+    GameEngine/include 
+    server/include
+    server/include/application
+    server/include/domain
+    server/include/infrastructure
+    server/include/presentation
+    server/include/shared
+)
 
 find_package(SFML 2.5 COMPONENTS graphics window system network REQUIRED)
 target_link_libraries(zappy_gui PRIVATE sfml-graphics sfml-window sfml-system sfml-network)
