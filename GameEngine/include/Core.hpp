@@ -21,12 +21,18 @@
         int run(int ac, char** av);
 
     private:
+        enum AppState {
+            MENU,
+            GAME
+        };
+
         void parseCommand(const std::string& command);
         void sendPendingTileRequest();
 
         WindowManager _windowManager;
         NetworkManager _network;
         GameWorld _world;
+        AppState _appState;
         bool _isRunning;
     };
 

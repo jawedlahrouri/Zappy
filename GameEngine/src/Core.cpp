@@ -7,7 +7,7 @@
 
 #include "Core.hpp"
 
-Core::Core() : _isRunning(false) 
+Core::Core() : _appState(MENU), _isRunning(false)
 {
 
 }
@@ -16,7 +16,8 @@ Core::~Core()
 
 }
 
-int Core::run(int ac, char** av) {
+int Core::run(int ac, char** av)
+{
     unsigned short port = (ac > 1) ? static_cast<unsigned short>(std::stoi(av[1])) : 4242;
 
     if (!_network.connectToServer("127.0.0.1", port))
@@ -29,8 +30,12 @@ int Core::run(int ac, char** av) {
     std::cout << "[Core] Moteur démarré. Écoute du serveur..." << std::endl;
 
     while (_windowManager.isOpen()) {
-        _windowManager.handleEvents(_world);
-        sendPendingTileRequest();
+        if (_appState == MENU && _windowManager.handleMenuEvents())
+            _appState = GAME;
+        if (_appState == GAME && _windowManager.handleGameEvents(_world))
+            _appState = MENU;
+        if (_appState == GAME)
+            sendPendingTileRequest();
 
         std::string command = _network.receiveData();
         if (!command.empty()) {
@@ -39,7 +44,10 @@ int Core::run(int ac, char** av) {
  
         _windowManager.clear();
 
-        _windowManager.drawWorld(_world);
+        if (_appState == MENU)
+            _windowManager.drawMenu();
+        else if (_appState == GAME)
+            _windowManager.drawWorld(_world);
 
         _windowManager.display();
     }
@@ -60,7 +68,8 @@ void Core::sendPendingTileRequest()
     _network.sendCommand(command);
 }
 
-void Core::parseCommand(const std::string& command) {
+void Core::parseCommand(const std::string& command)
+{
     std::stringstream ss(command);
     std::string cmdType;
 

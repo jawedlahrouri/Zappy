@@ -8,15 +8,16 @@
 #include "TextureManager.hpp"
 #include <iostream>
 
-TextureManager& TextureManager::getInstance() {
+TextureManager& TextureManager::getInstance()
+{
     static TextureManager instance;
     return instance;
 }
 
-bool TextureManager::loadTexture(const std::string& name, const std::string& filename) {
-    if (_textures.find(name) != _textures.end()) {
+bool TextureManager::loadTexture(const std::string& name, const std::string& filename)
+{
+    if (_textures.find(name) != _textures.end())
         return true;
-    }
 
     std::string fullPath = _basePath + filename;
 
@@ -30,7 +31,8 @@ bool TextureManager::loadTexture(const std::string& name, const std::string& fil
     return true;
 }
 
-const sf::Texture& TextureManager::getTexture(const std::string& name) const {
+const sf::Texture& TextureManager::getTexture(const std::string& name) const
+{
     auto it = _textures.find(name);
     if (it == _textures.end()) {
         std::cerr << "[TextureManager] Error: Texture '" << name << "' introuvable !" << std::endl;

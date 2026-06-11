@@ -1,3 +1,10 @@
+/*
+** EPITECH PROJECT, 2026
+** zappy
+** File description:
+** GraphicalUtils
+*/
+
 #include "GraphicalUtils.hpp"
 #include "TextureManager.hpp"
 #include <cmath>

@@ -21,12 +21,14 @@ public:
 
     bool isOpen() const;
 
-    void handleEvents(const GameWorld& world);
+    bool handleMenuEvents();
+    bool handleGameEvents(const GameWorld& world);
     std::optional<std::pair<int, int>> consumeTileRequest();
 
     void clear();
     void display();
 
+    void drawMenu();
     void drawWorld(const GameWorld& world);
 
     private:
@@ -37,8 +39,9 @@ public:
         void zoomView(float factor);
         void resetZoom();
         void update2DPan();
+        bool handleWindowEvent(const sf::Event& event);
+        bool handleGameEvent(const sf::Event& event, const GameWorld& world);
         void select2DTile(const GameWorld& world, int mouseX, int mouseY);
-        void drawInfoPanel2D(const GameWorld& world);
 
         sf::RenderWindow _window;
         sf::View _worldView;
