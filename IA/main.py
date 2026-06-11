@@ -5,8 +5,14 @@ import argparse
 from src.server_link import ZappyNetwork
 from src.command import ZappyCommand
 from src.Ai_agent import ZappyAgent
+from src.logger import ZappyLogger
 
 def wait_for_welcome(net):
+    """Attend que le serveur envoie "WELCOME" pour confirmer la connexion.
+    Params:
+        -net (ZappyNetwork): L'instance de connexion réseau.
+    Retourne True si WELCOME reçu, False en cas de timeout ou d'erreur."""
+
     print("[Handshake] En attente du WELCOME...")
     welcome_received = False
     timeout = 0
@@ -26,6 +32,11 @@ def wait_for_welcome(net):
     return False
 
 def wait_for_infos(net):
+    """Attend que le serveur envoie le CLIENT-NUM et les dimensions de la carte.
+    Params:
+        -net (ZappyNetwork): L'instance de connexion réseau.
+    Retourne un tuple (success, client_num, dimensions) où success est True si les infos sont reçues, False sinon."""
+
     print("[Handshake] En attente de CLIENT-NUM et dimensions...")
     client_num = None
     dimensions = None
@@ -43,7 +54,7 @@ def wait_for_infos(net):
                     client_num = int(msg)
                     print(f"[Handshake] CLIENT-NUM: {client_num}")
                     if client_num == 0:
-                        print("[Erreur] L'équipe est pleine (0 slots restants).")
+                        print("[Erreur] 0 slots restants.")
                         return False, 0, None
                 elif dimensions is None and ' ' in msg:
                     parts = msg.split()
@@ -61,11 +72,17 @@ def wait_for_infos(net):
     return True, client_num, dimensions
 
 def handshake(net, team_name):
+    """Effectue le handshake initial avec le serveur: attend WELCOME, envoie le nom de team, attend CLIENT-NUM et dimensions.
+    Params:
+        -net (ZappyNetwork): L'instance de connexion réseau.
+        -team_name (str): Le nom de l'équipe.
+    Retourne True si le handshake est réussi, False sinon."""
+
     if not wait_for_welcome(net):
         return False
     print(f"[Handshake] Envoi du nom de team: {team_name}")
     if not net.send_command(team_name):
-        print("[Erreur] Impossible d'envoyer le team")
+        print("[Erreur] Impossible d'envoyer le team_name")
         return False
     success, client_num, dimensions = wait_for_infos(net)
     if not success:
@@ -74,11 +91,21 @@ def handshake(net, team_name):
     return True
 
 def main(port, machine, team_name):
+    """Point d'entrée principal du client Zappy. Gère la connexion, le handshake, et lance l'agent.
+    Params:
+        -port (int): Le port du serveur.
+        -machine (str): L'adresse du serveur (nom de machine).
+        -team_name (str): Le nom de l'équipe.
+    Retourne 0 en cas de succès, 84 en cas d'erreur."""
+
+    ZappyLogger.setup(ZappyLogger,team_name, debug_mode=True)
+    logger = ZappyLogger.get_logger("Main")
+    logger.info(f"Démarrage du client Zappy (Team: {team_name}, Port: {port})")
     net = ZappyNetwork(machine, port)
     try:
         net.connect()
     except Exception as e:
-        print(f"[Erreur] Impossible de se connecter: {e}")
+        logger.error(f"Impossible de se connecter: {e}")
         return 84
     if not net.connected:
         return 84
@@ -89,11 +116,11 @@ def main(port, machine, team_name):
         cmd_interface = ZappyCommand(net)
         agent = ZappyAgent(cmd_interface, team_name)
         agent.run()
-        print("[Agent] Agent terminé correctement")
+        logger.info("[Agent] Agent terminé correctement")
     except KeyboardInterrupt:
-        print("\n[Agent] Arrêt par l'utilisateur")
+        logger.info("\n[Agent] Arrêt par l'utilisateur")
     except Exception as e:
-        print(f"[Erreur] Exception dans l'agent: {e}")
+        logger.error(f"[Erreur] Exception dans l'agent: {e}")
         import traceback
         traceback.print_exc()
         return 84
