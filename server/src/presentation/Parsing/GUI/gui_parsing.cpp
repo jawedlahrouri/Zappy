@@ -1,4 +1,3 @@
-#include "GUI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -12,6 +11,7 @@
 #include "application/Server/Server.hpp"
 #include <iostream>
 #include "ServerException.hpp"
+#include "GUI.hpp"
 
 
 void Parsing::parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network)

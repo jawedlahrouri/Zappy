@@ -1,4 +1,3 @@
-#include "AI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -13,6 +12,7 @@
 #include <algorithm>
 #include "ai_execute_cmds.hpp"
 #include "ServerException.hpp"
+#include "AI.hpp"
 
 
 std::vector<std::string> Parsing::split_command(const std::string &command)
