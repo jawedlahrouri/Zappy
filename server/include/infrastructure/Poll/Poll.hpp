@@ -30,7 +30,7 @@ class Poll : public IPoll {
         size_t getSize() const override;
 
     private:
-        std::vector<SysPoll::PollFd> m_pollfds;
+        std::vector<SysPoll::PollFd> _pollfds;
 };
 
 #endif /* !POLL_HPP_ */

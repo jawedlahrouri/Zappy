@@ -10,10 +10,10 @@
 #include "GameEngine/GameEngine.hpp"
 
 AI::AI(std::unique_ptr<ISocket> clientSocket, int playerId)
-    : Client(std::move(clientSocket), playerId), m_level(1), m_orientation(1), m_foodTicks(126)
+    : Client(std::move(clientSocket), playerId), _level(1), _orientation(1), _foodTicks(126)
 {
     setType(ClientType::AI);
-    m_inventory["food"] = 10;
+    _inventory["food"] = 10;
 }
 
 void AI::update(std::shared_ptr<Client> self, INetworkProvider& network, GameEngine& engine, std::vector<int>& clientsToRemove)

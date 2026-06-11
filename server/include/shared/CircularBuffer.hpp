@@ -28,9 +28,9 @@ class CircularBuffer {
         size_t available_space() const;
         void resize(size_t new_capacity);
 
-        std::vector<char> m_buffer;
-        size_t m_head;
-        size_t m_tail;
-        bool m_full;
-        size_t m_capacity;
+        std::vector<char> _buffer;
+        size_t _head;
+        size_t _tail;
+        bool _full;
+        size_t _capacity;
 };

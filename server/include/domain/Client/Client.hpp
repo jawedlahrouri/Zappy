@@ -28,14 +28,14 @@ class Client {
         Client(std::unique_ptr<ISocket> clientSocket, int id);
         virtual ~Client() = default;
 
-        ISocket& getSocket() { return *m_socket; }
-        const ISocket& getSocket() const { return *m_socket; }
-        std::unique_ptr<ISocket> releaseSocket() { return std::move(m_socket); }
+        ISocket& getSocket() { return *_socket; }
+        const ISocket& getSocket() const { return *_socket; }
+        std::unique_ptr<ISocket> releaseSocket() { return std::move(_socket); }
         
-        int getId() const { return m_id; }
+        int getId() const { return _id; }
         
-        ClientType getType() const { return m_type; }
-        void setType(ClientType newType) { m_type = newType; }
+        ClientType getType() const { return _type; }
+        void setType(ClientType newType) { _type = newType; }
 
         void appendToBuffer(const std::string& data);
         bool extractLine(std::string& line);
@@ -48,13 +48,13 @@ class Client {
         virtual void update(std::shared_ptr<Client>, INetworkProvider&, GameEngine&, std::vector<int>&) {}
 
     protected:
-        std::unique_ptr<ISocket> m_socket;
-        int m_id;
-        ClientType m_type;
+        std::unique_ptr<ISocket> _socket;
+        int _id;
+        ClientType _type;
 
     private:
-        CircularBuffer m_readBuffer;
-        CircularBuffer m_writeBuffer;
+        CircularBuffer _readBuffer;
+        CircularBuffer _writeBuffer;
 };
 
 #endif /* !CLIENT_HPP_ */

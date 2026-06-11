@@ -25,14 +25,14 @@ void Poll::addFd(int fd, NetworkEvent event)
     pfd.fd = fd;
     pfd.events = eventToSys(event);
     pfd.revents = 0;
-    m_pollfds.push_back(pfd);
+    _pollfds.push_back(pfd);
 }
 
 void Poll::removeFd(int fd)
 {
-    for (auto it = m_pollfds.begin(); it != m_pollfds.end(); ++it) {
+    for (auto it = _pollfds.begin(); it != _pollfds.end(); ++it) {
         if (it->fd == fd) {
-            m_pollfds.erase(it);
+            _pollfds.erase(it);
             break;
         }
     }
@@ -40,7 +40,7 @@ void Poll::removeFd(int fd)
 
 void Poll::addEvents(int fd, NetworkEvent event)
 {
-    for (auto &pfd : m_pollfds) {
+    for (auto &pfd : _pollfds) {
         if (pfd.fd == fd) {
             pfd.events |= eventToSys(event);
             break;
@@ -50,7 +50,7 @@ void Poll::addEvents(int fd, NetworkEvent event)
 
 void Poll::removeEvents(int fd, NetworkEvent event)
 {
-    for (auto &pfd : m_pollfds) {
+    for (auto &pfd : _pollfds) {
         if (pfd.fd == fd) {
             pfd.events &= ~eventToSys(event);
             break;
@@ -60,10 +60,10 @@ void Poll::removeEvents(int fd, NetworkEvent event)
 
 int Poll::runPoll(int timeout)
 {
-    for (auto &pfd : m_pollfds) {
+    for (auto &pfd : _pollfds) {
         pfd.revents = 0;
     }
-    int ret = SysPoll::poll(m_pollfds, timeout);
+    int ret = SysPoll::poll(_pollfds, timeout);
     if (ret == -1 && SysPoll::isInterrupted()) {
         return 0;
     }
@@ -72,37 +72,37 @@ int Poll::runPoll(int timeout)
 
 bool Poll::isReadable(size_t index) const
 {
-    if (index >= m_pollfds.size()) {
+    if (index >= _pollfds.size()) {
         return false;
     }
-    return (m_pollfds[index].revents & SysPoll::EventIn) != 0;
+    return (_pollfds[index].revents & SysPoll::EventIn) != 0;
 }
 
 bool Poll::isWritable(size_t index) const
 {
-    if (index >= m_pollfds.size()) {
+    if (index >= _pollfds.size()) {
         return false;
     }
-    return (m_pollfds[index].revents & SysPoll::EventOut) != 0;
+    return (_pollfds[index].revents & SysPoll::EventOut) != 0;
 }
 
 bool Poll::isError(size_t index) const
 {
-    if (index >= m_pollfds.size()) {
+    if (index >= _pollfds.size()) {
         return false;
     }
-    return (m_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup)) != 0;
+    return (_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup)) != 0;
 }
 
 int Poll::getFd(size_t index) const
 {
-    if (index >= m_pollfds.size()) {
+    if (index >= _pollfds.size()) {
         return -1;
     }
-    return m_pollfds[index].fd;
+    return _pollfds[index].fd;
 }
 
 size_t Poll::getSize() const
 {
-    return m_pollfds.size();
+    return _pollfds.size();
 }

@@ -29,11 +29,11 @@ class Socket : public ISocket {
         int getClientSocket() const override;
 
     private:
-        int m_socket;
-        int m_port;
-        int m_backlog;
-        int m_clientSocket;
-        std::string m_data;
+        int _socket;
+        int _port;
+        int _backlog;
+        int _clientSocket;
+        std::string _data;
 };
 
 #endif /* !SOCKET_HPP_ */

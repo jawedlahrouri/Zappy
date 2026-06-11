@@ -34,9 +34,9 @@ class ClientManager {
         void disconnectAll();
 
     private:
-        std::unordered_map<int, std::shared_ptr<Client>> m_clients;
-        INetworkProvider& m_network;
-        ILogger& m_logger;
+        std::unordered_map<int, std::shared_ptr<Client>> _clients;
+        INetworkProvider& _network;
+        ILogger& _logger;
 };
 
 #endif /* !CLIENTMANAGER_HPP_ */

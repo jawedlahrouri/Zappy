@@ -19,7 +19,7 @@
 #include <chrono>
 
 Server::Server(ILogger& logger, std::unique_ptr<ISocket> masterSocket, std::unique_ptr<IPoll> poll)
-    : m_logger(logger), m_masterSocket(std::move(masterSocket)), m_poll(std::move(poll)), m_clientManager(*this, logger)
+    : _logger(logger), _masterSocket(std::move(masterSocket)), _poll(std::move(poll)), _clientManager(*this, logger)
 {
 }
 
@@ -28,23 +28,23 @@ Server::~Server()
     try {
         cleanup();
     } catch (const std::exception &e) {
-        m_logger.error(ServerException(std::string("Server::~Server: ") + e.what()).what());
+        _logger.error(ServerException(std::string("Server::~Server: ") + e.what()).what());
     }
 }
 
 void Server::sendResponse(int clientId, const std::string& message)
 {
-    m_clientManager.sendResponse(clientId, message);
+    _clientManager.sendResponse(clientId, message);
 }
 
 void Server::sendToGuis(const std::string& message)
 {
-    m_clientManager.sendToGuis(message);
+    _clientManager.sendToGuis(message);
 }
 
 void Server::broadcastEvent(const std::string& message, int excludeClientId)
 {
-    m_clientManager.broadcastEvent(message, excludeClientId);
+    _clientManager.broadcastEvent(message, excludeClientId);
 }
 
 void Server::sendEvent(const IEventElement &event)
@@ -59,20 +59,20 @@ void Server::sendEvent(const IEventElement &event)
 
 const std::unordered_map<int, std::shared_ptr<Client>>& Server::getClients() const
 {
-    return m_clientManager.getClients();
+    return _clientManager.getClients();
 }
 
 void Server::addPollEvent(int fd, NetworkEvent event)
 {
-    m_poll->addEvents(fd, event);
+    _poll->addEvents(fd, event);
 }
 
 void Server::removeClient(int clientSocket)
 {
     try {
-        m_clientManager.removeClient(clientSocket);
-        m_poll->removeFd(clientSocket);
-        m_logger.info("Client " + std::to_string(clientSocket) + " disconnected");
+        _clientManager.removeClient(clientSocket);
+        _poll->removeFd(clientSocket);
+        _logger.info("Client " + std::to_string(clientSocket) + " disconnected");
     } catch (const std::exception &e) {
         throw ServerException(std::string("Server::removeClient: ") + e.what());
     }
@@ -81,16 +81,16 @@ void Server::removeClient(int clientSocket)
 bool Server::handleWritable(size_t index)
 {
     try {
-        int client_socket = m_poll->getFd(index);
-        auto client = m_clientManager.getClient(client_socket);
+        int client_socket = _poll->getFd(index);
+        auto client = _clientManager.getClient(client_socket);
         if (!client) {
-            m_poll->removeEvents(client_socket, NetworkEvent::Output);
+            _poll->removeEvents(client_socket, NetworkEvent::Output);
             return false;
         }
 
         const auto &buffer = client->getWriteBuffer();
         if (buffer.empty()) {
-            m_poll->removeEvents(client_socket, NetworkEvent::Output);
+            _poll->removeEvents(client_socket, NetworkEvent::Output);
             return false;
         }
 
@@ -100,16 +100,16 @@ bool Server::handleWritable(size_t index)
                 client->removeFromWriteBuffer(sent);
             }
             if (!client->hasWriteData()) {
-                m_poll->removeEvents(client_socket, NetworkEvent::Output);
+                _poll->removeEvents(client_socket, NetworkEvent::Output);
             }
         } catch (const std::exception &e) {
-            m_logger.error("handleWritable: " + std::string(e.what()));
+            _logger.error("handleWritable: " + std::string(e.what()));
             removeClient(client_socket);
             return true;
         }
         return false;
     } catch (const std::exception &e) {
-        m_logger.error("Server::handleWritable exception: " + std::string(e.what()));
+        _logger.error("Server::handleWritable exception: " + std::string(e.what()));
         return false;
     }
 }
@@ -117,8 +117,8 @@ bool Server::handleWritable(size_t index)
 bool Server::handleClientData(size_t pollIndex)
 {
     try {
-        int client_socket = m_poll->getFd(pollIndex);
-        auto client = m_clientManager.getClient(client_socket);
+        int client_socket = _poll->getFd(pollIndex);
+        auto client = _clientManager.getClient(client_socket);
         if (!client) {
             return false;
         }
@@ -126,7 +126,7 @@ bool Server::handleClientData(size_t pollIndex)
         try {
             data = client->getSocket().recvData(1024);
         } catch (const std::exception &e) {
-            m_logger.info("Client " + std::to_string(client_socket) + " disconnected: " + e.what());
+            _logger.info("Client " + std::to_string(client_socket) + " disconnected: " + e.what());
             removeClient(client_socket);
             return true;
         }
@@ -138,13 +138,13 @@ bool Server::handleClientData(size_t pollIndex)
         try {
             client->appendToBuffer(data);
         } catch (const std::overflow_error &e) {
-            m_logger.error("Client " + std::to_string(client_socket) + " buffer overflow: " + e.what());
+            _logger.error("Client " + std::to_string(client_socket) + " buffer overflow: " + e.what());
             removeClient(client_socket);
             return true;
         }
 
         if (client->getType() == ClientType::PENDING) {
-            ConnectionHandler::detectClientType(client_socket, m_clientManager, *this, m_logger, m_teamNames);
+            ConnectionHandler::detectClientType(client_socket, _clientManager, *this, _logger, _teamNames);
         } else {
             std::string line;
             while (client->extractLine(line)) {
@@ -159,7 +159,7 @@ bool Server::handleClientData(size_t pollIndex)
         }
         return false;
     } catch (const std::exception &e) {
-        m_logger.error("Server::handleClientData exception: " + std::string(e.what()));
+        _logger.error("Server::handleClientData exception: " + std::string(e.what()));
         return false;
     }
 }
@@ -167,8 +167,8 @@ bool Server::handleClientData(size_t pollIndex)
 void Server::cleanup()
 {
     try {
-        m_clientManager.disconnectAll();
-        m_masterSocket->closeSocket();
+        _clientManager.disconnectAll();
+        _masterSocket->closeSocket();
     } catch (const std::exception &e) {
         throw ServerException(std::string("Server::cleanup: ") + e.what());
     }
@@ -177,16 +177,16 @@ void Server::cleanup()
 void Server::processPollEvent(size_t &i)
 {
     try {
-        if (m_poll->isError(i)) {
+        if (_poll->isError(i)) {
             if (i > 0) {
-                removeClient(m_poll->getFd(i));
+                removeClient(_poll->getFd(i));
                 --i;
             }
             return;
         }
-        if (m_poll->isReadable(i)) {
+        if (_poll->isReadable(i)) {
             if (i == 0) {
-                ConnectionHandler::acceptClient(*m_masterSocket, *m_poll, m_clientManager, m_logger);
+                ConnectionHandler::acceptClient(*_masterSocket, *_poll, _clientManager, _logger);
             } else {
                 if (handleClientData(i)) {
                     --i;
@@ -194,7 +194,7 @@ void Server::processPollEvent(size_t &i)
                 }
             }
         }
-        if (i > 0 && i < m_poll->getSize() && m_poll->isWritable(i)) {
+        if (i > 0 && i < _poll->getSize() && _poll->isWritable(i)) {
             if (handleWritable(i)) {
                 --i;
             }
@@ -207,8 +207,8 @@ void Server::processPollEvent(size_t &i)
 void Server::runPollLoop()
 {
     try {
-        m_logger.info("Waiting for connections...");
-        std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / m_freq);
+        _logger.info("Waiting for connections...");
+        std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / _freq);
         auto next_tick_time = std::chrono::steady_clock::now();
 
         while (true) {
@@ -218,22 +218,22 @@ void Server::runPollLoop()
                 timeout_ms = 0;
             }
 
-            int poll_count = m_poll->runPoll(timeout_ms);
+            int poll_count = _poll->runPoll(timeout_ms);
             if (poll_count == -1) {
                 throw ServerException(std::string("poll failed"));
             }
 
-            for (size_t i = 0; i < m_poll->getSize(); ++i) {
+            for (size_t i = 0; i < _poll->getSize(); ++i) {
                 processPollEvent(i);
             }
 
             now = std::chrono::steady_clock::now();
             if (now >= next_tick_time) {
-                if (m_gameEngine) {
-                    m_gameEngine->update(*this);
+                if (_gameEngine) {
+                    _gameEngine->update(*this);
                     std::vector<int> clientsToRemove;
-                    for (auto &[fd, client] : m_clientManager.getClients()) {
-                        client->update(client, *this, *m_gameEngine, clientsToRemove);
+                    for (auto &[fd, client] : _clientManager.getClients()) {
+                        client->update(client, *this, *_gameEngine, clientsToRemove);
                     }
                     for (int fd : clientsToRemove) {
                         removeClient(fd);
@@ -250,19 +250,19 @@ void Server::runPollLoop()
 void Server::openServer(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq, int width, int height)
 {
     try {
-        m_port = port;
-        m_clientsNb = clientsNb;
-        m_teamNames = teamNames;
-        m_freq = freq;
+        _port = port;
+        _clientsNb = clientsNb;
+        _teamNames = teamNames;
+        _freq = freq;
         try {
-            m_masterSocket->createSocket(port, clientsNb);
-            m_masterSocket->bindSocket();
-            m_masterSocket->receiveData();
+            _masterSocket->createSocket(port, clientsNb);
+            _masterSocket->bindSocket();
+            _masterSocket->receiveData();
 
-            m_logger.info("Server opened on port " + std::to_string(m_port));
-            m_poll->addFd(m_masterSocket->getSocket(), NetworkEvent::Input);
+            _logger.info("Server opened on port " + std::to_string(_port));
+            _poll->addFd(_masterSocket->getSocket(), NetworkEvent::Input);
 
-            m_gameEngine = std::make_unique<GameEngine>(width, height, m_logger);
+            _gameEngine = std::make_unique<GameEngine>(width, height, _logger);
 
             runPollLoop();
         } catch (const std::exception &e) {
@@ -275,25 +275,25 @@ void Server::openServer(int port, int clientsNb, const std::vector<std::string> 
 
 int Server::getClientsNb() const
 {
-    return m_clientsNb;
+    return _clientsNb;
 }
 
 int Server::getFreq() const
 {
-    return m_freq;
+    return _freq;
 }
 
 const std::vector<std::string>& Server::getTeamNames() const
 {
-    return m_teamNames;
+    return _teamNames;
 }
 
 const std::unique_ptr<GameEngine>& Server::getGameEngine() const
 {
-    return m_gameEngine;
+    return _gameEngine;
 }
 
 ILogger& Server::getLogger() const
 {
-    return m_logger;
+    return _logger;
 }

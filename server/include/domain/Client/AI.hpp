@@ -19,44 +19,44 @@ class AI : public Client {
         AI(std::unique_ptr<ISocket> clientSocket, int playerId);
         void update(std::shared_ptr<Client> self, INetworkProvider& network, GameEngine& engine, std::vector<int>& clientsToRemove) override;
         
-        const std::string& getTeamName() const { return m_teamName; }
-        void setTeamName(const std::string& name) { m_teamName = name; }
+        const std::string& getTeamName() const { return _teamName; }
+        void setTeamName(const std::string& name) { _teamName = name; }
         
-        int getX() const { return m_x; }
-        void setX(int x) { m_x = x; }
+        int getX() const { return _x; }
+        void setX(int x) { _x = x; }
         
-        int getY() const { return m_y; }
-        void setY(int y) { m_y = y; }
+        int getY() const { return _y; }
+        void setY(int y) { _y = y; }
         
-        int getLevel() const { return m_level; }
-        void setLevel(int level) { m_level = level; }
+        int getLevel() const { return _level; }
+        void setLevel(int level) { _level = level; }
         
-        int getOrientation() const { return m_orientation; }
-        void setOrientation(int orientation) { m_orientation = orientation; }
+        int getOrientation() const { return _orientation; }
+        void setOrientation(int orientation) { _orientation = orientation; }
         
-        std::map<std::string, int>& getInventory() { return m_inventory; }
-        const std::map<std::string, int>& getInventory() const { return m_inventory; }
+        std::map<std::string, int>& getInventory() { return _inventory; }
+        const std::map<std::string, int>& getInventory() const { return _inventory; }
         
-        std::queue<std::string>& getCommandQueue() { return m_commandQueue; }
-        const std::queue<std::string>& getCommandQueue() const { return m_commandQueue; }
+        std::queue<std::string>& getCommandQueue() { return _commandQueue; }
+        const std::queue<std::string>& getCommandQueue() const { return _commandQueue; }
         
-        int getActionTicksLeft() const { return m_actionTicksLeft; }
-        void setActionTicksLeft(int ticks) { m_actionTicksLeft = ticks; }
+        int getActionTicksLeft() const { return _actionTicksLeft; }
+        void setActionTicksLeft(int ticks) { _actionTicksLeft = ticks; }
         
-        int getFoodTicks() const { return m_foodTicks; }
-        void setFoodTicks(int ticks) { m_foodTicks = ticks; }
+        int getFoodTicks() const { return _foodTicks; }
+        void setFoodTicks(int ticks) { _foodTicks = ticks; }
 
     private:
-        std::string m_teamName;
-        int m_x = 0;
-        int m_y = 0;
-        int m_level;
-        int m_orientation;
+        std::string _teamName;
+        int _x = 0;
+        int _y = 0;
+        int _level;
+        int _orientation;
         
-        std::map<std::string, int> m_inventory; 
-        std::queue<std::string> m_commandQueue;
-        int m_actionTicksLeft = -1;
-        int m_foodTicks;
+        std::map<std::string, int> _inventory; 
+        std::queue<std::string> _commandQueue;
+        int _actionTicksLeft = -1;
+        int _foodTicks;
 };
 
 #endif /* !AI_HPP_ */

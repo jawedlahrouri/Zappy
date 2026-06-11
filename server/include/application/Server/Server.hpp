@@ -50,16 +50,16 @@ class Server : public INetworkProvider {
         void cleanup();
         void removeClient(int clientSocket);
 
-        ILogger& m_logger;
-        std::unique_ptr<ISocket> m_masterSocket;
-        std::unique_ptr<IPoll> m_poll;
-        ClientManager m_clientManager;
-        std::unique_ptr<GameEngine> m_gameEngine;
+        ILogger& _logger;
+        std::unique_ptr<ISocket> _masterSocket;
+        std::unique_ptr<IPoll> _poll;
+        ClientManager _clientManager;
+        std::unique_ptr<GameEngine> _gameEngine;
 
-        int m_port = 0;
-        int m_clientsNb = 0;
-        std::vector<std::string> m_teamNames;
-        int m_freq = 0;
+        int _port = 0;
+        int _clientsNb = 0;
+        std::vector<std::string> _teamNames;
+        int _freq = 0;
 };
 
 #endif /* !SERVER_HPP_ */
