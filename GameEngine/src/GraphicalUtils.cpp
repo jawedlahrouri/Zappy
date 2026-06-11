@@ -21,7 +21,7 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
     sf::Sprite foodSprite(tm.getTexture("food"));
     sf::Sprite linemateSprite(tm.getTexture("linemate"));
     sf::Sprite deraumereSprite(tm.getTexture("deraumere"));
-    // sf::Sprite siburSprite(tm.getTexture("sibur"));
+    sf::Sprite siburSprite(tm.getTexture("sibur"));
     // sf::Sprite mendianeSprite(tm.getTexture("mendiane"));
     // sf::Sprite phirasSprite(tm.getTexture("phiras"));
     // sf::Sprite thystameSprite(tm.getTexture("thystame"));
@@ -29,7 +29,7 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
     foodSprite.setScale(resScale, resScale);
     linemateSprite.setScale(resScale, resScale);
     deraumereSprite.setScale(resScale, resScale);
-    // siburSprite.setScale(resScale, resScale);
+    siburSprite.setScale(resScale, resScale);
     // mendianeSprite.setScale(resScale, resScale);
     // phirasSprite.setScale(resScale, resScale);
     // thystameSprite.setScale(resScale, resScale);
@@ -49,11 +49,10 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
         target.draw(deraumereSprite);
     }
 
-    // // q3 : Sibur (Au centre exact de la case)
-    // if (tile.resources.sibur > 0) {
-    //     siburSprite.setPosition(startX + 24.0f, startY + 24.0f);
-    //     target.draw(siburSprite);
-    // }
+    if (tile.resources.sibur > 0) {
+        siburSprite.setPosition(startX + 4.0f, startY + 44.0f);
+        target.draw(siburSprite);
+    }
 
     // // q4 : Mendiane (Au milieu à droite)
     // if (tile.resources.mendiane > 0) {
@@ -76,17 +75,23 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
 
 void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, float tileSize, float offsetX, float offsetY)
 {
+    if (player.level < 1)
+        return;
     float centerX = player.x * tileSize + offsetX + (tileSize / 2.0f);
     float centerY = player.y * tileSize + offsetY + (tileSize / 2.0f);
 
     const TextureManager& tm = TextureManager::getInstance();
-    std::string texKey;
+    std::string texKey = "playerFace";
     // Orientation : 1: N, 2: E, 3: S, 4: W
-    if (player.orientation == 1) texKey = "playerBack";
-    else if (player.orientation == 2) texKey = "playerRight";
-    else if (player.orientation == 3) texKey = "playerFace";
-    else if (player.orientation == 4) texKey = "playerLeft";
-
+    if (player.orientation == 1)
+        texKey = "playerBack";
+    else if (player.orientation == 2)
+        texKey = "playerRight";
+    else if (player.orientation == 3)
+        texKey = "playerFace";
+    else if (player.orientation == 4)
+        texKey = "playerLeft";
+    
     sf::Sprite playerSprite(tm.getTexture(texKey));
     sf::Vector2u texSize = tm.getTexture(texKey).getSize();
     if (texSize.x > 0 && texSize.y > 0) {

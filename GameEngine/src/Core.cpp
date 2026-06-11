@@ -84,11 +84,21 @@ void Core::parseCommand(const std::string& command)
     }
     else if (cmdType == "pnw") {
         Player p;
+        ss >> std::ws;
+        if (ss.peek() == '#') {
+            char hash = 0;
+            ss >> hash;
+        }
         ss >> p.id >> p.x >> p.y >> p.orientation >> p.level >> p.teamName;
         _world.addPlayer(p);
     }
     else if (cmdType == "ppo") {
         int id = 0, x = 0, y = 0, orientation = 0;
+        ss >> std::ws;
+        if (ss.peek() == '#') {
+            char hash = 0;
+            ss >> hash;
+        }
         ss >> id >> x >> y >> orientation;
 
         _world.movePlayer(id, x, y, orientation);

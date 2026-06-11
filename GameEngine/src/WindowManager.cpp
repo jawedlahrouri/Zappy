@@ -49,7 +49,7 @@ void WindowManager::loadTextures()
     // tm.loadTexture("mendiane",  "mendiane.png");
     // tm.loadTexture("phiras",    "phiras.png");
     // tm.loadTexture("thystame",  "thystame.png");
-    tm.loadTexture("egg", "egg.png");
+    tm.loadTexture("egg", "oeuf.png");
 
     tm.loadTexture("playerFace", "character_face.png");
     tm.loadTexture("playerBack", "character_back.png");
