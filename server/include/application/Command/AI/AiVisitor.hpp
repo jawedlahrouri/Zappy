@@ -1,10 +1,8 @@
-#include "Network/INetworkProvider.hpp"
 #ifndef AIVISITOR_HPP_
 #define AIVISITOR_HPP_
 
 #include "IAiVisitor.hpp"
-
-class INetworkProvider;
+#include "Network/INetworkProvider.hpp"
 
 class AiVisitor : public IAiVisitor {
 public:

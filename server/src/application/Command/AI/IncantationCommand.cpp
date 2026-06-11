@@ -15,16 +15,16 @@
 
 void IncantationCommand::Accept(IAiVisitor *visitor) {
     try {
-    visitor->visit(this);
+        visitor->visit(this);
     } catch (const std::exception &e) {
         throw ServerException(std::string("IncantationCommand::Accept: ") + e.what());
     }
 }
 
-void AiCommandParser::parse_incantation([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] INetworkProvider &network)
+void AiCommandParser::parse_incantation([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
-IncantationCommand cmd;
+        IncantationCommand cmd;
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,7 +34,7 @@ IncantationCommand cmd;
 
 void AiVisitor::visit([[maybe_unused]] IncantationCommand *element) {
     try {
-} catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
 }

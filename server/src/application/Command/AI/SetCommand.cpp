@@ -15,16 +15,16 @@
 
 void SetCommand::Accept(IAiVisitor *visitor) {
     try {
-    visitor->visit(this);
+        visitor->visit(this);
     } catch (const std::exception &e) {
         throw ServerException(std::string("SetCommand::Accept: ") + e.what());
     }
 }
 
-void AiCommandParser::parse_set([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] INetworkProvider &network)
+void AiCommandParser::parse_set([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
-SetCommand cmd;
+        SetCommand cmd;
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,7 +34,7 @@ SetCommand cmd;
 
 void AiVisitor::visit([[maybe_unused]] SetCommand *element) {
     try {
-} catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
 }

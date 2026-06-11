@@ -15,16 +15,16 @@
 
 void PpoCommand::Accept(IGuiVisitor *visitor) {
     try {
-    visitor->visit(this);
+        visitor->visit(this);
     } catch (const std::exception &e) {
         throw ServerException(std::string("PpoCommand::Accept: ") + e.what());
     }
 }
 
-void GuiCommandParser::parse_gui_ppo([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] INetworkProvider &network)
+void GuiCommandParser::parse_gui_ppo([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
-PpoCommand cmd;
+        PpoCommand cmd;
         GuiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,7 +34,7 @@ PpoCommand cmd;
 
 void GuiVisitor::visit([[maybe_unused]] PpoCommand *element) {
     try {
-} catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         throw ServerException(std::string("GuiVisitor::visit: ") + e.what());
     }
 }

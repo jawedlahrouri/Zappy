@@ -1,4 +1,3 @@
-#include "Network/INetworkProvider.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -10,6 +9,7 @@
 #define EVENTVISITOR_HPP_
 
 #include "IEventVisitor.hpp"
+#include "Network/INetworkProvider.hpp"
 
 
 

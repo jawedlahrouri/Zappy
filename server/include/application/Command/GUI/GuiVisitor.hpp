@@ -1,10 +1,8 @@
-#include "Network/INetworkProvider.hpp"
 #ifndef GUIVISITOR_HPP_
 #define GUIVISITOR_HPP_
 
 #include "IGuiVisitor.hpp"
-
-class INetworkProvider;
+#include "Network/INetworkProvider.hpp"
 
 class GuiVisitor : public IGuiVisitor {
 public:

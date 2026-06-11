@@ -1,4 +1,3 @@
-#include "Network/INetworkProvider.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -12,6 +11,7 @@
 #include <string>
 #include <memory>
 #include "Server/Server.hpp"
+#include "Network/INetworkProvider.hpp"
 
 class AI;
 

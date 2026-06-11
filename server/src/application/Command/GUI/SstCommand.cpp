@@ -15,16 +15,16 @@
 
 void SstCommand::Accept(IGuiVisitor *visitor) {
     try {
-    visitor->visit(this);
+        visitor->visit(this);
     } catch (const std::exception &e) {
         throw ServerException(std::string("SstCommand::Accept: ") + e.what());
     }
 }
 
-void GuiCommandParser::parse_gui_sst([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, [[maybe_unused]] INetworkProvider &network)
+void GuiCommandParser::parse_gui_sst([[maybe_unused]] std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
-SstCommand cmd;
+        SstCommand cmd;
         GuiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,7 +34,7 @@ SstCommand cmd;
 
 void GuiVisitor::visit([[maybe_unused]] SstCommand *element) {
     try {
-} catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         throw ServerException(std::string("GuiVisitor::visit: ") + e.what());
     }
 }

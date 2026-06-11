@@ -1,4 +1,3 @@
-#include "Network/INetworkProvider.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -11,6 +10,7 @@
 
 #include <string>
 #include <memory>
+#include "Network/INetworkProvider.hpp"
 
 class GUI;
 class Server;
