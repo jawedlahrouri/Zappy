@@ -33,14 +33,21 @@ target_include_directories(zappy_server PRIVATE
     GameEngine/include
 )
 
-
 # ----------------------------------------------------------------======
 # 2. CIBLE : zappy_gui
 # ----------------------------------------------------------------======
 file(GLOB_RECURSE GUI_SOURCES "GameEngine/src/*.cpp")
 
 add_executable(zappy_gui ${GUI_SOURCES})
-target_include_directories(zappy_gui PRIVATE GameEngine/include server/include)
+target_include_directories(zappy_gui PRIVATE 
+    GameEngine/include 
+    server/include
+    server/include/application
+    server/include/domain
+    server/include/infrastructure
+    server/include/presentation
+    server/include/shared
+)
 
 find_package(SFML 2.5 COMPONENTS graphics window system network REQUIRED)
 # Utilisation des cibles CMake officielles de SFML
