@@ -50,7 +50,7 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour l'incantation."""
 
-        logger.info(f"agent  : Mode ÉLÉVATION (Niveau {self.agent.level}) : préparation du rituel.")
+        logger.info(f"agent : Mode ÉLÉVATION (Niveau {self.agent.level}) : préparation du rituel.")
         if self.agent.level == 1 or self.agent.grouper.role == 'LEADER':
             required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
             for stone_name, amount in required_stones.items():
@@ -79,9 +79,9 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour le regroupement."""
 
-        is_grouped = self.agent.grouper.process_grouping(self.agent.level, self.agent.agent_id, self.agent.vision)            
+        is_grouped = self.agent.grouper.process_grouping(self.agent.level, self.agent.agent_id, self.agent.vision)
         if is_grouped:
-            logger.info(f"agent  : Regroupement validé ! Passage en phase d'Incantation.")
+            logger.info(f"agent : Regroupement validé ! Passage en phase d'Incantation.")
             return AgentState.ELEVATION
         return AgentState.GROUPING
     
