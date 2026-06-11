@@ -55,9 +55,9 @@ class StateComportment:
             required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
             for stone_name, amount in required_stones.items():
                 for _ in range(amount):
-                    self.agent.cmd.set_object(stone_name)
+                    self.agent.cmd.send_command(f"Set {stone_name}")
             
-            success = self.agent.cmd.incantation()
+            success = self.agent.cmd.send_command("Incantation")
             if success:
                 self.agent.level += 1
                 logger.info(f"agent : L'Incantation a réussie ! Passage au Niveau {self.agent.level}.")
@@ -92,7 +92,7 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour le clonage."""
 
-        success = self.agent.cmd.fork()
+        success = self.agent.cmd.send_command("Fork")
         if success:
             self.agent.utils.launch_clone()
         return AgentState.SURVIVAL

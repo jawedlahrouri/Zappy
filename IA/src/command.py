@@ -156,22 +156,23 @@ class ZappyCommand:
             -command (str): La command à envoyé au server
         Retourne la reponse du serveur"""
 
-        logger.info(f"l'agent envoie la commande {command}")
         if not command.endswith('\n'):
-            command += '\n'
-        if (command == "Connect_nbr\n"):
+            command += '\n' 
+        cmd_name = command.split(' ')[0].strip() 
+        logger.info(f"L'agent envoie la commande : {command.strip()}")
+        if cmd_name == "Connect_nbr":
             return self.connect_nbr()
-        if (command == "Incantation\n"):
+        if cmd_name == "Incantation":
             return self.incantation()
         self.network.send_command(command)
         response = self._wait_for_response()
-        logger.info(f"l'agent a recu la reponse  {response}")
+        logger.info(f"L'agent a reçu la réponse : {response}")
         if response == "dead":
             return "dead"
-        if response == "ko":
-            return []
-        if (command == "Look\n"):
-            return self._parse_look(response)
-        elif (command == "Inventory\n"):
-            response = self._parse_inventory(response)
+        parsers = {
+            "Look": lambda r: [] if r == "ko" else self._parse_look(r),
+            "Inventory": lambda r: {} if r == "ko" else self._parse_inventory(r)
+        }
+        if cmd_name in parsers:
+            return parsers[cmd_name](response)
         return response == "ok"
