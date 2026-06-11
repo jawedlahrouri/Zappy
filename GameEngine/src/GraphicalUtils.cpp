@@ -79,7 +79,6 @@ void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, 
     else if (player.orientation == 2) texKey = "playerRight";
     else if (player.orientation == 3) texKey = "playerFace";
     else if (player.orientation == 4) texKey = "playerLeft";
-    else texKey = "playerFace";
 
     sf::Sprite playerSprite(tm.getTexture(texKey));
     sf::Vector2u texSize = tm.getTexture(texKey).getSize();

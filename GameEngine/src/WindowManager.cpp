@@ -47,16 +47,16 @@ void WindowManager::loadTextures()
     tm.loadTexture("food", "food.png");
     tm.loadTexture("linemate",  "brique.png");
     tm.loadTexture("deraumere", "shoe.png");
-    // tm.loadTexture("sibur",     "sibur.png");
+    tm.loadTexture("sibur", "ballon.png");
     // tm.loadTexture("mendiane",  "mendiane.png");
     // tm.loadTexture("phiras",    "phiras.png");
     // tm.loadTexture("thystame",  "thystame.png");
     tm.loadTexture("egg", "egg.png");
 
-    tm.loadTexture("PlayerFace", "character_face.png");
+    tm.loadTexture("playerFace", "character_face.png");
     tm.loadTexture("playerBack", "character_back.png");
-    tm.loadTexture("PlayerRight", "character_right.png");
-    // tm.loadTexture("PlayerLeft", "character_left.png");
+    tm.loadTexture("playerRight", "character_right.png");
+    tm.loadTexture("playerLeft", "character_left.png");
 }
 
 void WindowManager::loadFont()

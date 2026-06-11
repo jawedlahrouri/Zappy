@@ -32,7 +32,7 @@ class utils:
         logger.info(f"l'agent  a pondu un nouvel œuf et lance un nouveau clone.")
         port = str(self.cmd.network.port)
         machine = self.cmd.network.machine
-        subprocess.Popen(["./zappy_ai", "-p", port, "-h", machine, "-n", self.team_name])
+        subprocess.Popen(["python3 ./main", "-p", port, "-h", machine, "-n", self.team_name])
 
     def is_food_critical_for_action(self, estimated_tu_cost, inventory, food_minimum):
         """Vérifie si la nourriture actuelle est insuffisante pour effectuer une action risquée\n
