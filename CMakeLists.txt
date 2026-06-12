@@ -56,9 +56,9 @@ target_link_libraries(zappy_gui PRIVATE sfml-graphics sfml-window sfml-system sf
 # ----------------------------------------------------------------======
 # 3. CIBLE : zappy_ai (Déploiement du script Python)
 # ----------------------------------------------------------------======
-# On s'assure que le script Python est copié à la RACINE du repo
+
+file(WRITE ${CMAKE_SOURCE_DIR}/zappy_ai "#!/bin/bash\nexec python3 \"\$(dirname \"\$0\")/IA/main.py\" \"\$@\"\n")
 add_custom_target(zappy_ai ALL
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/IA/main.py ${CMAKE_SOURCE_DIR}/zappy_ai
     COMMAND chmod +x ${CMAKE_SOURCE_DIR}/zappy_ai
     COMMENT "Déploiement de l'exécutable IA (Copie de main.py à la racine)"
 )

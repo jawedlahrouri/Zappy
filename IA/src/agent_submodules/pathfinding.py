@@ -45,17 +45,17 @@ class Pathfinder:
             return
         row = int(math.sqrt(target_index))
         for _ in range(row):
-            self.cmd.forward()
+            self.cmd.send_command("Forward")
         middle_of_row = row * row + row
         shift = target_index - middle_of_row
         if shift < 0:
-            self.cmd.left()
+            self.cmd.send_command("Left")
             for _ in range(abs(shift)):
-                self.cmd.forward()
+                self.cmd.send_command("Forward")
         elif shift > 0:
-            self.cmd.right()
+            self.cmd.send_command("Right")
             for _ in range(shift):
-                self.cmd.forward()
+                self.cmd.send_command("Forward")
 
     def search_and_take_items(self, target_items, vision):
         """Cherche les cases contenant les éléments ciblés et se déplace vers la meilleure case pour les ramasser.\n
@@ -81,7 +81,7 @@ class Pathfinder:
                 count = items_on_tile.count(item)
                 for _ in range(count):
                     logger.info(f"Agent ramasse {item} sur la case {best_index}.")
-                    self.cmd.take_object(item)
+                    self.cmd.send_command(f"Take {item}")
             return True
         return False
 
@@ -94,19 +94,19 @@ class Pathfinder:
         if level <= 2:
             if self.explore_step < 3:
                 logger.info(f"Agent explore en avançant droit devant. Étape {self.explore_step + 1}/3.")
-                self.cmd.forward()
+                self.cmd.send_command("Forward")
                 self.explore_step += 1
             else:
                 logger.info(f"Agent explore en virant pour quadriller la zone. Étape {self.explore_step + 1}/3.")
-                action = random.choice([self.cmd.right, self.cmd.left])
+                action = random.choice([self.cmd.send_command("Right"), self.cmd.send_command("Left")])
                 action()
                 self.explore_step = 0 
         else:
             if self.explore_step < 3:
                 logger.info(f"Agent explore en scannant à droite. Étape {self.explore_step + 1}/3.")
-                self.cmd.right()
+                self.cmd.send_command("Right")
                 self.explore_step += 1
             else:
                 logger.info(f"Agent explore en avançant après scan. Étape {self.explore_step + 1}/3.")
-                self.cmd.forward()
+                self.cmd.send_command("Forward")
                 self.explore_step = 0
