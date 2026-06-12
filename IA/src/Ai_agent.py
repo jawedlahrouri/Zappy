@@ -17,7 +17,7 @@ from src.logger import ZappyLogger
 logger = ZappyLogger.get_logger("AgentCore")
 
 class ZappyAgent:
-    def __init__(self, command_interface: ZappyCommand, team_name: str):
+    def __init__(self, command_interface: ZappyCommand, team_name: str, map_size : str, client_num):
         self.cmd = command_interface # Interface de commande pour interagir avec le serveur.
         self.pathfinder = Pathfinder(self.cmd) # Module de pathfinding pour se déplacer efficacement.
         self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
@@ -39,6 +39,10 @@ class ZappyAgent:
         self.team_roster = {} # Dictionnaire pour suivre les alliés connus et leur dernière activité.
         self.population_target = 10 # Nombre d'agents que nous voulons idéalement dans l'équipe, utilisé pour décider quand faire du forking.
         self.last_ping_time = time.time() # Timestamp du dernier ping envoyé pour vérifier la présence des alliés.
+        self.x = 0 # position en X
+        self.y = 0 # position en Y
+        self.direction = 0 # direction dans laquelle le robot regarde
+        self.map_width, self.map_height = map_size.split()
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.
