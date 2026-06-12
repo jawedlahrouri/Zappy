@@ -79,14 +79,14 @@ def handshake(net, team_name):
     Retourne True si le handshake est réussi, False sinon."""
 
     if not wait_for_welcome(net):
-        return False
+        return False, None, None
     print(f"[Handshake] Envoi du nom de team: {team_name}")
     if not net.send_command(team_name):
         print("[Erreur] Impossible d'envoyer le team_name")
-        return False
+        return False, None, None
     success, client_num, dimensions = wait_for_infos(net)
     if not success:
-        return False
+        return False, None, None
     print("[Handshake] Succès! Démarrage de l'agent...")
     return True, client_num, dimensions
 

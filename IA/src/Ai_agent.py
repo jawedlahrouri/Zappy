@@ -42,7 +42,8 @@ class ZappyAgent:
         self.x = 0 # position en X
         self.y = 0 # position en Y
         self.direction = 0 # direction dans laquelle le robot regarde
-        self.map_width, self.map_height = map_size.split()
+        self.map_width, self.map_height = map_size[0], map_size[1] # taille de la map, utilisée pour le pathfinding et la navigation.
+        self.client_num = client_num # Le nombre de slots clients attribués à notre équipe, utilisé pour décider si on doit faire du forking dès le départ.
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.
@@ -197,6 +198,8 @@ class ZappyAgent:
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
+        if self.client_num >= 0:
+            self.utils.launch_clone()
         while self.is_alive:
             self.update_internal_state()
             self.evaluate_situation()
