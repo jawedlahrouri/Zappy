@@ -199,9 +199,15 @@ class ZappyAgent:
 
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
         if self.client_num >= 0:
-            self.utils.launch_clone()
+            self.utils.launch_clone() 
         while self.is_alive:
             self.update_internal_state()
+            if not self.is_alive:
+                break
             self.evaluate_situation()
+            if not self.is_alive:
+                break                
             self.act_based_on_state()
             time.sleep(0.1)
+        self.cmd.network.close()
+        logger.info(f"l'agent {self.agent_id} a terminé son cycle de vie (Déconnecté).")

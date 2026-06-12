@@ -58,7 +58,7 @@ class ZappyCommand:
                     logger.warning(f"l'agent a été éjecté par un autre joueur. Détails: {msg}")
                 elif msg == "dead":
                     self.system_queue.append("dead")
-                    logger.warning(f"l'agent est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
+                    logger.warning(f"l'agent est mort.")
                 else:
                     self.system_queue.append(msg)
             time.sleep(0.05)
