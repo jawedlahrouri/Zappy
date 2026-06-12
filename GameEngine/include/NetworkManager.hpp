@@ -19,6 +19,7 @@ class NetworkManager {
         bool authenticateAsGraphic();
         std::string receiveData();
         bool sendCommand(const std::string& command);
+        void disconnect();
         
         bool isConnected() const;
 
