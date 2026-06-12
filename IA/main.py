@@ -88,7 +88,7 @@ def handshake(net, team_name):
     if not success:
         return False
     print("[Handshake] Succès! Démarrage de l'agent...")
-    return True
+    return True, client_num, dimensions
 
 def main(port, machine, team_name):
     """Point d'entrée principal du client Zappy. Gère la connexion, le handshake, et lance l'agent.
@@ -109,12 +109,13 @@ def main(port, machine, team_name):
         return 84
     if not net.connected:
         return 84
-    if not handshake(net, team_name):
+    is_connected, client_num, dimensions = handshake(net, team_name)
+    if not is_connected:
         net.close()
-        return 84 
+        return 84
     try:
         cmd_interface = ZappyCommand(net)
-        agent = ZappyAgent(cmd_interface, team_name)
+        agent = ZappyAgent(cmd_interface, team_name, dimensions, client_num)
         agent.run()
         logger.info("[Agent] Agent terminé correctement")
     except KeyboardInterrupt:

@@ -1,5 +1,3 @@
-#include "AI.hpp"
-#include "GUI.hpp"
 /*
 ** EPITECH PROJECT, 2026
 ** Zappy-1
@@ -10,10 +8,11 @@
 #include "ServerException.hpp"
 #include "application/Server/Server.hpp"
 #include "application/Server/login.hpp"
-
 #include "GameEngine.hpp"
 #include "application/Event/GUI/EventVisitor.hpp"
 #include "application/Event/GUI/PnwEvent.hpp"
+#include "AI.hpp"
+#include "GUI.hpp"
 
 // protocol:
 // <-- WELCOME (sent on connection accept)

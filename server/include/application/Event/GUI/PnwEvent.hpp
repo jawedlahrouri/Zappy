@@ -12,6 +12,7 @@
 #include "IEventVisitor.hpp"
 #include "application/Server/Server.hpp"
 #include <memory>
+#include "AI.hpp"
 
 class PnwEvent : public IEventElement {
 public:
