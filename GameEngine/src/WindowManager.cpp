@@ -46,9 +46,9 @@ void WindowManager::loadTextures()
     tm.loadTexture("linemate",  "brique.png");
     tm.loadTexture("deraumere", "shoe.png");
     tm.loadTexture("sibur", "ballon.png");
-    // tm.loadTexture("mendiane",  "mendiane.png");
-    // tm.loadTexture("phiras",    "phiras.png");
-    // tm.loadTexture("thystame",  "thystame.png");
+    tm.loadTexture("mendiane", "jersey.png");
+    tm.loadTexture("phiras", "trophy.png");
+    tm.loadTexture("thystame",  "carte.png");
     tm.loadTexture("egg", "oeuf.png");
 
     tm.loadTexture("playerFace", "character_face.png");
