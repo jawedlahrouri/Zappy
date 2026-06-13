@@ -199,6 +199,12 @@ void Core::initCommands()
         std::cout << "[Graphic] edi handler: eggId=" << eggId << std::endl;
         _world.removeEgg(eggId);
     };
+
+    _commands["tna"] = [this](std::stringstream& ss) {
+        std::string teamName;
+        ss >> teamName;
+        _windowManager.addMenuTeamName(teamName);
+    };
 }
 
 void Core::parseCommand(const std::string& command)
