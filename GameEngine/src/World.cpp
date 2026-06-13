@@ -87,8 +87,9 @@ void WorldRenderer::drawEggs(sf::RenderWindow& window, const GameWorld& world,
 {
     const auto& eggs = world.getEggs();
 
-    for (const auto& pair : eggs)
+    for (const auto& pair : eggs) {
         GraphicalUtils::drawEgg(window, pair.second, TILE_SIZE, offsetX, offsetY);
+    }
 }
 
 void WorldRenderer::drawInfoPanel(sf::RenderWindow& window,
@@ -130,17 +131,17 @@ void WorldRenderer::drawInfoPanel(sf::RenderWindow& window,
         std::to_string(y), 0, 20, panelX, panelY);
     drawInfoLine(window, text, "food: " + std::to_string(resources.food), 2,
         16, panelX, panelY);
-    drawInfoLine(window, text, "linemate: " +
+    drawInfoLine(window, text, "brick: " +
         std::to_string(resources.linemate), 3, 16, panelX, panelY);
-    drawInfoLine(window, text, "deraumere: " +
+    drawInfoLine(window, text, "shoe: " +
         std::to_string(resources.deraumere), 4, 16, panelX, panelY);
-    drawInfoLine(window, text, "sibur: " + std::to_string(resources.sibur), 5,
+    drawInfoLine(window, text, "balloon: " + std::to_string(resources.sibur), 5,
         16, panelX, panelY);
-    drawInfoLine(window, text, "mendiane: " +
+    drawInfoLine(window, text, "jersey: " +
         std::to_string(resources.mendiane), 6, 16, panelX, panelY);
-    drawInfoLine(window, text, "phiras: " + std::to_string(resources.phiras),
+    drawInfoLine(window, text, "trophy: " + std::to_string(resources.phiras),
         7, 16, panelX, panelY);
-    drawInfoLine(window, text, "thystame: " +
+    drawInfoLine(window, text, "card: " +
         std::to_string(resources.thystame), 8, 16, panelX, panelY);
 
     window.setView(previousView);

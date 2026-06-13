@@ -13,6 +13,8 @@
     #include "WindowManager.hpp"
     #include <sstream>
     #include <chrono>
+    #include <unordered_map>
+    #include <functional>
 
     class Core {
     public:
@@ -30,12 +32,15 @@
         bool connectFromMenu();
         void parseCommand(const std::string& command);
         void sendPendingTileRequest();
+        void initCommands();
+        void parseValue(std::stringstream& ss, int& value);
 
         WindowManager _windowManager;
         NetworkManager _network;
         GameWorld _world;
         AppState _appState;
         bool _isRunning;
+        std::unordered_map<std::string, std::function<void(std::stringstream&)>> _commands;
     };
 
 #endif /* !CORE_HPP_ */
