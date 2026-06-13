@@ -11,6 +11,7 @@ class AgentState(Enum): # Enum pour représenter les différents états de compo
     ELEVATION = 4
     FORKING = 5
     BALISE = 6
+    BEGINER = 7
 
 class StateComportment:
     def __init__(self, agent):
@@ -98,11 +99,36 @@ class StateComportment:
             self.agent.utils.launch_clone()
         return AgentState.SURVIVAL
 
-    def act_observer(self):
+    def act_balise(self):
         """Effectue les actions de la balise qui vas servir de (0, 0) dans les coordonées.
         Params:
             -Aucun parametre.
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester a un endroit precis pour servir de (0,0) pour les autres."""
-        if self.agent.is_alive == True:
-            return True
+        if self.agent.is_alive:
+            secret_msg = self.agent.comms.encode(str(self.agent.agent_id), "balise")
+            self.agent.cmd.send_command(f"Broadcast {secret_msg}")
+        return AgentState.BALISE
+    
+    def act_beginer(self):
+        """Effectue les actions attendus de la part d'un bot qui vient d'arriver.
+        Params:
+            - Aucun parametre.
+        Retourne:
+            - AgentState: l'etat dans lequel l'agent doit etre.
+        """
+        if not self.agent.ping_sent:
+            self.agent.cmd.send_command("Broadcast TEAM_PING") # a voir avec jawed car doit etre crypté
+            self.agent.ping_sent = True
+            return AgentState.BEGINER
+
+        elif self.agent.wait_counter < 3:
+            self.agent.cmd.send_command("Inventory")
+            self.agent.wait_counter += 1
+            return AgentState.BEGINER
+
+        else:
+            self.agent.state = AgentState.BALISE
+            logger.info(f"L'agent {self.agent.agent_id} a terminé sa phase d'initialisation et devient une BALISE.")
+            return AgentState.BALISE
+        

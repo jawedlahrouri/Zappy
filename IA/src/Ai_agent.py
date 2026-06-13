@@ -19,6 +19,7 @@ logger = ZappyLogger.get_logger("AgentCore")
 class ZappyAgent:
     def __init__(self, command_interface: ZappyCommand, team_name: str, map_size : str, client_num):
         self.cmd = command_interface # Interface de commande pour interagir avec le serveur.
+        self.cmd.on_success_callback = self.handle_command_success
         self.pathfinder = Pathfinder(self.cmd) # Module de pathfinding pour se déplacer efficacement.
         self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
         self.comms = StealthComms() # Module de cryptage des message pour sécuriser la communication entre nos agents.
@@ -30,7 +31,7 @@ class ZappyAgent:
         self.unread_messages = [] # Messages reçus du serveur mais pas encore traités.
         self.agent_id = random.randint(1000, 9999) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
         self.is_alive = True # Flag pour savoir si l'agent est encore en vie.
-        self.state = AgentState.SURVIVAL # État initial de l'agent, il commencera en mode survie pour sécuriser sa position avant de faire autre chose.
+        self.state = AgentState.BEGINER # État initial de l'agent, il commencera en mode survie pour sécuriser sa position avant de faire autre chose.
         self.level = 1 # Niveau actuel de l'agent, commence à 1 et augmente avec les incantations réussies.
         self.inventory = {} # Dictionnaire pour stocker les ressources que l'agent a en sa possession (nourriture, pierres, etc).
         self.vision = [] # Ce que l'agent voit autour de lui, mis à jour à chaque cycle.
@@ -42,7 +43,39 @@ class ZappyAgent:
         self.x = 0 # position en X
         self.y = 0 # position en Y
         self.direction = 0 # direction dans laquelle le robot regarde
-        self.map_width, self.map_height = map_size.split()
+        if isinstance(map_size, tuple):
+            self.map_width, self.map_height = map_size
+        else:
+            self.map_width, self.map_height = map_size.split()
+        self.map_width = int(self.map_width)
+        self.map_height = int(self.map_height)
+        self.ping_sent = False
+        self.wait_counter = 0
+
+    def handle_command_success(self, cmd_name: str):
+        """Met à jour la position et direction internes suite à une commande réussie."""
+        if cmd_name == "Forward":
+            if self.direction == 0:
+                self.y += 1
+            elif self.direction == 1:
+                self.x += 1
+            elif self.direction == 2:
+                self.y -= 1
+            elif self.direction == 3:
+                self.x -= 1
+            
+            self.x = self.x % self.map_width
+            self.y = self.y % self.map_height
+            logger.info(f"Agent {self.agent_id} position mise à jour: x={self.x}, y={self.y}")
+
+        elif cmd_name == "Right":
+            self.direction = (self.direction + 1) % 4
+            logger.info(f"Agent {self.agent_id} direction mise à jour (Right): dir={self.direction}")
+
+        elif cmd_name == "Left":
+            self.direction = (self.direction - 1) % 4
+            logger.info(f"Agent {self.agent_id} direction mise à jour (Left): dir={self.direction}")
+
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.
@@ -102,6 +135,9 @@ class ZappyAgent:
             elif decoded['command'] == 'needmate':
                 sender_id = int(decoded['param'].split('-')[1])
                 self.team_roster[sender_id] = current_time
+            elif decoded['command'] == 'balise' and self.state == AgentState.BEGINER:
+                self.state = AgentState.SURVIVAL
+
         dead_ids = [ally_id for ally_id, last_seen in self.team_roster.items() if current_time - last_seen > 40]
         for ally_id in dead_ids:
             logger.warning(f"Allié {ally_id} ne répond plus. Déclaré mort.")
@@ -119,6 +155,8 @@ class ZappyAgent:
         food = self.inventory.get('food', 0)
         if food <= self.food_minimum:
             self.state = AgentState.SURVIVAL
+            return
+        if self.state in [AgentState.BEGINER, AgentState.BALISE]:
             return
         call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.decoded_messages)
         if call_k is not None:
@@ -179,17 +217,22 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais fais agir l'agent selon son état (survie, farming, grouping, etc)."""
 
-        if self.state == AgentState.SURVIVAL:
-            self.state = self.comportment.act_survival()
-        elif self.state == AgentState.FARMING:
-            self.state = self.comportment.act_farming()
-        elif self.state == AgentState.GROUPING:
-            self.state = self.comportment.act_grouping()
-        elif self.state == AgentState.ELEVATION:
-            self.state = self.comportment.act_elevating()
-        elif self.state == AgentState.FORKING:
-            self.state = self.comportment.act_forking()
-
+        match self.state:
+            case AgentState.SURVIVAL:
+                self.state = self.comportment.act_survival()
+            case AgentState.FARMING:
+                self.state = self.comportment.act_farming()
+            case AgentState.GROUPING:
+                self.state = self.comportment.act_grouping()
+            case AgentState.ELEVATION:
+                self.state = self.comportment.act_elevating()
+            case AgentState.FORKING:
+                self.state = self.comportment.act_forking()
+            case AgentState.BALISE:
+                self.state = self.comportment.act_balise()
+            case AgentState.BEGINER:
+                self.state = self.comportment.act_beginer()
+        
     def run(self):
         """Lance la boucle principale de l'agent.\n
         Params:
