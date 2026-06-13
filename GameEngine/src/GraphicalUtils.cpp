@@ -34,38 +34,39 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
     phirasSprite.setScale(resScale, resScale);
     thystameSprite.setScale(resScale / 4, resScale / 4);
 
-    if (tile.resources.food > 0) {
-        foodSprite.setPosition(startX + 4.0f, startY + 4.0f);
+
+    for (int i = 0; i < tile.resources.food; i++) {
+        foodSprite.setPosition(startX + 4.0f + (static_cast<float>(i) * 2.5f), startY + 4.0f);
         target.draw(foodSprite);
     }
 
-    if (tile.resources.linemate > 0) {
-        linemateSprite.setPosition(startX + 44.0f, startY + 4.0f);
+    for (int i = 0; i < tile.resources.linemate; i++) {
+        linemateSprite.setPosition(startX + 44.0f + (static_cast<float>(i) * 2.5f), startY + 4.0f);
         target.draw(linemateSprite);
     }
 
-    if (tile.resources.deraumere > 0) {
-        deraumereSprite.setPosition(startX + 4.0f, startY + 24.0f);
+    for (int i = 0; i < tile.resources.deraumere; i++) {
+        deraumereSprite.setPosition(startX + 4.0f + (static_cast<float>(i) * 2.5f), startY + 24.0f);
         target.draw(deraumereSprite);
     }
 
-    if (tile.resources.sibur > 0) {
-        siburSprite.setPosition(startX + 4.0f, startY + 44.0f);
+    for (int i = 0; i < tile.resources.sibur; i++) {
+        siburSprite.setPosition(startX + 4.0f + (static_cast<float>(i) * 2.5f), startY + 44.0f);
         target.draw(siburSprite);
     }
 
-    if (tile.resources.mendiane > 0) {
-        mendianeSprite.setPosition(startX + 44.0f, startY + 24.0f);
+    for (int i = 0; i < tile.resources.mendiane; i++) {
+        mendianeSprite.setPosition(startX + 44.0f + (static_cast<float>(i) * 2.5f), startY + 24.0f);
         target.draw(mendianeSprite);
     }
 
-    if (tile.resources.phiras > 0) {
-        phirasSprite.setPosition(startX + 44.0f, startY + 44.0f);
+    for (int i = 0; i < tile.resources.phiras; i++) {
+        phirasSprite.setPosition(startX + 44.0f + (static_cast<float>(i) * 2.5f), startY + 44.0f);
         target.draw(phirasSprite);
     }
 
-    if (tile.resources.thystame > 0) {
-        thystameSprite.setPosition(startX + 25.5f, startY + 44.0f);
+    for (int i = 0; i < tile.resources.thystame; i++) {
+        thystameSprite.setPosition(startX + 25.5f + (static_cast<float>(i) * 2.5f), startY + 4.0f);
         target.draw(thystameSprite);
     }
 }
