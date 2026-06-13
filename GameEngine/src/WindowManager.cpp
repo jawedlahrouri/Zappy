@@ -10,6 +10,7 @@
 #include "TextureManager.hpp"
 #include "World.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <filesystem>
 #include <iostream>
@@ -29,7 +30,13 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _width(width),
     _height(height),
     _title(title),
-    _fontLoaded(false)
+    _fontLoaded(false),
+    _menuIp("127.0.0.1"),
+    _menuPort("4242"),
+    _menuStatus(""),
+    _menuTeamNames(),
+    _menuConnectionEdited(false),
+    _activeMenuField(IP_FIELD)
 {
     create2DWindow(width, height);
     loadTextures();
@@ -52,6 +59,7 @@ void WindowManager::loadTextures()
     tm.loadTexture("egg", "oeuf.png");
 
     tm.loadTexture("playerFace", "character_face.png");
+    tm.loadTexture("bluePlayer", "bleu_character.png");
     tm.loadTexture("playerBack", "character_back.png");
     tm.loadTexture("playerRight", "character_right.png");
     tm.loadTexture("playerLeft", "character_left.png");
@@ -198,6 +206,51 @@ std::optional<std::pair<int, int>> WindowManager::consumeTileRequest()
     return request;
 }
 
+const std::string& WindowManager::getMenuIp() const
+{
+    return _menuIp;
+}
+
+const std::string& WindowManager::getMenuPort() const
+{
+    return _menuPort;
+}
+
+void WindowManager::setMenuConnectionInfo(const std::string& ip,
+    const std::string& port)
+{
+    _menuIp = ip;
+    _menuPort = port;
+}
+
+void WindowManager::setMenuStatus(const std::string& status)
+{
+    _menuStatus = status;
+}
+
+void WindowManager::resetMenuTeamNames()
+{
+    _menuTeamNames.clear();
+}
+
+void WindowManager::addMenuTeamName(const std::string& teamName)
+{
+    if (teamName.empty())
+        return;
+    if (std::find(_menuTeamNames.begin(), _menuTeamNames.end(), teamName) !=
+        _menuTeamNames.end())
+        return;
+    _menuTeamNames.push_back(teamName);
+}
+
+bool WindowManager::consumeMenuConnectionEdited()
+{
+    const bool wasEdited = _menuConnectionEdited;
+
+    _menuConnectionEdited = false;
+    return wasEdited;
+}
+
 bool WindowManager::handleWindowEvent(const sf::Event& event)
 {
     if (event.type == sf::Event::Closed) {
@@ -211,6 +264,70 @@ bool WindowManager::handleWindowEvent(const sf::Event& event)
         return true;
     }
     return false;
+}
+
+std::string& WindowManager::getActiveMenuInput()
+{
+    if (_activeMenuField == IP_FIELD)
+        return _menuIp;
+    return _menuPort;
+}
+
+void WindowManager::handleMenuTextEntered(sf::Uint32 unicode)
+{
+    std::string& input = getActiveMenuInput();
+
+    _menuStatus.clear();
+    if (unicode == 8) {
+        if (!input.empty()) {
+            input.pop_back();
+            _menuConnectionEdited = true;
+        }
+        return;
+    }
+    if (unicode < 32 || unicode > 126)
+        return;
+    const char character = static_cast<char>(unicode);
+
+    if (_activeMenuField == PORT_FIELD) {
+        if (std::isdigit(static_cast<unsigned char>(character)) &&
+            input.size() < 5) {
+            input += character;
+            _menuConnectionEdited = true;
+        }
+        return;
+    }
+    if ((std::isalnum(static_cast<unsigned char>(character)) ||
+        character == '.' || character == '-' || character == ':') &&
+        input.size() < 64) {
+        input += character;
+        _menuConnectionEdited = true;
+    }
+}
+
+bool WindowManager::handleMenuMousePressed(const sf::Event& event)
+{
+    const sf::Vector2u windowSize = _window.getSize();
+    const float centerX = static_cast<float>(windowSize.x) / 2.0f;
+    const float centerY = static_cast<float>(windowSize.y) / 2.0f;
+    const float mouseX = static_cast<float>(event.mouseButton.x);
+    const float mouseY = static_cast<float>(event.mouseButton.y);
+    const sf::FloatRect ipBox(centerX - 180.0f, centerY - 118.0f,
+        360.0f, 46.0f);
+    const sf::FloatRect portBox(centerX - 180.0f, centerY - 13.0f,
+        360.0f, 46.0f);
+    const sf::FloatRect startButton(centerX - 150.0f, centerY + 76.0f,
+        300.0f, 58.0f);
+
+    if (ipBox.contains(mouseX, mouseY)) {
+        _activeMenuField = IP_FIELD;
+        return false;
+    }
+    if (portBox.contains(mouseX, mouseY)) {
+        _activeMenuField = PORT_FIELD;
+        return false;
+    }
+    return startButton.contains(mouseX, mouseY);
 }
 
 bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& world)
@@ -247,12 +364,21 @@ bool WindowManager::handleMenuEvents()
     while (_window.pollEvent(event)) {
         if (handleWindowEvent(event))
             continue;
-        if (event.type != sf::Event::KeyPressed)
-            continue;
-        if (event.key.code == sf::Keyboard::Enter)
-            startGame = true;
-        else if (event.key.code == sf::Keyboard::Escape)
-            _window.close();
+        if (event.type == sf::Event::TextEntered) {
+            handleMenuTextEntered(event.text.unicode);
+        } else if (event.type == sf::Event::MouseButtonPressed &&
+            event.mouseButton.button == sf::Mouse::Left) {
+            if (handleMenuMousePressed(event))
+                startGame = true;
+        } else if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::Enter)
+                startGame = true;
+            else if (event.key.code == sf::Keyboard::Tab)
+                _activeMenuField = (_activeMenuField == IP_FIELD) ?
+                    PORT_FIELD : IP_FIELD;
+            else if (event.key.code == sf::Keyboard::Escape)
+                _window.close();
+        }
     }
     return startGame;
 }
@@ -285,7 +411,8 @@ void WindowManager::display()
 
 void WindowManager::drawMenu()
 {
-    Menu::draw(_window, _font, _fontLoaded);
+    Menu::draw(_window, _font, _fontLoaded, _menuIp, _menuPort,
+        _activeMenuField, _menuStatus, _menuTeamNames);
 }
 
 void WindowManager::drawWorld(const GameWorld& world)

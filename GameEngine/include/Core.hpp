@@ -28,6 +28,8 @@
             GAME
         };
 
+        void setupMenuDefaults(int ac, char** av);
+        bool connectFromMenu();
         void parseCommand(const std::string& command);
         void sendPendingTileRequest();
         void initCommands();

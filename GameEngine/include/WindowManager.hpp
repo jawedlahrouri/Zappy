@@ -13,6 +13,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 class WindowManager {
 public:
@@ -30,8 +31,20 @@ public:
 
     void drawMenu();
     void drawWorld(const GameWorld& world);
+    const std::string& getMenuIp() const;
+    const std::string& getMenuPort() const;
+    void setMenuConnectionInfo(const std::string& ip, const std::string& port);
+    void setMenuStatus(const std::string& status);
+    void resetMenuTeamNames();
+    void addMenuTeamName(const std::string& teamName);
+    bool consumeMenuConnectionEdited();
 
     private:
+        enum MenuField {
+            IP_FIELD = 0,
+            PORT_FIELD = 1
+        };
+
         void create2DWindow(unsigned int width, unsigned int height);
         void loadTextures();
         void loadFont();
@@ -41,6 +54,9 @@ public:
         void update2DPan();
         bool handleWindowEvent(const sf::Event& event);
         bool handleGameEvent(const sf::Event& event, const GameWorld& world);
+        void handleMenuTextEntered(sf::Uint32 unicode);
+        bool handleMenuMousePressed(const sf::Event& event);
+        std::string& getActiveMenuInput();
         void select2DTile(const GameWorld& world, int mouseX, int mouseY);
 
         sf::RenderWindow _window;
@@ -57,6 +73,12 @@ public:
         bool _fontLoaded;
         sf::Texture _tileTexture;
         sf::Texture _linemateTexture;
+        std::string _menuIp;
+        std::string _menuPort;
+        std::string _menuStatus;
+        std::vector<std::string> _menuTeamNames;
+        bool _menuConnectionEdited;
+        MenuField _activeMenuField;
     };
 
 #endif /* !WINDOWMANAGER_HPP_ */
