@@ -17,7 +17,8 @@ public:
   void Accept(IAiVisitor *visitor) override;
   void setClient(std::shared_ptr<AI> client) { _client = client; }
   std::shared_ptr<AI> getClient() const { return _client; }
-
+  int getX() const { return _client->getX(); }
+  int getY() const { return _client->getY(); }
 private:
   std::shared_ptr<AI> _client;
 };

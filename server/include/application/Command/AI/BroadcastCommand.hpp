@@ -18,9 +18,12 @@ public:
   void Accept(IAiVisitor *visitor) override;
   void setClient(std::shared_ptr<AI> client) { _client = client; }
   std::shared_ptr<AI> getClient() const { return _client; }
+  void setMessage(const std::string& message) { _message = message; }
+  std::string getMessage() const { return _message; }
 
 private:
   std::shared_ptr<AI> _client;
+  std::string _message;
 };
 
 #endif /* !BROADCASTCOMMAND_HPP_ */

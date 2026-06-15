@@ -25,6 +25,7 @@ void AiCommandParser::parse_connect_nbr([[maybe_unused]] std::shared_ptr<AI> cli
 {
     try {
         ConnectNbrCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,6 +35,21 @@ void AiCommandParser::parse_connect_nbr([[maybe_unused]] std::shared_ptr<AI> cli
 
 void AiVisitor::visit([[maybe_unused]] ConnectNbrCommand *element) {
     try {
+        auto client = element->getClient();
+        int count = 0;
+        for (auto &other : _network.getClients()) {
+            if (other.second->getType() == ClientType::AI) {
+                auto aiOther = std::dynamic_pointer_cast<AI>(other.second);
+                if (aiOther && aiOther->getTeamName() == client->getTeamName()) {
+                    count++;
+                }
+            }
+        }
+        
+        int slots = _network.getClientsNb() - count;
+        if (slots < 0) slots = 0;
+        
+        _network.sendResponse(client->getId(), std::to_string(slots) + "\n");
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
