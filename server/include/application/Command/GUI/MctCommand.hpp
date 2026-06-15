@@ -17,8 +17,9 @@ class IGuiVisitor;
 class MctCommand : public IGuiCommandElement {
 public:
     void Accept(IGuiVisitor *visitor) override;
-    void setClient(std::shared_ptr<GUI> client) { _client = client; }
-    std::shared_ptr<GUI> getClient() const { return _client; }
+    void setClient(std::shared_ptr<GUI> client);
+    std::shared_ptr<GUI> getClient() const;
+
 private:
     std::shared_ptr<GUI> _client;
 };
