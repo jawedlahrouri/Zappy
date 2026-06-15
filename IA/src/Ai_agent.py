@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import decimal
 import random
 import time
 import sys
@@ -44,13 +45,14 @@ class ZappyAgent:
         self.y = 0 # position en Y
         self.direction = 0 # direction dans laquelle le robot regarde
         if isinstance(map_size, tuple):
-            self.map_width, self.map_height = map_size
+            self.map_width, self.map_height = map_size # gestion de si les données de la map sont obtenues sous forme de tuple
         else:
-            self.map_width, self.map_height = map_size.split()
-        self.map_width = int(self.map_width)
-        self.map_height = int(self.map_height)
-        self.ping_sent = False
-        self.wait_counter = 0
+            self.map_width, self.map_height = map_size.split() # gestion de si les données de la map sont obtenues sous forme de string
+        self.map_width = int(self.map_width) # largeur de la map
+        self.map_height = int(self.map_height) # hauteur de la map
+        self.ping_sent = False # ping de naissance envoyé ou non
+        self.wait_counter = 0 # temps d'attente avant de commencer a envoyer des messages
+        self.balise_k = None # direction de la balise (set ses coords a zero)
 
     def handle_command_success(self, cmd_name: str):
         """Met à jour la position et direction internes suite à une commande réussie."""
@@ -136,7 +138,8 @@ class ZappyAgent:
                 sender_id = int(decoded['param'].split('-')[1])
                 self.team_roster[sender_id] = current_time
             elif decoded['command'] == 'balise' and self.state == AgentState.BEGINER:
-                self.state = AgentState.SURVIVAL
+                # self.state = AgentState.SURVIVAL
+                self.balise_k = msg_obj['k']
 
         dead_ids = [ally_id for ally_id, last_seen in self.team_roster.items() if current_time - last_seen > 40]
         for ally_id in dead_ids:
@@ -156,6 +159,16 @@ class ZappyAgent:
         if food <= self.food_minimum:
             self.state = AgentState.SURVIVAL
             return
+        if self.state == AgentState.BEGINER and self.balise_k is not None:
+            if self.balise_k == 0:
+                self.x = 0
+                self.y = 0
+                self.state = AgentState.SURVIVAL
+                self.balise_k = None
+                logger.info(f"L'agent {self.agent_id} est sur la balise. Coordonnées calibrées à (0,0). Passage en mode SURVIVAL.")
+                return
+            else:
+                return
         if self.state in [AgentState.BEGINER, AgentState.BALISE]:
             return
         call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.decoded_messages)

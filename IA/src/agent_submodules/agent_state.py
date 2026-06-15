@@ -106,6 +106,22 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester a un endroit precis pour servir de (0,0) pour les autres."""
         if self.agent.is_alive:
+            food = self.agent.inventory.get('food', 0)
+            current_population = len(self.agent.team_roster) + 1
+            if current_population < self.agent.population_target:
+                is_queen = True
+                for ally_id in self.agent.team_roster.keys():
+                    if ally_id > self.agent.agent_id:
+                        is_queen = False
+                        break
+                if is_queen and food > self.agent.food_safe:
+                    if not self.agent.utils.is_food_critical_for_action(42, self.agent.inventory, self.agent.food_minimum):
+                        logger.info(f"La BALISE (ID {self.agent.agent_id}) est la REINE et initie un Fork pour recruter un nouveau drone. Pop actuelle: {current_population}/{self.agent.population_target}.")
+                        success = self.agent.cmd.send_command("Fork")
+                        if success:
+                            self.agent.utils.launch_clone()
+                            return AgentState.BALISE
+
             secret_msg = self.agent.comms.encode(str(self.agent.agent_id), "balise")
             self.agent.cmd.send_command(f"Broadcast {secret_msg}")
         return AgentState.BALISE
@@ -117,18 +133,25 @@ class StateComportment:
         Retourne:
             - AgentState: l'etat dans lequel l'agent doit etre.
         """
-        if not self.agent.ping_sent:
-            self.agent.cmd.send_command("Broadcast TEAM_PING") # a voir avec jawed car doit etre crypté
-            self.agent.ping_sent = True
+        if self.agent.balise_k is not None and self.agent.balise_k > 0:
+            self.agent.grouper._move_towards_sound(self.agent.balise_k)
+            self.agent.balise_k = None
             return AgentState.BEGINER
-
-        elif self.agent.wait_counter < 3:
-            self.agent.cmd.send_command("Inventory")
-            self.agent.wait_counter += 1
-            return AgentState.BEGINER
-
+        
         else:
-            self.agent.state = AgentState.BALISE
-            logger.info(f"L'agent {self.agent.agent_id} a terminé sa phase d'initialisation et devient une BALISE.")
-            return AgentState.BALISE
+            if not self.agent.ping_sent:
+                self.agent.cmd.send_command("Broadcast TEAM_PING")
+                self.agent.ping_sent = True
+                return AgentState.BEGINER
+
+            elif self.agent.wait_counter < 3:
+                self.agent.cmd.send_command("Inventory")
+                self.agent.wait_counter += 1
+                return AgentState.BEGINER
+            
+            
+            else:
+                self.agent.state = AgentState.BALISE
+                logger.info(f"L'agent {self.agent.agent_id} a terminé sa phase d'initialisation et devient une BALISE.") # a voir jawed pour le cryptage
+                return AgentState.BALISE
         
