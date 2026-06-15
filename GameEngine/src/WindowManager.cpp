@@ -9,18 +9,8 @@
 #include "Menu.hpp"
 #include "TextureManager.hpp"
 #include "World.hpp"
-#include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <filesystem>
-#include <iostream>
-
-namespace {
-    constexpr float ZOOM_STEP = 1.1f;
-    constexpr float MIN_ZOOM = 0.35f;
-    constexpr float MAX_ZOOM = 3.0f;
-    constexpr float PAN_SPEED = 650.0f;
-}
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
     : _viewCenter(static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f),
@@ -85,9 +75,8 @@ void WindowManager::loadFont()
 
 WindowManager::~WindowManager()
 {
-    if (_window.isOpen()) {
+    if (_window.isOpen())
         _window.close();
-    }
 }
 
 bool WindowManager::isOpen() const
@@ -104,8 +93,7 @@ void WindowManager::create2DWindow(unsigned int width, unsigned int height)
     _height = height;
     _window.create(sf::VideoMode(width, height), _title);
     _window.setFramerateLimit(60);
-    _viewCenter = {static_cast<float>(width) / 2.0f,
-        static_cast<float>(height) / 2.0f};
+    _viewCenter = {static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f};
     _panClock.restart();
     updateView(width, height);
 }
@@ -148,13 +136,11 @@ void WindowManager::update2DPan()
         return;
     if (!_window.hasFocus())
         return;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) ||
-        sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         movement.y -= panStep;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
         movement.y += panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) ||
-        sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         movement.x -= panStep;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
         movement.x += panStep;
@@ -174,23 +160,17 @@ void WindowManager::select2DTile(const GameWorld& world, int mouseX, int mouseY)
         return;
 
     const sf::Vector2u windowSize = _window.getSize();
-    const float panelLeft = static_cast<float>(windowSize.x) -
-        WorldRenderer::INFO_PANEL_WIDTH - WorldRenderer::INFO_PANEL_MARGIN;
-    if (_selectedTile.has_value() && static_cast<float>(mouseX) >= panelLeft &&
-        static_cast<float>(mouseY) <= WorldRenderer::INFO_PANEL_MARGIN +
-        WorldRenderer::INFO_PANEL_HEIGHT)
+    const float panelLeft = static_cast<float>(windowSize.x) - WorldRenderer::INFO_PANEL_WIDTH - WorldRenderer::INFO_PANEL_MARGIN;
+    if (_selectedTile.has_value() && static_cast<float>(mouseX) >= panelLeft && static_cast<float>(mouseY) <= WorldRenderer::INFO_PANEL_MARGIN + WorldRenderer::INFO_PANEL_HEIGHT)
         return;
 
-    const sf::Vector2f worldPos = _window.mapPixelToCoords(
-        {mouseX, mouseY}, _worldView);
+    const sf::Vector2f worldPos = _window.mapPixelToCoords({mouseX, mouseY}, _worldView);
     const float totalMapWidth = static_cast<float>(mapWidth) * WorldRenderer::TILE_SIZE;
     const float totalMapHeight = static_cast<float>(mapHeight) * WorldRenderer::TILE_SIZE;
     const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
     const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
-    const int tileX = static_cast<int>(std::floor((worldPos.x - offsetX) /
-        WorldRenderer::TILE_SIZE));
-    const int tileY = static_cast<int>(std::floor((worldPos.y - offsetY) /
-        WorldRenderer::TILE_SIZE));
+    const int tileX = static_cast<int>(std::floor((worldPos.x - offsetX) / WorldRenderer::TILE_SIZE));
+    const int tileY = static_cast<int>(std::floor((worldPos.y - offsetY) / WorldRenderer::TILE_SIZE));
 
     if (tileX < 0 || tileX >= mapWidth || tileY < 0 || tileY >= mapHeight)
         return;
@@ -237,8 +217,7 @@ void WindowManager::addMenuTeamName(const std::string& teamName)
 {
     if (teamName.empty())
         return;
-    if (std::find(_menuTeamNames.begin(), _menuTeamNames.end(), teamName) !=
-        _menuTeamNames.end())
+    if (std::find(_menuTeamNames.begin(), _menuTeamNames.end(), teamName) != _menuTeamNames.end())
         return;
     _menuTeamNames.push_back(teamName);
 }
@@ -312,12 +291,9 @@ bool WindowManager::handleMenuMousePressed(const sf::Event& event)
     const float centerY = static_cast<float>(windowSize.y) / 2.0f;
     const float mouseX = static_cast<float>(event.mouseButton.x);
     const float mouseY = static_cast<float>(event.mouseButton.y);
-    const sf::FloatRect ipBox(centerX - 180.0f, centerY - 118.0f,
-        360.0f, 46.0f);
-    const sf::FloatRect portBox(centerX - 180.0f, centerY - 13.0f,
-        360.0f, 46.0f);
-    const sf::FloatRect startButton(centerX - 150.0f, centerY + 76.0f,
-        300.0f, 58.0f);
+    const sf::FloatRect ipBox(centerX - 180.0f, centerY - 118.0f, 360.0f, 46.0f);
+    const sf::FloatRect portBox(centerX - 180.0f, centerY - 13.0f, 360.0f, 46.0f);
+    const sf::FloatRect startButton(centerX - 150.0f, centerY + 76.0f, 300.0f, 58.0f);
 
     if (ipBox.contains(mouseX, mouseY)) {
         _activeMenuField = IP_FIELD;
@@ -373,10 +349,12 @@ bool WindowManager::handleMenuEvents()
         } else if (event.type == sf::Event::KeyPressed) {
             if (event.key.code == sf::Keyboard::Enter)
                 startGame = true;
-            else if (event.key.code == sf::Keyboard::Tab)
-                _activeMenuField = (_activeMenuField == IP_FIELD) ?
-                    PORT_FIELD : IP_FIELD;
-            else if (event.key.code == sf::Keyboard::Escape)
+            else if (event.key.code == sf::Keyboard::Tab) {
+                if (_activeMenuField == IP_FIELD)
+                    _activeMenuField = PORT_FIELD;
+                else
+                    _activeMenuField = IP_FIELD;
+            } else if (event.key.code == sf::Keyboard::Escape)
                 _window.close();
         }
     }

@@ -11,6 +11,7 @@
     #include <SFML/Graphics.hpp>
     #include <string>
     #include <vector>
+    #include <algorithm>
 
     class Menu {
         public:

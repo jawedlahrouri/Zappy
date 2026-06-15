@@ -29,7 +29,7 @@ class utils:
             aucun paramètre.
         Retourne None."""
         
-        logger.info(f"l'agent  a pondu un nouvel œuf et lance un nouveau clone.")
+        logger.info(f"l'agent a pondu un nouvel œuf et lance un nouveau clone.")
         port = str(self.cmd.network.port)
         machine = self.cmd.network.machine
         subprocess.Popen([sys.executable, "main.py", "-p", port, "-h", machine, "-n", self.team_name])

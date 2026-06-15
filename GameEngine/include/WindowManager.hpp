@@ -40,6 +40,11 @@ public:
     bool consumeMenuConnectionEdited();
 
     private:
+        static constexpr float ZOOM_STEP = 1.1f;
+        static constexpr float MIN_ZOOM = 0.35f;
+        static constexpr float MAX_ZOOM = 3.0f;
+        static constexpr float PAN_SPEED = 650.0f;
+
         enum MenuField {
             IP_FIELD = 0,
             PORT_FIELD = 1

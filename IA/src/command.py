@@ -73,21 +73,6 @@ class ZappyCommand:
         self.broadcast_queue.clear()
         return unread
 
-    def look(self):
-        """Envoie la commande Look au serveur et attend la réponse, en gérant les cas de mort et de refus.\n
-        Params:
-            -Aucun paramètre.
-        Retourne la vision analysée ou "dead" si l'agent est mort, ou une liste vide en cas de refus."""
-
-        logger.info(f"l'agent envoie la commande: Look")
-        self.network.send_command("Look\n")
-        response = self._wait_for_response()
-        logger.info(f"l'agent envoie la commande: {response}")
-        if response == "dead":
-            return "dead"
-        if response == "ko":
-            return []
-        return self._parse_look(response)
 
     def _parse_look(self, raw_str):
         """Parse la réponse de la commande Look pour extraire la vision de l'agent.\n
@@ -106,34 +91,6 @@ class ZappyCommand:
         except Exception as e:
             logger.error(f"[Erreur] Parsing vision échoué sur '{raw_str}': {e}")
         return parsed_vision
-    
-    def broadcast_text(self, text):
-        """Envoie un message de diffusion au serveur et attend la confirmation.\n
-        Params:
-            -text (str): Le texte à diffuser.
-        Retourne True si la diffusion est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande: Broadcast '{text}'")
-        self.network.send_command(f"Broadcast {text}\n")
-        response = self._wait_for_response()
-        logger.info(f"l'agent envoie la commande: {response}")
-        return response == "ok"
-    
-    def inventory(self):
-        """Envoie la commande Inventory au serveur et attend la réponse, en gérant les cas de mort et de refus.\n
-        Params:
-            -Aucun paramètre.
-        Retourne l'Inventaire analysée ou "dead" si l'agent est mort, ou une liste vide en cas de refus."""
-
-        logger.info(f"l'agent envoie la commande: Inventory")
-        self.network.send_command("Inventory\n")
-        response = self._wait_for_response()
-        logger.info(f"l'agent envoie la commande: {response}")
-        if response == "dead":
-            return "dead"
-        if response == "ko":
-            return {}
-        return self._parse_inventory(response)
     
     def _parse_inventory(self, raw_str):
         """Parse la réponse de la commande Inventory pour extraire l'inventaire de l'agent.\n
@@ -171,56 +128,6 @@ class ZappyCommand:
             logger.info(f"l'agent envoie la commande: {second_response}")
             return second_response.startswith("Current level")
         return False
-    
-    def forward(self):
-        """Envoie la commande Forward au serveur et attend la réponse.\n
-        Params:
-            -Aucun paramètre.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande: Forward")
-        self.network.send_command("Forward\n")
-        return self._wait_for_response() == "ok"
-    
-    def right(self):
-        """Envoie la commande Right au serveur et attend la réponse.\n
-        Params:
-            -Aucun paramètre.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande: Right")
-        self.network.send_command("Right\n")
-        return self._wait_for_response() == "ok"
-    
-    def left(self):
-        """Envoie la commande Left au serveur et attend la réponse.\n
-        Params:
-            -Aucun paramètre.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande: Left")
-        self.network.send_command("Left\n")
-        return self._wait_for_response() == "ok"
-    
-    def take_object(self, obj):
-        """Envoie la commande Take pour un objet spécifique au serveur et attend la réponse.\n
-        Params:
-            -obj (str): Le nom de l'objet à prendre.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande:  Take {obj}")
-        self.network.send_command(f"Take {obj}\n")
-        return self._wait_for_response() == "ok"
-    
-    def set_object(self, obj):
-        """Envoie la commande Set pour un objet spécifique au serveur et attend la réponse.\n
-        Params:
-            -obj (str): Le nom de l'objet à poser.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande:  Set {obj}")
-        self.network.send_command(f"Set {obj}\n")
-        return self._wait_for_response() == "ok"
 
     def connect_nbr(self):
         """Envoie la commande Connect_nbr au serveur pour connaître le nombre de connexions disponibles, et attend la réponse.\n
@@ -233,25 +140,6 @@ class ZappyCommand:
         response = self._wait_for_response()
         return -1 if response == "ko" else int(response)
     
-    def fork(self):
-        """Envoie la commande Fork au serveur et attend la réponse.\n
-        Params:
-            -Aucun paramètre.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        logger.info(f"l'agent envoie la commande: Fork")
-        self.network.send_command("Fork\n")
-        return self._wait_for_response() == "ok"
-
-    def eject(self):
-        """Envoie la commande Eject au serveur et attend la réponse.\n
-        Params:
-            -Aucun paramètre.
-        Retourne True si la commande est confirmée, False sinon."""
-
-        self.network.send_command("Eject\n")
-        return self._wait_for_response() == "ok"
-    
     def death(self):
         """Envoie la commande Death au serveur et attend la réponse.\n
         Params:
@@ -261,3 +149,30 @@ class ZappyCommand:
         self.network.send_command("Death\n")
         logger.warning(f"l'agent envoie la commande: death")
         return self._wait_for_response() == "dead"
+
+    def send_command(self, command):
+        """Envoie la commande passé en parametres au serveur
+        Params:
+            -command (str): La command à envoyé au server
+        Retourne la reponse du serveur"""
+
+        if not command.endswith('\n'):
+            command += '\n' 
+        cmd_name = command.split(' ')[0].strip() 
+        logger.info(f"L'agent envoie la commande : {command.strip()}")
+        if cmd_name == "Connect_nbr":
+            return self.connect_nbr()
+        if cmd_name == "Incantation":
+            return self.incantation()
+        self.network.send_command(command)
+        response = self._wait_for_response()
+        logger.info(f"L'agent a reçu la réponse : {response}")
+        if response == "dead":
+            return "dead"
+        parsers = {
+            "Look": lambda r: [] if r == "ko" else self._parse_look(r),
+            "Inventory": lambda r: {} if r == "ko" else self._parse_inventory(r)
+        }
+        if cmd_name in parsers:
+            return parsers[cmd_name](response)
+        return response == "ok"

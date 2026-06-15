@@ -141,6 +141,8 @@ void Core::initCommands()
         _world.setMapSize(width, height);
     };
 
+    _commands["tna"] = [this](std::stringstream& ss) { std::string teamName; ss >> teamName; _windowManager.addMenuTeamName(teamName);};
+
     _commands["pnw"] = [this](std::stringstream& ss) {
         Player p;
         parseValue(ss, p.id);
