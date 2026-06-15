@@ -11,6 +11,7 @@
 #include "application/Server/Server.hpp"
 #include "domain/Client/AI.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PieEvent.hpp"
 #include "ServerException.hpp"
 
 void IncantationCommand::Accept(IAiVisitor *visitor) {
@@ -55,10 +56,10 @@ void AiVisitor::visit(IncantationCommand *element) {
                     engine->checkVictory(p->getTeamName(), _network);
                 }
             }
-            _network.sendToGuis("pie " + std::to_string(x) + " " + std::to_string(y) + " 1\n");
+            _network.sendEvent(PieEvent(x, y, 1));
         } else {
             _network.sendResponse(aiClient->getId(), "ko\n");
-            _network.sendToGuis("pie " + std::to_string(x) + " " + std::to_string(y) + " 0\n");
+            _network.sendEvent(PieEvent(x, y, 0));
         }
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());

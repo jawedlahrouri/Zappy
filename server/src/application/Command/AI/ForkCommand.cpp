@@ -10,6 +10,7 @@
 #include "application/Command/AI/AiVisitor.hpp"
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
+#include "application/Event/GUI/EnwEvent.hpp"
 
 #include "ServerException.hpp"
 #include <iostream>
@@ -56,8 +57,7 @@ void AiVisitor::visit(ForkCommand *element) {
         
         _network.getGameEngine()->addEgg(egg);
         
-        std::string enw_msg = "enw " + std::to_string(eggId) + " " + std::to_string(aiClient->getId()) + " " + std::to_string(pos_x) + " " + std::to_string(pos_y) + "\n";
-        _network.sendToGuis(enw_msg);
+        _network.sendEvent(EnwEvent(eggId, aiClient->getId(), pos_x, pos_y));
         
         _network.sendResponse(aiClient->getId(), "ok\n");
     } catch (const std::exception &e) {

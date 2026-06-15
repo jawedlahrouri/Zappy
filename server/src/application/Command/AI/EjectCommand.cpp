@@ -10,6 +10,7 @@
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PexEvent.hpp"
 
 #include "ServerException.hpp"
 #include <iostream>
@@ -124,7 +125,7 @@ void AiVisitor::visit([[maybe_unused]] EjectCommand *element) {
         if (ejected_someone || eggs_destroyed) {
             _network.sendResponse(client->getId(), "ok\n");
             if (ejected_someone) {
-                _network.sendToGuis("pex " + std::to_string(client->getId()) + "\n");
+                _network.sendEvent(PexEvent(client->getId()));
             }
         } else {
             _network.sendResponse(client->getId(), "ko\n");
