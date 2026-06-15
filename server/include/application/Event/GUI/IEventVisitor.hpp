@@ -11,6 +11,7 @@
 class PdiEvent;
 class PdrEvent;
 class PnwEvent;
+class SegEvent;
 
 class IEventVisitor {
 public:
@@ -18,6 +19,7 @@ public:
     virtual void visit(PdiEvent *event) = 0;
     virtual void visit(PdrEvent *event) = 0;
     virtual void visit(PnwEvent *event) = 0;
+    virtual void visit(SegEvent *event) = 0;
 };
 
 #endif /* !IEVENTVISITOR_HPP_ */

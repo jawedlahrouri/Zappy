@@ -11,8 +11,6 @@
 #include "IEventVisitor.hpp"
 #include "INetworkProvider.hpp"
 
-
-
 class EventVisitor : public IEventVisitor {
 public:
     EventVisitor(INetworkProvider &network) : _network(network) {}
@@ -21,6 +19,7 @@ public:
     void visit(PdiEvent *event) override;
     void visit(PdrEvent *event) override;
     void visit(PnwEvent *event) override;
+    void visit(SegEvent *event) override;
 
 private:
     INetworkProvider &_network;
