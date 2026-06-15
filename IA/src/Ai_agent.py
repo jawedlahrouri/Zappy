@@ -51,13 +51,13 @@ class ZappyAgent:
             self.is_alive = False
             logger.error("Connexion au serveur perdue.")
             return
-        response = self.cmd.look()
+        response = self.cmd.send_command("Look")
         if response == "dead":
             self.is_alive = False
             logger.warning(f"L'agent {self.agent_id} est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
             return
         self.vision = response
-        response = self.cmd.inventory()
+        response = self.cmd.send_command("Inventory")
         if response == "dead":
             self.is_alive = False
             logger.warning(f"L'agent {self.agent_id} est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
@@ -79,7 +79,7 @@ class ZappyAgent:
         current_time = time.time()
         if current_time - self.last_ping_time > 15:
             secret_msg = self.comms.encode(str(self.agent_id), "ping")
-            self.cmd.broadcast_text(secret_msg)
+            self.cmd.send_command(f"Broadcast {secret_msg}")
             self.last_ping_time = current_time
 
     def process_radio_and_demographics(self):
