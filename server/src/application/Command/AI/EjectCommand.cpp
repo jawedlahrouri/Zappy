@@ -65,11 +65,11 @@ static void check_bound(int &x, int &y, int width, int height)
 }
 
 static bool destroy_egg(std::shared_ptr<AI> client, INetworkProvider &network) {
-    auto tile = network.getGameEngine()->getTile(client->getX(), client->getY());
+    auto tile = network.getGameEngine()->getMap().getTile(client->getX(), client->getY());
     auto eggs = tile.getEggs();
     bool destroyed = false;
     for (auto &egg : eggs) {
-        network.getGameEngine()->removeEgg(egg->getId());
+        network.getGameEngine()->getMap().removeEgg(egg->getId());
         network.sendToGuis("edi " + std::to_string(egg->getId()) + "\n");
         destroyed = true;
     }
@@ -116,7 +116,7 @@ void AiVisitor::visit([[maybe_unused]] EjectCommand *element) {
                 int push_k = getPushDirection(-x_dir, -y_dir, aiOther->getOrientation());
                 _network.sendResponse(aiOther->getId(), "eject: " + std::to_string(push_k) + "\n");
                 
-                _network.getGameEngine()->moveAi(aiOther->getId(), old_x, old_y, new_x, new_y);
+                _network.getGameEngine()->getMap().moveAi(aiOther->getId(), old_x, old_y, new_x, new_y);
             }
         }
         

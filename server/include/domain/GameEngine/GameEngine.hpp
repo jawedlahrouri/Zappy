@@ -18,37 +18,7 @@ class AI;
 class INetworkProvider;
 class ILogger;
 
-enum ResourceType {
-    FOOD = 0,
-    LINEMATE,
-    DERAUMERE,
-    SIBUR,
-    MENDIANE,
-    PHIRAS,
-    THYSTAME,
-    RESOURCE_COUNT
-};
-
-struct Egg {
-    int id;
-    int ownerId;
-    std::string teamName;
-    int x;
-    int y;
-    
-    int getId() const;
-    int getOwnerId() const;
-};
-
-struct Tile {
-    std::array<int, RESOURCE_COUNT> resources = {0, 0, 0, 0, 0, 0, 0};
-    std::vector<int> playerIds;
-    std::vector<std::shared_ptr<Egg>> eggs;
-    
-    void addEgg(std::shared_ptr<Egg> egg);
-    void removeEgg(int eggId);
-    const std::vector<std::shared_ptr<Egg>>& getEggs() const;
-};
+#include "domain/Map/Map.hpp"
 
 class GameEngine {
     public:
@@ -62,14 +32,11 @@ class GameEngine {
         int getWidth() const;
         int getHeight() const;
         
-        const Tile& getTile(int x, int y) const;
-        void addResourceToTile(int x, int y, ResourceType type, int quantity);
-        void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
-        void removeEgg(int eggId);
-        void addEgg(std::shared_ptr<Egg> egg);
+        Map& getMap();
+        const Map& getMap() const;
+
         int generateEggId() { return _nextEggId++; }
-        void addAiToTile(int aiId, int x, int y);
-        void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
+
         bool checkIncantationRequirements(int x, int y, int level) const;
         std::vector<std::shared_ptr<AI>> getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const;
         void consumeIncantationResources(int x, int y, int level);
@@ -95,7 +62,7 @@ class GameEngine {
         int _width;
         int _height;
 
-        std::vector<std::vector<Tile>> _map;
+        Map _map;
         int _resourceSpawnTicks = 0;
         int _nextEggId = 0;
         const std::array<double, RESOURCE_COUNT> _densities = {0.5, 0.3, 0.15, 0.1, 0.1, 0.08, 0.05};

@@ -66,14 +66,14 @@ void AiVisitor::visit([[maybe_unused]] TakeCommand *element) {
             return;
         }
 
-        auto& tile = _network.getGameEngine()->getTile(element->getClient()->getX(), element->getClient()->getY());
+        auto& tile = _network.getGameEngine()->getMap().getTile(element->getClient()->getX(), element->getClient()->getY());
         
         if (tile.resources[resType] <= 0) {
             _network.sendResponse(element->getClient()->getId(), "ko\n");
             return;
         }
         
-        _network.getGameEngine()->removeResourceFromTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
+        _network.getGameEngine()->getMap().removeResourceFromTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
         auto& inventory = element->getClient()->getInventory();
         inventory[resource_name]++;
         

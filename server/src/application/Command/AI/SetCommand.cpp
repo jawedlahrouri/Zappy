@@ -74,7 +74,7 @@ void AiVisitor::visit([[maybe_unused]] SetCommand *element) {
         }
         
         inventory[resource_name]--;
-        _network.getGameEngine()->addResourceToTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
+        _network.getGameEngine()->getMap().addResourceToTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
         
         _network.sendResponse(element->getClient()->getId(), "ok\n");
     } catch (const std::exception &e) {

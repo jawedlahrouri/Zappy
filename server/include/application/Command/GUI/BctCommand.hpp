@@ -10,9 +10,6 @@
 
 #include "application/Command/GUI/BaseGuiCommand.hpp"
 #include <memory>
-class GUI;
-
-class IGuiVisitor;
 
 class BctCommand : public BaseGuiCommand {
 public:

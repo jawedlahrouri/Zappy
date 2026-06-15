@@ -55,7 +55,7 @@ void AiVisitor::visit(ForkCommand *element) {
         egg->x = pos_x;
         egg->y = pos_y;
         
-        _network.getGameEngine()->addEgg(egg);
+        _network.getGameEngine()->getMap().addEgg(egg);
         
         _network.sendEvent(EnwEvent(eggId, aiClient->getId(), pos_x, pos_y));
         

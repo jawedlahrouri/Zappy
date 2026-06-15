@@ -11,7 +11,7 @@
 #include "application/Command/GUI/IGuiCommandElement.hpp"
 #include <memory>
 
-class GUI;
+#include "domain/Client/GUI.hpp"
 
 class BaseGuiCommand : public IGuiCommandElement {
 public:

@@ -11,7 +11,7 @@
 #include "application/Command/AI/IAiCommandElement.hpp"
 #include <memory>
 
-class AI;
+#include "domain/Client/AI.hpp"
 
 class BaseAiCommand : public IAiCommandElement {
 public:

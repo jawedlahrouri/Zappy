@@ -71,7 +71,7 @@ static std::string buildLookOutput(std::shared_ptr<AI> client, GameEngine* engin
     for (int d = 0; d <= level; d++) {
         for (int w = -d; w <= d; w++) {
             auto [tile_x, tile_y] = getTileCoordinates(pos_x, pos_y, orientation, d, w);
-            auto tile = engine->getTile(tile_x, tile_y);
+            auto tile = engine->getMap().getTile(tile_x, tile_y);
             output += getTileContentString(tile);
             if (d != level || w != d) {
                 output += ",";
