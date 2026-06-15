@@ -28,9 +28,23 @@ enum ResourceType {
     RESOURCE_COUNT
 };
 
+struct Egg {
+    int id;
+    int ownerId;
+    std::string teamName;
+    int x;
+    int y;
+    
+    int getId() const { return id; }
+    int getOwnerId() const { return ownerId; }
+};
+
 struct Tile {
     std::array<int, RESOURCE_COUNT> resources = {0, 0, 0, 0, 0, 0, 0};
     std::vector<int> playerIds;
+    std::vector<std::shared_ptr<Egg>> eggs;
+    
+    const std::vector<std::shared_ptr<Egg>>& getEggs() const { return eggs; }
 };
 
 class GameEngine {
@@ -47,6 +61,8 @@ class GameEngine {
         const Tile& getTile(int x, int y) const;
         void addResourceToTile(int x, int y, ResourceType type, int quantity);
         void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
+        void removeEgg(int eggId);
+        void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
 
         void generateInitialResources();
         void spawnResourcesCycle();

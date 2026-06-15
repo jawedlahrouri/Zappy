@@ -195,6 +195,39 @@ void GameEngine::removeResourceFromTile(int x, int y, ResourceType type, int qua
         _map[toric_y][toric_x].resources[type] = 0;
 }
 
+void GameEngine::removeEgg(int eggId)
+{
+    for (int y = 0; y < _height; y++) {
+        for (int x = 0; x < _width; x++) {
+            auto& eggs = _map[y][x].eggs;
+            for (auto it = eggs.begin(); it != eggs.end(); ++it) {
+                if ((*it)->getId() == eggId) {
+                    eggs.erase(it);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void GameEngine::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
+{
+    int toric_old_x = (oldX % _width + _width) % _width;
+    int toric_old_y = (oldY % _height + _height) % _height;
+    int toric_new_x = (newX % _width + _width) % _width;
+    int toric_new_y = (newY % _height + _height) % _height;
+
+    auto& oldPlayers = _map[toric_old_y][toric_old_x].playerIds;
+    for (auto it = oldPlayers.begin(); it != oldPlayers.end(); ++it) {
+        if (*it == aiId) {
+            oldPlayers.erase(it);
+            break;
+        }
+    }
+    
+    _map[toric_new_y][toric_new_x].playerIds.push_back(aiId);
+}
+
 void GameEngine::generateInitialResources()
 {
     try {
