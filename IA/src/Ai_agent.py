@@ -53,6 +53,7 @@ class ZappyAgent:
         self.ping_sent = False # ping de naissance envoyé ou non
         self.wait_counter = 0 # temps d'attente avant de commencer a envoyer des messages
         self.balise_k = None # direction de la balise (set ses coords a zero)
+        self.heard_balise = False # Indique si l'agent a déjà entendu la balise
 
     def handle_command_success(self, cmd_name: str):
         """Met à jour la position et direction internes suite à une commande réussie."""
@@ -140,6 +141,7 @@ class ZappyAgent:
             elif decoded['command'] == 'balise' and self.state == AgentState.BEGINER:
                 # self.state = AgentState.SURVIVAL
                 self.balise_k = msg_obj['k']
+                self.heard_balise = True
 
         dead_ids = [ally_id for ally_id, last_seen in self.team_roster.items() if current_time - last_seen > 40]
         for ally_id in dead_ids:

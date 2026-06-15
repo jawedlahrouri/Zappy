@@ -138,6 +138,10 @@ class StateComportment:
             self.agent.balise_k = None
             return AgentState.BEGINER
         
+        elif self.agent.heard_balise:
+            self.agent.cmd.send_command("Inventory")
+            return AgentState.BEGINER
+        
         else:
             if not self.agent.ping_sent:
                 self.agent.cmd.send_command("Broadcast TEAM_PING")
