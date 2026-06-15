@@ -18,7 +18,7 @@ MACHINE="127.0.0.1"
 # Se déclenche quand on fait un Ctrl+C
 cleanup() {
     echo -e "\n[+] Arrêt de tous les processus Zappy..."
-    pkill -f "./zappy_server"
+    pkill -f "./server/zappy_ref-v3.0.1/linux/zappy_server"
     pkill -f "./zappy_gui"
     pkill -f "./zappy_ai"
     echo "[+] Terminé."
@@ -33,7 +33,7 @@ trap cleanup SIGINT
 # ==========================================
 echo "[+] Lancement du zappy_server..."
 # Options du serveur basées sur le sujet
-./zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 -c $CLIENTS_NB -f $FREQ &
+./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 -c $CLIENTS_NB -f $FREQ &
 SERVER_PID=$!
 
 # Petite pause pour laisser le temps au serveur d'ouvrir ses sockets réseau
