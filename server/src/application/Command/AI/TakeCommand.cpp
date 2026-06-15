@@ -83,3 +83,10 @@ void AiVisitor::visit([[maybe_unused]] TakeCommand *element) {
     }
 }
 
+void TakeCommand::setResourceName(const std::string& name) {
+    _resourceName = name;
+}
+
+std::string TakeCommand::getResourceName() const {
+    return _resourceName;
+}

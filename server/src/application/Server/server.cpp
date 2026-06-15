@@ -213,9 +213,16 @@ void Server::runPollLoop()
 
         while (true) {
             auto now = std::chrono::steady_clock::now();
-            int timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_tick_time - now).count();
-            if (timeout_ms < 0) {
-                timeout_ms = 0;
+            int timeout_ms = -1;
+            if (!_clientManager.getClients().empty()) {
+                timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_tick_time - now).count();
+                if (timeout_ms <= 0 && next_tick_time > now) {
+                    timeout_ms = 1;
+                } else if (timeout_ms < 0) {
+                    timeout_ms = 0;
+                }
+            } else {
+                next_tick_time = now + tick_duration;
             }
 
             int poll_count = _poll->runPoll(timeout_ms);
@@ -229,7 +236,7 @@ void Server::runPollLoop()
 
             now = std::chrono::steady_clock::now();
             if (now >= next_tick_time) {
-                if (_gameEngine) {
+                if (_gameEngine && !_clientManager.getClients().empty()) {
                     _gameEngine->update(*this);
                     std::vector<int> clientsToRemove;
                     for (auto &[fd, client] : _clientManager.getClients()) {

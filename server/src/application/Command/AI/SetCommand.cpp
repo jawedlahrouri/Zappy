@@ -81,3 +81,11 @@ void AiVisitor::visit([[maybe_unused]] SetCommand *element) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
 }
+
+void SetCommand::setResourceName(const std::string& name) {
+    _resourceName = name;
+}
+
+std::string SetCommand::getResourceName() const {
+    return _resourceName;
+}

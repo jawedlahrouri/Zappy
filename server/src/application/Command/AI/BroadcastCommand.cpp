@@ -101,3 +101,11 @@ void AiVisitor::visit(BroadcastCommand *element) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
 }
+
+void BroadcastCommand::setMessage(const std::string& message) {
+    _message = message;
+}
+
+std::string BroadcastCommand::getMessage() const {
+    return _message;
+}

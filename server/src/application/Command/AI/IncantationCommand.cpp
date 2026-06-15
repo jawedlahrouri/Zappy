@@ -33,7 +33,6 @@ void AiCommandParser::parse_incantation([[maybe_unused]] std::shared_ptr<AI> cli
     }
 }
 
-
 void AiVisitor::visit(IncantationCommand *element) {
     try {
         auto aiClient = element->getClient();

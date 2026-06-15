@@ -38,3 +38,11 @@ void GuiVisitor::visit([[maybe_unused]] PpoCommand *element) {
         throw ServerException(std::string("GuiVisitor::visit: ") + e.what());
     }
 }
+
+void PpoCommand::setPlayerId(int id) {
+    _playerId = id;
+}
+
+int PpoCommand::getPlayerId() const {
+    return _playerId;
+}
