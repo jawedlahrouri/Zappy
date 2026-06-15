@@ -278,6 +278,11 @@ int Server::getClientsNb() const
     return _clientsNb;
 }
 
+void Server::setClientsNb(int nb)
+{
+    _clientsNb = nb;
+}
+
 int Server::getFreq() const
 {
     return _freq;
