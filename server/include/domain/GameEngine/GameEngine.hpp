@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <array>
+#include <unordered_map>
 
 class AI;
 class INetworkProvider;
@@ -28,9 +29,25 @@ enum ResourceType {
     RESOURCE_COUNT
 };
 
+struct Egg {
+    int id;
+    int ownerId;
+    std::string teamName;
+    int x;
+    int y;
+    
+    int getId() const;
+    int getOwnerId() const;
+};
+
 struct Tile {
     std::array<int, RESOURCE_COUNT> resources = {0, 0, 0, 0, 0, 0, 0};
     std::vector<int> playerIds;
+    std::vector<std::shared_ptr<Egg>> eggs;
+    
+    void addEgg(std::shared_ptr<Egg> egg);
+    void removeEgg(int eggId);
+    const std::vector<std::shared_ptr<Egg>>& getEggs() const;
 };
 
 class GameEngine {
@@ -40,13 +57,23 @@ class GameEngine {
 
         void update(INetworkProvider& network);
         void updateAi(std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove);
+        bool checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider& network);
 
-        int getWidth() const { return _width; }
-        int getHeight() const { return _height; }
+        int getWidth() const;
+        int getHeight() const;
         
         const Tile& getTile(int x, int y) const;
         void addResourceToTile(int x, int y, ResourceType type, int quantity);
         void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
+        void removeEgg(int eggId);
+        void addEgg(std::shared_ptr<Egg> egg);
+        int generateEggId() { return _nextEggId++; }
+        void addAiToTile(int aiId, int x, int y);
+        void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
+        bool checkIncantationRequirements(int x, int y, int level) const;
+        std::vector<std::shared_ptr<AI>> getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const;
+        void consumeIncantationResources(int x, int y, int level);
+        void checkVictory(const std::string& teamName, INetworkProvider& network) const;
 
         void generateInitialResources();
         void spawnResourcesCycle();
@@ -58,12 +85,19 @@ class GameEngine {
         void executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& network);
         int getCommandDuration(const std::string& command);
 
+        struct IncantationRequirement {
+            int players;
+            std::array<int, RESOURCE_COUNT> resources;
+        };
+        static const std::unordered_map<int, IncantationRequirement> _incantationReqs;
+
         ILogger& _logger;
         int _width;
         int _height;
 
         std::vector<std::vector<Tile>> _map;
         int _resourceSpawnTicks = 0;
+        int _nextEggId = 0;
         const std::array<double, RESOURCE_COUNT> _densities = {0.5, 0.3, 0.15, 0.1, 0.1, 0.08, 0.05};
 };
 

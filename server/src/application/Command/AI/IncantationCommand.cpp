@@ -9,9 +9,10 @@
 #include "application/Command/AI/AiVisitor.hpp"
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
-
+#include "domain/Client/AI.hpp"
+#include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PieEvent.hpp"
 #include "ServerException.hpp"
-#include <iostream>
 
 void IncantationCommand::Accept(IAiVisitor *visitor) {
     try {
@@ -32,8 +33,34 @@ void AiCommandParser::parse_incantation([[maybe_unused]] std::shared_ptr<AI> cli
     }
 }
 
-void AiVisitor::visit([[maybe_unused]] IncantationCommand *element) {
+
+void AiVisitor::visit(IncantationCommand *element) {
     try {
+        auto aiClient = element->getClient();
+        if (!aiClient)
+            throw ServerException("Client is not an AI");
+
+        int level = aiClient->getLevel();
+        int x = aiClient->getX();
+        int y = aiClient->getY();
+
+        auto& engine = _network.getGameEngine();
+        auto players = engine->getPlayersOnTileForIncantation(x, y, level, _network);
+
+        if (players.size() > 0 && engine->checkIncantationRequirements(x, y, level)) {
+            engine->consumeIncantationResources(x, y, level);
+            for (auto& p : players) {
+                p->setLevel(level + 1);
+                _network.sendResponse(p->getId(), "Current level: " + std::to_string(level + 1) + "\n");   
+                if (p->getLevel() == 8) {
+                    engine->checkVictory(p->getTeamName(), _network);
+                }
+            }
+            _network.sendEvent(PieEvent(x, y, 1));
+        } else {
+            _network.sendResponse(aiClient->getId(), "ko\n");
+            _network.sendEvent(PieEvent(x, y, 0));
+        }
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

@@ -25,6 +25,7 @@ void AiCommandParser::parse_left([[maybe_unused]] std::shared_ptr<AI> client, [[
 {
     try {
         LeftCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,6 +35,16 @@ void AiCommandParser::parse_left([[maybe_unused]] std::shared_ptr<AI> client, [[
 
 void AiVisitor::visit([[maybe_unused]] LeftCommand *element) {
     try {
+        int orientation = element->getClient()->getOrientation();
+
+        if (orientation == 0) // NORTH
+            element->getClient()->setOrientation(3);
+        else if (orientation == 1) // EAST
+            element->getClient()->setOrientation(0);
+        else if (orientation == 2) // SOUTH
+            element->getClient()->setOrientation(1);
+        else if (orientation == 3) // WEST
+            element->getClient()->setOrientation(2);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

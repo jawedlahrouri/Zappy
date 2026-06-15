@@ -9,7 +9,6 @@
 #include "application/Command/GUI/GuiVisitor.hpp"
 #include "GuiCommandParser.hpp"
 #include "application/Server/Server.hpp"
-
 #include "ServerException.hpp"
 #include <iostream>
 

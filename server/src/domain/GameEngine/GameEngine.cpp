@@ -14,7 +14,43 @@
 #include <iostream>
 #include <random>
 #include <cmath>
+#include <algorithm>
 #include "shared/ILogger.hpp"
+
+int Egg::getId() const
+{
+    return id;
+}
+
+int Egg::getOwnerId() const
+{
+    return ownerId;
+}
+
+void Tile::addEgg(std::shared_ptr<Egg> egg)
+{
+    eggs.push_back(egg);
+}
+
+void Tile::removeEgg(int eggId)
+{
+    eggs.erase(std::remove_if(eggs.begin(), eggs.end(), [eggId](const std::shared_ptr<Egg>& egg){ return egg->getId() == eggId; }), eggs.end());
+}
+
+const std::vector<std::shared_ptr<Egg>>& Tile::getEggs() const
+{
+    return eggs;
+}
+
+int GameEngine::getWidth() const
+{
+    return _width;
+}
+
+int GameEngine::getHeight() const
+{
+    return _height;
+}
 
 GameEngine::GameEngine(int width, int height, ILogger& logger)
     : _logger(logger), _width(width), _height(height)
@@ -123,6 +159,14 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
     try {
     if (ai->getActionTicksLeft() == -1 && !ai->getCommandQueue().empty()) {
         std::string next_cmd = ai->getCommandQueue().front();
+
+        if (next_cmd == "Incantation") {
+            if (!checkIncantationStart(ai, network)) {
+                ai->getCommandQueue().pop();
+                return;
+            }
+        }
+
         ai->setActionTicksLeft(getCommandDuration(next_cmd));
         if (ai->getActionTicksLeft() == 0) {
             executeAiAction(ai, network);
@@ -193,6 +237,149 @@ void GameEngine::removeResourceFromTile(int x, int y, ResourceType type, int qua
     _map[toric_y][toric_x].resources[type] -= quantity;
     if (_map[toric_y][toric_x].resources[type] < 0)
         _map[toric_y][toric_x].resources[type] = 0;
+}
+
+void GameEngine::removeEgg(int eggId)
+{
+    for (int y = 0; y < _height; y++) {
+        for (int x = 0; x < _width; x++) {
+            auto& eggs = _map[y][x].eggs;
+            for (auto it = eggs.begin(); it != eggs.end(); ++it) {
+                if ((*it)->getId() == eggId) {
+                    eggs.erase(it);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void GameEngine::addEgg(std::shared_ptr<Egg> egg)
+{
+    int toric_x = (egg->x % _width + _width) % _width;
+    int toric_y = (egg->y % _height + _height) % _height;
+
+    _map[toric_y][toric_x].addEgg(egg);
+}
+
+void GameEngine::addAiToTile(int aiId, int x, int y)
+{
+    int toric_x = (x % _width + _width) % _width;
+    int toric_y = (y % _height + _height) % _height;
+
+    _map[toric_y][toric_x].playerIds.push_back(aiId);
+}
+
+const std::unordered_map<int, GameEngine::IncantationRequirement> GameEngine::_incantationReqs = {
+    {1, {1, {0, 1, 0, 0, 0, 0, 0}}},
+    {2, {2, {0, 1, 1, 1, 0, 0, 0}}},
+    {3, {2, {0, 2, 0, 1, 0, 2, 0}}},
+    {4, {4, {0, 1, 1, 2, 0, 1, 0}}},
+    {5, {4, {0, 1, 2, 1, 3, 0, 0}}},
+    {6, {6, {0, 1, 2, 3, 0, 1, 0}}},
+    {7, {6, {0, 2, 2, 2, 2, 2, 1}}}
+};
+
+std::vector<std::shared_ptr<AI>> GameEngine::getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const
+{
+    std::vector<std::shared_ptr<AI>> players;
+    const Tile& t = getTile(x, y);
+    for (int pid : t.playerIds) {
+        auto it = network.getClients().find(pid);
+        if (it != network.getClients().end()) {
+            auto ai = std::dynamic_pointer_cast<AI>(it->second);
+            if (ai && ai->getLevel() == level) {
+                players.push_back(ai);
+            }
+        }
+    }
+    return players;
+}
+
+bool GameEngine::checkIncantationRequirements(int x, int y, int level) const
+{
+    auto reqIt = _incantationReqs.find(level);
+    if (reqIt == _incantationReqs.end()) return false;
+    const auto& req = reqIt->second;
+
+    const Tile& t = getTile(x, y);
+    for (int i = 1; i < RESOURCE_COUNT; ++i) {
+        if (t.resources[i] != req.resources[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void GameEngine::consumeIncantationResources(int x, int y, int level)
+{
+    auto reqIt = _incantationReqs.find(level);
+    if (reqIt == _incantationReqs.end()) return;
+    const auto& req = reqIt->second;
+
+    for (int i = 1; i < RESOURCE_COUNT; ++i) {
+        removeResourceFromTile(x, y, static_cast<ResourceType>(i), req.resources[i]);
+    }
+}
+
+#include "application/Event/GUI/SegEvent.hpp"
+
+void GameEngine::checkVictory(const std::string& teamName, INetworkProvider& network) const
+{
+    int count = 0;
+    for (const auto& pair : network.getClients()) {
+        auto ai = std::dynamic_pointer_cast<AI>(pair.second);
+        if (ai && ai->getTeamName() == teamName && ai->getLevel() == 8) {
+            count++;
+        }
+    }
+    
+    if (count >= 6) {
+        network.sendEvent(SegEvent(teamName));
+    }
+}
+
+bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider& network)
+{
+    int level = ai->getLevel();
+    int x = ai->getX();
+    int y = ai->getY();
+
+    auto players = getPlayersOnTileForIncantation(x, y, level, network);
+    auto reqIt = _incantationReqs.find(level);
+    
+    if (reqIt == _incantationReqs.end() || players.size() != static_cast<size_t>(reqIt->second.players) || !checkIncantationRequirements(x, y, level)) {
+        network.sendResponse(ai->getId(), "ko\n");
+        return false;
+    }
+
+    std::string pic_msg = "pic " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(level);
+    for (const auto& p : players) {
+        network.sendResponse(p->getId(), "Elevation underway\n");
+        pic_msg += " " + std::to_string(p->getId());
+    }
+    pic_msg += "\n";
+    
+    network.sendToGuis(pic_msg);
+    return true;
+}
+
+void GameEngine::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
+{
+    int toric_old_x = (oldX % _width + _width) % _width;
+    int toric_old_y = (oldY % _height + _height) % _height;
+    int toric_new_x = (newX % _width + _width) % _width;
+    int toric_new_y = (newY % _height + _height) % _height;
+
+    auto& oldPlayers = _map[toric_old_y][toric_old_x].playerIds;
+    for (auto it = oldPlayers.begin(); it != oldPlayers.end(); ++it) {
+        if (*it == aiId) {
+            oldPlayers.erase(it);
+            break;
+        }
+    }
+    
+    _map[toric_new_y][toric_new_x].playerIds.push_back(aiId);
 }
 
 void GameEngine::generateInitialResources()

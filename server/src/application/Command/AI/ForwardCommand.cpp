@@ -12,6 +12,22 @@
 
 #include "ServerException.hpp"
 #include <iostream>
+#include <unordered_map>
+#include "domain/GameEngine/GameEngine.hpp"
+
+static void borderWrap(std::shared_ptr<AI> client, int width, int height) {
+    int x = client->getX();
+    int y = client->getY();
+
+    if (x < 0)
+        client->setX(width - 1);
+    else if (x >= width)
+        client->setX(0);
+    else if (y < 0)
+        client->setY(height - 1);
+    else if (y >= height)
+        client->setY(0);
+}
 
 void ForwardCommand::Accept(IAiVisitor *visitor) {
     try {
@@ -25,6 +41,7 @@ void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client,
 {
     try {
         ForwardCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,6 +51,17 @@ void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client,
 
 void AiVisitor::visit([[maybe_unused]] ForwardCommand *element) {
     try {
+        int orientation = element->getClient()->getOrientation();
+        
+        if (orientation == 0) // NORTH
+            element->getClient()->setY(element->getClient()->getY() + 1);
+        else if (orientation == 1) // EAST
+            element->getClient()->setX(element->getClient()->getX() + 1);
+        else if (orientation == 2) // SOUTH
+            element->getClient()->setY(element->getClient()->getY() - 1);
+        else if (orientation == 3) // WEST
+            element->getClient()->setX(element->getClient()->getX() - 1);
+        borderWrap(element->getClient(), _network.getGameEngine()->getWidth(), _network.getGameEngine()->getHeight()); // teleport to the other side if the player goes out of bounds
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
