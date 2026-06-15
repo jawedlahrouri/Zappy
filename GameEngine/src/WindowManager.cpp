@@ -58,6 +58,7 @@ void WindowManager::loadTextures()
 void WindowManager::loadFont()
 {
     const std::string fonts[] = {
+        "GameEngine/assets/fonts/arial.ttf",
         "GameEngine/assets/fonts/NimbusSans-Regular.otf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
@@ -93,6 +94,7 @@ void WindowManager::create2DWindow(unsigned int width, unsigned int height)
     _height = height;
     _window.create(sf::VideoMode(width, height), _title);
     _window.setFramerateLimit(60);
+    _window.requestFocus();
     _viewCenter = {static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f};
     _panClock.restart();
     updateView(width, height);
@@ -257,7 +259,7 @@ void WindowManager::handleMenuTextEntered(sf::Uint32 unicode)
     std::string& input = getActiveMenuInput();
 
     _menuStatus.clear();
-    if (unicode == 8) {
+    if (unicode == 8 || unicode == 127) {
         if (!input.empty()) {
             input.pop_back();
             _menuConnectionEdited = true;
@@ -341,6 +343,10 @@ bool WindowManager::handleMenuEvents()
         if (handleWindowEvent(event))
             continue;
         if (event.type == sf::Event::TextEntered) {
+            if (event.text.unicode == 13 || event.text.unicode == 10) {
+                startGame = true;
+                continue;
+            }
             handleMenuTextEntered(event.text.unicode);
         } else if (event.type == sf::Event::MouseButtonPressed &&
             event.mouseButton.button == sf::Mouse::Left) {

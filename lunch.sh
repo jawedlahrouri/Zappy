@@ -58,7 +58,7 @@ sleep 3
 # ==========================================
 echo "[+] Lancement du zappy_gui..."
 # Le GUI a besoin du port et de l'hôte
-./zappy_gui -p $PORT -h $MACHINE &
+env WAYLAND_DISPLAY="" ./zappy_gui -p $PORT -h $MACHINE &
 
 # On attend que le processus du serveur se termine (bloque le script ici)
 wait $SERVER_PID
