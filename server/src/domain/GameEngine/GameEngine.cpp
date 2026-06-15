@@ -14,7 +14,43 @@
 #include <iostream>
 #include <random>
 #include <cmath>
+#include <algorithm>
 #include "shared/ILogger.hpp"
+
+int Egg::getId() const
+{
+    return id;
+}
+
+int Egg::getOwnerId() const
+{
+    return ownerId;
+}
+
+void Tile::addEgg(std::shared_ptr<Egg> egg)
+{
+    eggs.push_back(egg);
+}
+
+void Tile::removeEgg(int eggId)
+{
+    eggs.erase(std::remove_if(eggs.begin(), eggs.end(), [eggId](const std::shared_ptr<Egg>& egg){ return egg->getId() == eggId; }), eggs.end());
+}
+
+const std::vector<std::shared_ptr<Egg>>& Tile::getEggs() const
+{
+    return eggs;
+}
+
+int GameEngine::getWidth() const
+{
+    return _width;
+}
+
+int GameEngine::getHeight() const
+{
+    return _height;
+}
 
 GameEngine::GameEngine(int width, int height, ILogger& logger)
     : _logger(logger), _width(width), _height(height)
@@ -208,6 +244,14 @@ void GameEngine::removeEgg(int eggId)
             }
         }
     }
+}
+
+void GameEngine::addEgg(std::shared_ptr<Egg> egg)
+{
+    int toric_x = (egg->x % _width + _width) % _width;
+    int toric_y = (egg->y % _height + _height) % _height;
+
+    _map[toric_y][toric_x].addEgg(egg);
 }
 
 void GameEngine::addAiToTile(int aiId, int x, int y)

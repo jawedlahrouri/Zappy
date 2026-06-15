@@ -35,8 +35,8 @@ struct Egg {
     int x;
     int y;
     
-    int getId() const { return id; }
-    int getOwnerId() const { return ownerId; }
+    int getId() const;
+    int getOwnerId() const;
 };
 
 struct Tile {
@@ -44,7 +44,9 @@ struct Tile {
     std::vector<int> playerIds;
     std::vector<std::shared_ptr<Egg>> eggs;
     
-    const std::vector<std::shared_ptr<Egg>>& getEggs() const { return eggs; }
+    void addEgg(std::shared_ptr<Egg> egg);
+    void removeEgg(int eggId);
+    const std::vector<std::shared_ptr<Egg>>& getEggs() const;
 };
 
 class GameEngine {
@@ -55,13 +57,15 @@ class GameEngine {
         void update(INetworkProvider& network);
         void updateAi(std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove);
 
-        int getWidth() const { return _width; }
-        int getHeight() const { return _height; }
+        int getWidth() const;
+        int getHeight() const;
         
         const Tile& getTile(int x, int y) const;
         void addResourceToTile(int x, int y, ResourceType type, int quantity);
         void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
         void removeEgg(int eggId);
+        void addEgg(std::shared_ptr<Egg> egg);
+        int generateEggId() { return _nextEggId++; }
         void addAiToTile(int aiId, int x, int y);
         void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
 
@@ -81,6 +85,7 @@ class GameEngine {
 
         std::vector<std::vector<Tile>> _map;
         int _resourceSpawnTicks = 0;
+        int _nextEggId = 0;
         const std::array<double, RESOURCE_COUNT> _densities = {0.5, 0.3, 0.15, 0.1, 0.1, 0.08, 0.05};
 };
 
