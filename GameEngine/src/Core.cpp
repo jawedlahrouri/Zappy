@@ -61,7 +61,7 @@ int Core::run(int ac, char** av)
     return 0;
 }
 
-void Core::setupMenuDefaults(int ac, char** av)
+void Core::setupMenuDefaults([[maybe_unused]] int ac, [[maybe_unused]] char** av)
 {
     // const std::string port = (ac > 1) ? av[1] : "4242";
     // const std::string ip = (ac > 2) ? av[2] : "127.0.0.1";
