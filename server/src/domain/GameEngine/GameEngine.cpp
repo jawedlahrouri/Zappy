@@ -210,6 +210,14 @@ void GameEngine::removeEgg(int eggId)
     }
 }
 
+void GameEngine::addAiToTile(int aiId, int x, int y)
+{
+    int toric_x = (x % _width + _width) % _width;
+    int toric_y = (y % _height + _height) % _height;
+
+    _map[toric_y][toric_x].playerIds.push_back(aiId);
+}
+
 void GameEngine::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
 {
     int toric_old_x = (oldX % _width + _width) % _width;

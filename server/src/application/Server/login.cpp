@@ -37,6 +37,7 @@ void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetw
     network.sendResponse(fd, std::to_string(slots));
     if (network.getGameEngine()) {
         network.sendResponse(fd, std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
+        network.getGameEngine()->addAiToTile(ai->getId(), ai->getX(), ai->getY());
     } else {
         network.sendResponse(fd, "0 0");
     }

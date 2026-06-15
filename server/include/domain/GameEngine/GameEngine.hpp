@@ -62,6 +62,7 @@ class GameEngine {
         void addResourceToTile(int x, int y, ResourceType type, int quantity);
         void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
         void removeEgg(int eggId);
+        void addAiToTile(int aiId, int x, int y);
         void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
 
         void generateInitialResources();

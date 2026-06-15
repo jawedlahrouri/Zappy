@@ -65,7 +65,7 @@ static void check_bound(int &x, int &y, int width, int height)
 
 static bool destroy_egg(std::shared_ptr<AI> client, INetworkProvider &network) {
     auto tile = network.getGameEngine()->getTile(client->getX(), client->getY());
-    auto eggs = tile.getEggs(); // Copy array since we will modify the original
+    auto eggs = tile.getEggs();
     bool destroyed = false;
     for (auto &egg : eggs) {
         network.getGameEngine()->removeEgg(egg->getId());
