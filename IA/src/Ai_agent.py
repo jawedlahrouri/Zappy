@@ -44,6 +44,13 @@ class ZappyAgent:
         self.direction = 0 # direction dans laquelle le robot regarde
         self.map_width, self.map_height = map_size[0], map_size[1] # taille de la map, utilisée pour le pathfinding et la navigation.
         self.client_num = client_num # Le nombre de slots clients attribués à notre équipe, utilisé pour décider si on doit faire du forking dès le départ.
+        self.cycles_lived = 0 # Compte le nombre de cycles de vie de l'agent.
+        self.is_queen_elected = False # Flag pour savoir si la reine a été élue.
+        self.is_queen = False # Flag pour savoir si cet agent est la reine.
+        self.last_connect_nbr = client_num # Nombre de slots clients lors du dernier check, utilisé pour détecter les oeufs éclos.
+        self.unclaimed_clones = 0 # Nombre d'agents nés mais pas encore connectés.
+        self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
+        self.initial_cascade_pending = True # Flag pour savoir si la cascade initiale de forking est en cours.
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.
@@ -117,6 +124,9 @@ class ZappyAgent:
         if self.state == AgentState.ELEVATION:
             return
         self.process_radio_and_demographics()
+        self.cycles_lived += 1
+        if not self.is_queen_elected and self.cycles_lived > 5:
+            self.elect_queen()  
         food = self.inventory.get('food', 0)
         if food <= self.food_minimum:
             self.state = AgentState.SURVIVAL
@@ -138,6 +148,23 @@ class ZappyAgent:
             return
         self.state = AgentState.SURVIVAL
 
+    def elect_queen(self):
+        """Détermine si cet agent doit devenir la Reine, après avoir laissé le temps aux pings d'arriver.
+        Params:
+            -Aucun paramètre.
+        Retourne rien, mais défini l'agent comme reine si les conditions sont réunies.
+        """
+
+        highest_id = self.agent_id
+        for ally_id in self.team_roster.keys():
+            if ally_id > highest_id:
+                highest_id = ally_id
+        if highest_id == self.agent_id:
+            self.is_queen = True
+            self.agent_id = 9999
+            logger.info("Agent élu comme REINE (ID 9999).")
+        self.is_queen_elected = True
+
     def check_population(self, food, current_population):
         """Vérifie si les conditions sont réunies pour pondre un oeuf\n
         Params:
@@ -145,12 +172,7 @@ class ZappyAgent:
             -current_population (int): Le nombre actuel d'agents connus dans l'équipe
         Retourne 1 si on décide de faire de pondre un oeuf, 0 sinon."""
 
-        is_queen = True
-        for ally_id in self.team_roster.keys():
-            if ally_id > self.agent_id:
-                is_queen = False
-                break
-        if is_queen and food > self.food_safe:
+        if self.is_queen and food > self.food_safe:
             if not self.utils.is_food_critical_for_action(42, self.inventory, self.food_minimum):
                 logger.info(f"l'agent {self.agent_id} est la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
                 self.state = AgentState.FORKING
@@ -191,6 +213,37 @@ class ZappyAgent:
         elif self.state == AgentState.FORKING:
             self.state = self.comportment.act_forking()
 
+    def manage_demographics(self):
+        """Gère le forking événementiel (uniquement exécuté par la Reine)."""
+        if not self.is_queen:
+            return
+            
+        response = self.cmd.send_command("Connect_nbr")
+        if response:
+            current_connect_nbr = int(response)
+            if self.initial_cascade_pending:
+                if current_connect_nbr > 0:
+                    logger.info(f"Reine : Cascade initiale avec {current_connect_nbr} slots ouverts.")
+                    for _ in range(current_connect_nbr):
+                        self.utils.launch_clone()
+                        self.unclaimed_clones += 1
+                self.initial_cascade_pending = False
+                self.last_connect_nbr = current_connect_nbr
+                return
+            delta = current_connect_nbr - self.last_connect_nbr
+            
+            if delta > 0:
+                logger.info(f"Reine : {delta} oeuf(s) a/ont éclos !")
+                for _ in range(delta):
+                    self.utils.launch_clone()
+                    self.unclaimed_clones += 1
+            elif delta < 0:
+                connected = abs(delta)
+                self.unclaimed_clones = max(0, self.unclaimed_clones - connected)
+                logger.info(f"Reine : {connected} clone(s) connecté(s). Unclaimed: {self.unclaimed_clones}")
+                
+            self.last_connect_nbr = current_connect_nbr
+
     def run(self):
         """Lance la boucle principale de l'agent.\n
         Params:
@@ -198,8 +251,6 @@ class ZappyAgent:
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
-        if self.client_num >= 0:
-            self.utils.launch_clone() 
         while self.is_alive:
             self.update_internal_state()
             if not self.is_alive:
@@ -208,6 +259,8 @@ class ZappyAgent:
             if not self.is_alive:
                 break                
             self.act_based_on_state()
+            if self.is_queen_elected:
+                self.manage_demographics()
             time.sleep(0.1)
         self.cmd.network.close()
         logger.info(f"l'agent {self.agent_id} a terminé son cycle de vie (Déconnecté).")
