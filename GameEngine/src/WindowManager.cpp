@@ -49,7 +49,7 @@ void WindowManager::loadTextures()
     tm.loadTexture("egg", "oeuf.png");
 
     tm.loadTexture("playerFace", "character_face.png");
-    tm.loadTexture("bluePlayer", "bleu_character.png");
+    tm.loadTexture("bluePlayer", "blue_character.png");
     tm.loadTexture("playerBack", "character_back.png");
     tm.loadTexture("playerRight", "character_right.png");
     tm.loadTexture("playerLeft", "character_left.png");
