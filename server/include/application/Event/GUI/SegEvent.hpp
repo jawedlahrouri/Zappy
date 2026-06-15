@@ -7,13 +7,14 @@
 
 #include "IEventElement.hpp"
 #include "IEventVisitor.hpp"
+#include <string>
 
 class SegEvent : public IEventElement {
 public:
-    SegEvent(int teamId);
+    SegEvent(const std::string& teamName);
     ~SegEvent() override = default;
     void Accept(IEventVisitor *visitor) const override;
-    int getTeamId() const;
+    const std::string& getTeamName() const;
 private:
-    int _teamId;
+    std::string _teamName;
 };

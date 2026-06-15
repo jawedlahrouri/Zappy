@@ -11,10 +11,10 @@
 #include "ServerException.hpp"
 #include <string>
 
-SegEvent::SegEvent(int teamId) : _teamId(teamId) {}
+SegEvent::SegEvent(const std::string& teamName) : _teamName(teamName) {}
 
-int SegEvent::getTeamId() const {
-    return _teamId;
+const std::string& SegEvent::getTeamName() const {
+    return _teamName;
 }
 
 void SegEvent::Accept(IEventVisitor *visitor) const {
@@ -27,7 +27,7 @@ void SegEvent::Accept(IEventVisitor *visitor) const {
 
 void EventVisitor::visit(SegEvent *event) {
     try {
-        std::string payload = "seg " + std::to_string(event->getTeamId());
+        std::string payload = "seg " + event->getTeamName() + "\n";
         _network.sendToGuis(payload);
     } catch (const std::exception &e) {
         throw ServerException(std::string("EventVisitor::visit(SegEvent): ") + e.what());

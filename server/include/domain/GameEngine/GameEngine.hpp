@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <array>
+#include <unordered_map>
 
 class AI;
 class INetworkProvider;
@@ -56,6 +57,7 @@ class GameEngine {
 
         void update(INetworkProvider& network);
         void updateAi(std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove);
+        bool checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider& network);
 
         int getWidth() const;
         int getHeight() const;
@@ -68,6 +70,10 @@ class GameEngine {
         int generateEggId() { return _nextEggId++; }
         void addAiToTile(int aiId, int x, int y);
         void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
+        bool checkIncantationRequirements(int x, int y, int level) const;
+        std::vector<std::shared_ptr<AI>> getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const;
+        void consumeIncantationResources(int x, int y, int level);
+        void checkVictory(const std::string& teamName, INetworkProvider& network) const;
 
         void generateInitialResources();
         void spawnResourcesCycle();
@@ -78,6 +84,12 @@ class GameEngine {
         void handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& network);
         void executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& network);
         int getCommandDuration(const std::string& command);
+
+        struct IncantationRequirement {
+            int players;
+            std::array<int, RESOURCE_COUNT> resources;
+        };
+        static const std::unordered_map<int, IncantationRequirement> _incantationReqs;
 
         ILogger& _logger;
         int _width;
