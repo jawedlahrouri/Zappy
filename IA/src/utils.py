@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import random
-import time
 import sys
 import subprocess
 from enum import Enum

@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import random
-import time
 import sys
 import subprocess
 from enum import Enum
@@ -38,7 +37,7 @@ class ZappyAgent:
         self.food_safe = 15 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité pour faire des actions plus risquées comme le farming ou le regroupement.
         self.team_roster = {} # Dictionnaire pour suivre les alliés connus et leur dernière activité.
         self.population_target = 10 # Nombre d'agents que nous voulons idéalement dans l'équipe, utilisé pour décider quand faire du forking.
-        self.last_ping_time = time.time() # Timestamp du dernier ping envoyé pour vérifier la présence des alliés.
+        self.last_ping_cycle = 0 # Cycle de vie lors du dernier ping envoyé pour vérifier la présence des alliés.
         self.x = 0 # position en X
         self.y = 0 # position en Y
         self.direction = 0 # direction dans laquelle le robot regarde
@@ -88,11 +87,10 @@ class ZappyAgent:
                     self.decoded_messages.append({'k': k, 'data': decoded})
             except Exception:
                 continue
-        current_time = time.time()
-        if current_time - self.last_ping_time > 15:
+        if self.cycles_lived - self.last_ping_cycle > 10:
             secret_msg = self.comms.encode(str(self.agent_id), "ping")
             self.cmd.send_command(f"Broadcast {secret_msg}")
-            self.last_ping_time = current_time
+            self.last_ping_cycle = self.cycles_lived
 
     def process_radio_and_demographics(self):
         """Traite les messages radio reçus pour mettre à jour la liste des alliés connus
@@ -101,16 +99,15 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
-        current_time = time.time()
         for msg_obj in self.decoded_messages:
             decoded = msg_obj['data']
             if decoded['command'] == 'ping':
                 sender_id = int(decoded['param'])
-                self.team_roster[sender_id] = current_time
+                self.team_roster[sender_id] = self.cycles_lived
             elif decoded['command'] == 'needmate':
                 sender_id = int(decoded['param'].split('-')[1])
-                self.team_roster[sender_id] = current_time
-        dead_ids = [ally_id for ally_id, last_seen in self.team_roster.items() if current_time - last_seen > 40]
+                self.team_roster[sender_id] = self.cycles_lived
+        dead_ids = [ally_id for ally_id, last_seen_cycle in self.team_roster.items() if self.cycles_lived - last_seen_cycle > 30]
         for ally_id in dead_ids:
             logger.warning(f"Allié {ally_id} ne répond plus. Déclaré mort.")
             del self.team_roster[ally_id]
@@ -261,6 +258,5 @@ class ZappyAgent:
             self.act_based_on_state()
             if self.is_queen_elected:
                 self.manage_demographics()
-            time.sleep(0.1)
         self.cmd.network.close()
         logger.info(f"l'agent {self.agent_id} a terminé son cycle de vie (Déconnecté).")
