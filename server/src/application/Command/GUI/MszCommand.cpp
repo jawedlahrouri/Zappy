@@ -22,6 +22,16 @@ void MszCommand::Accept(IGuiVisitor *visitor)
     }
 }
 
+void MszCommand::setClient(std::shared_ptr<GUI> client)
+{
+    _client = client;
+}
+
+std::shared_ptr<GUI> MszCommand::getClient() const
+{
+    return _client;
+}
+
 void GuiCommandParser::parse_gui_msz(std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
