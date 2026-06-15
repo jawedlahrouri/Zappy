@@ -46,7 +46,6 @@ echo "[+] Lancement des clients IA..."
 # Lancement de 2 drones pour la TeamA et 1 pour la TeamB
 # On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
 ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
-./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
 ./zappy_ai -p $PORT -n $TEAM2 -h $MACHINE > /dev/null 2>&1 &
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
