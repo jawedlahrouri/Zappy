@@ -10,17 +10,27 @@
 
 #include "application/Command/GUI/IGuiCommandElement.hpp"
 #include <memory>
-class GUI;
 
+class GUI;
 class IGuiVisitor;
 
 class BctCommand : public IGuiCommandElement {
 public:
     void Accept(IGuiVisitor *visitor) override;
-    void setClient(std::shared_ptr<GUI> client) { _client = client; }
-    std::shared_ptr<GUI> getClient() const { return _client; }
+    
+    void setClient(std::shared_ptr<GUI> client);
+    std::shared_ptr<GUI> getClient() const;
+
+    void setX(int x);
+    void setY(int y);
+
+    int getX() const;
+    int getY() const;
+
 private:
     std::shared_ptr<GUI> _client;
+    int _x = 0;
+    int _y = 0;
 };
 
 #endif /* !BCTCOMMAND_HPP_ */
