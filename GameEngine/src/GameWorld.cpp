@@ -30,6 +30,35 @@ void GameWorld::setMapSize(int width, int height)
     }
 }
 
+void GameWorld::addTeamName(const std::string& teamName)
+{
+    if (teamName.empty())
+        return;
+    for (const std::string& name : _teamNames) {
+        if (name == teamName)
+            return;
+    }
+    _teamNames.push_back(teamName);
+}
+
+int GameWorld::getTeamColor(const std::string& teamName)
+{
+    addTeamName(teamName);
+    for (std::size_t index = 0; index < _teamNames.size(); index++) {
+        if (_teamNames[index] == teamName) {
+            if (index == 0)
+                return 1;
+            if (index == 1)
+                return 2;
+            if (index == 2)
+                return 3;
+            if (index == 3)
+                return 4;
+        }
+    }
+    return 2;
+}
+
 void GameWorld::setTileResources(int x, int y, const Resources& res)
 {
     if (x >= 0 && x < _width && y >= 0 && y < _height) {
@@ -52,7 +81,10 @@ Resources GameWorld::resToResources(int q0, int q1, int q2, int q3, int q4, int 
 
 
 void GameWorld::addPlayer(const Player& player) {
-    _players[player.id] = player;
+    Player newPlayer = player;
+
+    newPlayer.teamColor = getTeamColor(player.teamName);
+    _players[player.id] = newPlayer;
     std::cout << "[Graphic] Joueur #" << player.id << " ajouté à la position (" << player.x << ", " << player.y << ")" << std::endl;
 }
 

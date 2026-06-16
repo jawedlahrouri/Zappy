@@ -9,6 +9,44 @@
 #include "TextureManager.hpp"
 #include <cmath>
 
+static std::string getPlayerTextureKey(const Player& player)
+{
+    if (player.teamColor == 1) {
+        if (player.orientation == 1)
+            return "blueBack";
+        if (player.orientation == 2)
+            return "blueRight";
+        if (player.orientation == 4)
+            return "blueLeft";
+        return "bluePlayer";
+    }
+    if (player.teamColor == 3) {
+        if (player.orientation == 1)
+            return "greenBack";
+        if (player.orientation == 2)
+            return "greenRight";
+        if (player.orientation == 4)
+            return "greenLeft";
+        return "greenPlayer";
+    }
+    if (player.teamColor == 4) {
+        if (player.orientation == 1)
+            return "pinkBack";
+        if (player.orientation == 2)
+            return "pinkRight";
+        if (player.orientation == 4)
+            return "pinkLeft";
+        return "pinkPlayer";
+    }
+    if (player.orientation == 1)
+        return "playerBack";
+    if (player.orientation == 2)
+        return "playerRight";
+    if (player.orientation == 4)
+        return "playerLeft";
+    return "playerFace";
+}
+
 void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, float tileSize, float offsetX, float offsetY)
 {
     float startX = tile.x * tileSize + offsetX;
@@ -79,16 +117,7 @@ void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, 
     float centerY = player.y * tileSize + offsetY + (tileSize / 2.0f);
 
     const TextureManager& tm = TextureManager::getInstance();
-    std::string texKey = "playerFace";
-    // Orientation : 1: N, 2: E, 3: S, 4: W
-    if (player.orientation == 1)
-        texKey = "playerBack";
-    else if (player.orientation == 2)
-        texKey = "playerRight";
-    else if (player.orientation == 3)
-        texKey = "playerFace";
-    else if (player.orientation == 4)
-        texKey = "playerLeft";
+    std::string texKey = getPlayerTextureKey(player);
     
     sf::Sprite playerSprite(tm.getTexture(texKey));
     sf::Vector2u texSize = tm.getTexture(texKey).getSize();
