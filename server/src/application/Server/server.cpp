@@ -206,20 +206,23 @@ void Server::runPollLoop()
     try {
         _logger.info("Waiting for connections...");
         std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / _freq);
-        auto next_tick_time = std::chrono::steady_clock::now();
+        auto next_tick_time = std::chrono::steady_clock::now() + tick_duration;
+        bool was_empty = true;
 
         while (true) {
             auto now = std::chrono::steady_clock::now();
             int timeout_ms = -1;
-            if (!_clientManager.getClients().empty()) {
-                timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_tick_time - now).count();
-                if (timeout_ms <= 0 && next_tick_time > now) {
-                    timeout_ms = 1;
-                } else if (timeout_ms < 0) {
+
+            if (_clientManager.getClients().empty()) {
+                timeout_ms = -1;
+            } else {
+                auto diff = next_tick_time - now;
+                if (diff > std::chrono::steady_clock::duration::zero()) {
+                    timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        diff + std::chrono::microseconds(999)).count();
+                } else {
                     timeout_ms = 0;
                 }
-            } else {
-                next_tick_time = now + tick_duration;
             }
 
             int poll_count = _poll->runPoll(timeout_ms);
@@ -236,8 +239,20 @@ void Server::runPollLoop()
             }
 
             now = std::chrono::steady_clock::now();
+            bool is_empty = _clientManager.getClients().empty();
+
+            if (is_empty) {
+                was_empty = true;
+                next_tick_time = now + tick_duration;
+            } else {
+                if (was_empty) {
+                    was_empty = false;
+                    next_tick_time = now + tick_duration;
+                }
+            }
+
             if (now >= next_tick_time) {
-                if (_gameEngine && !_clientManager.getClients().empty()) {
+                if (_gameEngine && !is_empty) {
                     _gameEngine->update(*this);
                     std::vector<int> clientsToRemove;
                     for (auto &[fd, client] : _clientManager.getClients()) {
