@@ -8,17 +8,17 @@
 #ifndef SETCOMMAND_HPP_
 #define SETCOMMAND_HPP_
 
-#include "application/Command/AI/IAiCommandElement.hpp"
+#include "application/Command/AI/BaseAiCommand.hpp"
 #include "domain/Client/AI.hpp"
 #include "application/Command/AI/IAiVisitor.hpp"
 
-class SetCommand : public IAiCommandElement {
+class SetCommand : public BaseAiCommand {
 public:
     void Accept(IAiVisitor *visitor) override;
-    void setClient(std::shared_ptr<AI> client) { _client = client; }
-    std::shared_ptr<AI> getClient() const { return _client; }
+  void setResourceName(const std::string& name);
+  std::string getResourceName() const;
 private:
-    std::shared_ptr<AI> _client;
+    std::string _resourceName;
 };
 
 #endif /* !SETCOMMAND_HPP_ */

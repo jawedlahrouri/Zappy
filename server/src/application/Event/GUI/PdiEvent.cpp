@@ -6,10 +6,8 @@
 */
 
 #include "application/Event/GUI/EventVisitor.hpp"
-
 #include "ServerException.hpp"
 #include "application/Event/GUI/PdiEvent.hpp"
-#include <string>
 
 PdiEvent::PdiEvent(int playerId) : _playerId(playerId) {}
 

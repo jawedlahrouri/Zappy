@@ -21,6 +21,7 @@ class INetworkProvider {
         virtual ~INetworkProvider() = default;
 
         virtual int getClientsNb() const = 0;
+        virtual void setClientsNb(int nb) = 0;
         virtual int getFreq() const = 0;
         virtual const std::vector<std::string>& getTeamNames() const = 0;
         virtual const std::unique_ptr<GameEngine>& getGameEngine() const = 0;
