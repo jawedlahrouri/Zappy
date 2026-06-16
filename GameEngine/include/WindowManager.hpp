@@ -83,6 +83,7 @@ public:
         std::string _menuStatus;
         std::vector<std::string> _menuTeamNames;
         bool _menuConnectionEdited;
+        bool _showGrid;
         MenuField _activeMenuField;
     };
 

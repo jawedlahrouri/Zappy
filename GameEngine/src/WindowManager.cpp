@@ -26,6 +26,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _menuStatus(""),
     _menuTeamNames(),
     _menuConnectionEdited(false),
+    _showGrid(false),
     _activeMenuField(IP_FIELD)
 {
     create2DWindow(width, height);
@@ -338,6 +339,8 @@ bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& wor
             zoomView(ZOOM_STEP);
         } else if (event.key.code == sf::Keyboard::R) {
             resetZoom();
+        } else if (event.key.code == sf::Keyboard::G) {
+            _showGrid = !_showGrid;
         }
     } else if (event.type == sf::Event::MouseButtonPressed &&
         event.mouseButton.button == sf::Mouse::Left) {
@@ -410,5 +413,5 @@ void WindowManager::drawMenu()
 void WindowManager::drawWorld(const GameWorld& world)
 {
     WorldRenderer::draw(_window, _worldView, world, _selectedTile, _font,
-        _fontLoaded);
+        _fontLoaded, _showGrid);
 }

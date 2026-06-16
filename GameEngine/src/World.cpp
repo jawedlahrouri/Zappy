@@ -12,7 +12,7 @@
 void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView,
     const GameWorld& world,
     const std::optional<std::pair<int, int>>& selectedTile,
-    const sf::Font& font, bool fontLoaded)
+    const sf::Font& font, bool fontLoaded, bool showGrid)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
@@ -28,14 +28,23 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView,
     const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
     const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
 
-    drawTiles(window, world, selectedTile, offsetX, offsetY);
+    drawTiles(window, world, offsetX, offsetY);
+    if (showGrid)
+        drawGrid(window, world, offsetX, offsetY);
+    if (selectedTile.has_value()) {
+        const int x = selectedTile->first;
+        const int y = selectedTile->second;
+        const float posX = static_cast<float>(x) * TILE_SIZE + offsetX;
+        const float posY = static_cast<float>(y) * TILE_SIZE + offsetY;
+
+        drawSelectedTile(window, x, y, posX, posY, selectedTile);
+    }
     drawPlayers(window, world, offsetX, offsetY);
     drawEggs(window, world, offsetX, offsetY);
     drawInfoPanel(window, world, selectedTile, font, fontLoaded);
 }
 
 void WorldRenderer::drawTiles(sf::RenderWindow& window, const GameWorld& world,
-    const std::optional<std::pair<int, int>>& selectedTile,
     float offsetX, float offsetY)
 {
     const TextureManager& tm = TextureManager::getInstance();
@@ -51,7 +60,6 @@ void WorldRenderer::drawTiles(sf::RenderWindow& window, const GameWorld& world,
             window.draw(tileSprite);
             GraphicalUtils::drawResources(window, map[x][y], TILE_SIZE,
                 offsetX, offsetY);
-            drawSelectedTile(window, x, y, posX, posY, selectedTile);
         }
     }
 }
@@ -69,8 +77,34 @@ void WorldRenderer::drawSelectedTile(sf::RenderWindow& window, int x, int y,
     selection.setPosition(posX, posY);
     selection.setFillColor(sf::Color::Transparent);
     selection.setOutlineColor(sf::Color(255, 220, 80));
-    selection.setOutlineThickness(3.0f);
+    selection.setOutlineThickness(-3.0f);
     window.draw(selection);
+}
+
+void WorldRenderer::drawGrid(sf::RenderWindow& window, const GameWorld& world,
+    float offsetX, float offsetY)
+{
+    const int mapWidth = world.getWidth();
+    const int mapHeight = world.getHeight();
+    const sf::Color gridColor(255, 255, 255, 75);
+    sf::VertexArray lines(sf::Lines);
+
+    for (int x = 0; x <= mapWidth; x++) {
+        const float posX = offsetX + static_cast<float>(x) * TILE_SIZE;
+
+        lines.append(sf::Vertex(sf::Vector2f(posX, offsetY), gridColor));
+        lines.append(sf::Vertex(sf::Vector2f(posX,
+            offsetY + static_cast<float>(mapHeight) * TILE_SIZE), gridColor));
+    }
+    for (int y = 0; y <= mapHeight; y++) {
+        const float posY = offsetY + static_cast<float>(y) * TILE_SIZE;
+
+        lines.append(sf::Vertex(sf::Vector2f(offsetX, posY), gridColor));
+        lines.append(sf::Vertex(sf::Vector2f(
+            offsetX + static_cast<float>(mapWidth) * TILE_SIZE, posY),
+            gridColor));
+    }
+    window.draw(lines);
 }
 
 void WorldRenderer::drawPlayers(sf::RenderWindow& window, const GameWorld& world,
