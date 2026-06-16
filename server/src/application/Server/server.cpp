@@ -270,6 +270,7 @@ void Server::openServer(int port, int clientsNb, const std::vector<std::string> 
             _poll->addFd(_masterSocket->getSocket(), NetworkEvent::Input);
 
             _gameEngine = std::make_unique<GameEngine>(width, height, _logger);
+            _gameEngine->generateInitialEggs(teamNames, clientsNb);
 
             runPollLoop();
         } catch (const std::exception &e) {

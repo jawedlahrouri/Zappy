@@ -61,8 +61,10 @@ class Map {
         
         void addEgg(std::shared_ptr<Egg> egg);
         void removeEgg(int eggId);
+        std::shared_ptr<Egg> getAndRemoveRandomEggForTeam(const std::string& teamName);
 
         void addAiToTile(int aiId, int x, int y);
+        void removeAiFromTile(int aiId, int x, int y);
         void moveAi(int aiId, int oldX, int oldY, int newX, int newY);
         
         std::pair<int, int> borderWrap(int x, int y) const;

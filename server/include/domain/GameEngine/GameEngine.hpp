@@ -43,6 +43,7 @@ class GameEngine {
         void checkVictory(const std::string& teamName, INetworkProvider& network) const;
 
         void generateInitialResources();
+        void generateInitialEggs(const std::vector<std::string>& teamNames, int initialSlots);
         void spawnResourcesCycle();
 
     private:

@@ -321,3 +321,29 @@ void GameEngine::generateInitialResources()
         throw ServerException(std::string("GameEngine::generateInitialResources: ") + e.what());
     }
 }
+
+void GameEngine::generateInitialEggs(const std::vector<std::string>& teamNames, int initialSlots)
+{
+    try {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis_x(0, _width - 1);
+        std::uniform_int_distribution<> dis_y(0, _height - 1);
+
+        for (const auto& teamName : teamNames) {
+            for (int i = 0; i < initialSlots; ++i) {
+                int eggId = generateEggId();
+                auto egg = std::make_shared<Egg>();
+                egg->id = eggId;
+                egg->ownerId = -1;
+                egg->teamName = teamName;
+                egg->x = dis_x(gen);
+                egg->y = dis_y(gen);
+                _map.addEgg(egg);
+            }
+        }
+        _logger.info("[MAP] Initial eggs generated successfully.");
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("GameEngine::generateInitialEggs: ") + e.what());
+    }
+}

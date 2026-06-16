@@ -51,7 +51,7 @@ static int getSoundDirection(int dx, int dy, int orientation)
     else if (dx > 0 && dy == 0) absoluteDir = 7;
     else if (dx > 0 && dy < 0) absoluteDir = 8;
     
-    return (absoluteDir - 1 + (orientation * 2)) % 8 + 1;
+    return (absoluteDir - 1 + ((orientation - 1) * 2)) % 8 + 1;
 }
 
 void AiCommandParser::parse_broadcast(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network)

@@ -13,6 +13,40 @@
 #include "application/Event/GUI/PnwEvent.hpp"
 #include "AI.hpp"
 #include "GUI.hpp"
+#include <random>
+
+static int countTeamEggs(INetworkProvider &network, const std::string &team_name) {
+    if (!network.getGameEngine())
+        return 0;
+    int slots = 0;
+    auto& map = network.getGameEngine()->getMap();
+    for (int y = 0; y < map.getHeight(); ++y) {
+        for (int x = 0; x < map.getWidth(); ++x) {
+            for (const auto &e : map.getTile(x, y).getEggs()) {
+                if (e->teamName == team_name) {
+                    slots++;
+                }
+            }
+        }
+    }
+    return slots;
+}
+
+static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetworkProvider &network) {
+    if (egg) {
+        ai->setX(egg->x);
+        ai->setY(egg->y);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(1, 4);
+        ai->setOrientation(dis(gen));
+        network.sendToGuis("ebo " + std::to_string(egg->getId()) + "\n");
+    } else {
+        ai->setX(0);
+        ai->setY(0);
+        ai->setOrientation(1);
+    }
+}
 
 // protocol:
 // <-- WELCOME (sent on connection accept)
@@ -22,27 +56,25 @@
 void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network)
 {
     try {
-    int count = 0;
-    for (const auto &[fd_client, client] : network.getClients()) {
-        if (client->getType() == ClientType::AI) {
-            auto ai_client = std::dynamic_pointer_cast<AI>(client);
-            if (ai_client && ai_client->getTeamName() == team_name) {
-                count++;
-            }
-        }
-    }
-    int slots = network.getClientsNb() - count;
+        int slots = countTeamEggs(network, team_name);
+        std::shared_ptr<Egg> egg = nullptr;
 
-    int fd = ai->getId();
-    network.sendResponse(fd, std::to_string(slots));
-    if (network.getGameEngine()) {
-        network.sendResponse(fd, std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
-        network.getGameEngine()->getMap().addAiToTile(ai->getId(), ai->getX(), ai->getY());
-    } else {
-        network.sendResponse(fd, "0 0");
-    }
-    
-    network.sendEvent(PnwEvent(ai));
+        if (network.getGameEngine()) {
+            egg = network.getGameEngine()->getMap().getAndRemoveRandomEggForTeam(team_name);
+        }
+
+        int fd = ai->getId();
+        network.sendResponse(fd, std::to_string(slots > 0 ? slots - 1 : 0));
+
+        if (network.getGameEngine()) {
+            spawnAiOnEgg(ai, egg, network);
+            network.sendResponse(fd, std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
+            network.getGameEngine()->getMap().addAiToTile(ai->getId(), ai->getX(), ai->getY());
+        } else {
+            network.sendResponse(fd, "0 0");
+        }
+        
+        network.sendEvent(PnwEvent(ai));
     } catch (const std::exception &e) {
         throw ServerException(std::string("Login::login_ai: ") + e.what());
     }

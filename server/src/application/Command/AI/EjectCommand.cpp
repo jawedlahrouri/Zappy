@@ -36,10 +36,10 @@ void AiCommandParser::parse_eject([[maybe_unused]] std::shared_ptr<AI> client, [
 }
 
 static std::pair<int, int> getDirectionFromOrientation(int orientation) {
-    if (orientation == 0) return {0, -1}; // North
-    if (orientation == 1) return {1, 0};  // East
-    if (orientation == 2) return {0, 1};  // South
-    if (orientation == 3) return {-1, 0}; // West
+    if (orientation == 1) return {0, -1}; // North
+    if (orientation == 2) return {1, 0};  // East
+    if (orientation == 3) return {0, 1};  // South
+    if (orientation == 4) return {-1, 0}; // West
     return {0, 0};
 }
 
@@ -53,7 +53,7 @@ static int getPushDirection(int dx, int dy, int orientation) {
     else if (dx > 0 && dy > 0) absoluteDir = 6;
     else if (dx > 0 && dy == 0) absoluteDir = 7;
     else if (dx > 0 && dy < 0) absoluteDir = 8;
-    return (absoluteDir - 1 + (orientation * 2)) % 8 + 1;
+    return (absoluteDir - 1 + ((orientation - 1) * 2)) % 8 + 1;
 }
 
 static void check_bound(int &x, int &y, int width, int height)

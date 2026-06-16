@@ -8,9 +8,17 @@
 #include "domain/Map/Map.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <random>
 
-int Egg::getId() const { return id; }
-int Egg::getOwnerId() const { return ownerId; }
+
+int Egg::getId() const {
+    return id;
+}
+
+
+int Egg::getOwnerId() const {
+    return ownerId;
+}
 
 void Tile::addEgg(std::shared_ptr<Egg> egg) {
     eggs.push_back(egg);
@@ -106,4 +114,40 @@ void Map::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
     }
     
     _grid[toric_new_y][toric_new_x].playerIds.push_back(aiId);
+}
+
+std::shared_ptr<Egg> Map::getAndRemoveRandomEggForTeam(const std::string& teamName)
+{
+    std::vector<std::shared_ptr<Egg>> teamEggs;
+    for (int y = 0; y < _height; ++y) {
+        for (int x = 0; x < _width; ++x) {
+            for (auto &egg : _grid[y][x].getEggs()) {
+                if (egg->teamName == teamName) {
+                    teamEggs.push_back(egg);
+                }
+            }
+        }
+    }
+    if (teamEggs.empty()) {
+        return nullptr;
+    }
+    
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, teamEggs.size() - 1);
+    int idx = dis(gen);
+    
+    auto selected = teamEggs[idx];
+    removeEgg(selected->getId());
+    return selected;
+}
+
+void Map::removeAiFromTile(int aiId, int x, int y)
+{
+    auto [toric_x, toric_y] = borderWrap(x, y);
+    auto& players = _grid[toric_y][toric_x].playerIds;
+    auto it = std::find(players.begin(), players.end(), aiId);
+    if (it != players.end()) {
+        players.erase(it);
+    }
 }
