@@ -9,6 +9,7 @@
 #include "presentation/Parsing/GuiCommandParser.hpp"
 #include "application/Server/Server.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "domain/Map/Map.hpp"
 #include "domain/Client/GUI.hpp"
 #include "shared/ServerException.hpp"
 
@@ -57,7 +58,7 @@ void GuiVisitor::visit(MctCommand *element) {
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                const Tile& tile = engine->getTile(x, y);
+                const Tile& tile = engine->getMap().getTile(x, y);
                 std::string response = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
                                        std::to_string(tile.resources[FOOD]) + " " +
                                        std::to_string(tile.resources[LINEMATE]) + " " +
