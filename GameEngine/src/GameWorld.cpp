@@ -102,6 +102,26 @@ void GameWorld::movePlayer(int id, int x, int y, int orientation)
     _players[id] = newPlayer;
 }
 
+void GameWorld::setPlayerLevel(int id, int level)
+{
+    auto player = _players.find(id);
+
+    if (player == _players.end())
+        return;
+    player->second.level = level;
+}
+
+void GameWorld::setPlayerInventory(int id, int x, int y, const Resources& inventory)
+{
+    auto player = _players.find(id);
+
+    if (player == _players.end())
+        return;
+    player->second.x = x;
+    player->second.y = y;
+    player->second.inventory = inventory;
+}
+
 void GameWorld::addEgg(int id, int parentId, int x, int y)
 {
     _eggs[id] = {id, x, y, parentId, false};

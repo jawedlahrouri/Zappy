@@ -9,7 +9,7 @@
 #include "TextureManager.hpp"
 #include <cmath>
 
-static std::string getPlayerTextureKey(const Player& player)
+std::string GraphicalUtils::getPlayerTextureKey(const Player& player)
 {
     if (player.teamColor == 1) {
         if (player.orientation == 1)
@@ -43,6 +43,44 @@ static std::string getPlayerTextureKey(const Player& player)
     if (player.orientation == 2)
         return "playerRight";
     if (player.orientation == 4)
+        return "playerLeft";
+    return "playerFace";
+}
+
+std::string GraphicalUtils::getPlayerTextureKey(const Player& player, int orientation)
+{
+    if (player.teamColor == 1) {
+        if (orientation == 1)
+            return "blueBack";
+        if (orientation == 2)
+            return "blueRight";
+        if (orientation == 4)
+            return "blueLeft";
+        return "bluePlayer";
+    }
+    if (player.teamColor == 3) {
+        if (orientation == 1)
+            return "greenBack";
+        if (orientation == 2)
+            return "greenRight";
+        if (orientation == 4)
+            return "greenLeft";
+        return "greenPlayer";
+    }
+    if (player.teamColor == 4) {
+        if (orientation == 1)
+            return "pinkBack";
+        if (orientation == 2)
+            return "pinkRight";
+        if (orientation == 4)
+            return "pinkLeft";
+        return "pinkPlayer";
+    }
+    if (orientation == 1)
+        return "playerBack";
+    if (orientation == 2)
+        return "playerRight";
+    if (orientation == 4)
         return "playerLeft";
     return "playerFace";
 }
@@ -109,27 +147,21 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
     }
 }
 
-void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, float tileSize, float offsetX, float offsetY)
+void GraphicalUtils::drawPlayerPortrait(sf::RenderTarget& target, const Player& player, float x, float y, float size)
 {
-    if (player.level < 1)
-        return;
-    float centerX = player.x * tileSize + offsetX + (tileSize / 2.0f);
-    float centerY = player.y * tileSize + offsetY + (tileSize / 2.0f);
-
     const TextureManager& tm = TextureManager::getInstance();
-    std::string texKey = getPlayerTextureKey(player);
-    
-    sf::Sprite playerSprite(tm.getTexture(texKey));
-    sf::Vector2u texSize = tm.getTexture(texKey).getSize();
+    sf::Sprite portrait(tm.getTexture(getPlayerTextureKey(player, 3)));
+    const sf::Vector2u texSize = tm.getTexture(getPlayerTextureKey(player, 3)).getSize();
+
     if (texSize.x > 0 && texSize.y > 0) {
-        float desired = tileSize * 0.5f;
-        float scaleX = desired / static_cast<float>(texSize.x);
-        float scaleY = desired / static_cast<float>(texSize.y);
-        playerSprite.setScale(scaleX, scaleY);
-        playerSprite.setOrigin(static_cast<float>(texSize.x) / 2.0f, static_cast<float>(texSize.y) / 2.0f);
+        const float scaleX = size / static_cast<float>(texSize.x);
+        const float scaleY = size / static_cast<float>(texSize.y);
+
+        portrait.setScale(scaleX, scaleY);
     }
-    playerSprite.setPosition(centerX, centerY);
-    target.draw(playerSprite);
+    portrait.setPosition(x, y);
+    portrait.setColor(sf::Color(255, 255, 255, 255));
+    target.draw(portrait);
 }
 
 void GraphicalUtils::drawEgg(sf::RenderTarget& target, const Egg& egg, float tileSize, float offsetX, float offsetY)

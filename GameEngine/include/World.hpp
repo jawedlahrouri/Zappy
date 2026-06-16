@@ -20,15 +20,28 @@
             static constexpr float INFO_PANEL_WIDTH = 270.0f;
             static constexpr float INFO_PANEL_HEIGHT = 250.0f;
             static constexpr float INFO_PANEL_MARGIN = 20.0f;
+            static constexpr float PLAYER_PANEL_WIDTH = 330.0f;
+            static constexpr float PLAYER_PANEL_HEIGHT = 380.0f;
+            static constexpr float PORTRAIT_SIZE = 96.0f;
+            static constexpr float TIME_PANEL_WIDTH = 280.0f;
+            static constexpr float TIME_PANEL_HEIGHT = 140.0f;
+            static constexpr float TIME_PANEL_MARGIN = 20.0f;
+            static constexpr float TIME_BUTTON_WIDTH = 74.0f;
+            static constexpr float TIME_BUTTON_HEIGHT = 30.0f;
         
-            static void draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const sf::Font& font, bool fontLoaded, bool showGrid);
+            static void draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, int serverFreq, bool timePaused);
         private:
             static void drawTiles(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawGrid(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawSelectedTile(sf::RenderWindow& window, int x, int y, float posX, float posY, const std::optional<std::pair<int, int>>& selectedTile);
+            static void drawSelectedPlayer(sf::RenderWindow& window, const Player& player, float offsetX, float offsetY);
             static void drawPlayers(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawEggs(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
-            static void drawInfoPanel(sf::RenderWindow& window, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const sf::Font& font, bool fontLoaded);
+            static void drawTimePanel(sf::RenderWindow& window, const sf::Font& font, bool fontLoaded, int serverFreq, bool timePaused);
+            static void drawTimeButton(sf::RenderWindow& window, sf::Text& text, const std::string& label, const sf::FloatRect& rect, bool active);
+            static void drawInfoPanel(sf::RenderWindow& window, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded);
+            static void drawPlayerPanel(sf::RenderWindow& window, const GameWorld& world, int playerId, const sf::Font& font, bool fontLoaded);
+            static void drawPlayerInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY);
             static void drawInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY);
         };
 

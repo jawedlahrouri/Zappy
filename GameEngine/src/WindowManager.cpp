@@ -9,13 +9,17 @@
 #include "Menu.hpp"
 #include "TextureManager.hpp"
 #include "World.hpp"
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <limits>
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
     : _viewCenter(static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f),
     _selectedTile(std::nullopt),
+    _selectedPlayerId(std::nullopt),
     _pendingTileRequest(std::nullopt),
+    _pendingTimeRequest(std::nullopt),
     _zoomLevel(1.0f),
     _width(width),
     _height(height),
@@ -27,6 +31,9 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _menuTeamNames(),
     _menuConnectionEdited(false),
     _showGrid(false),
+    _serverFreq(100),
+    _resumeServerFreq(100),
+    _timePaused(false),
     _activeMenuField(IP_FIELD)
 {
     create2DWindow(width, height);
@@ -166,19 +173,17 @@ void WindowManager::update2DPan()
     _window.setView(_worldView);
 }
 
-void WindowManager::select2DTile(const GameWorld& world, int mouseX, int mouseY)
+bool WindowManager::select2DTile(const GameWorld& world, int mouseX, int mouseY)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
 
     if (mapWidth <= 0 || mapHeight <= 0 || world.getMap().empty())
-        return;
+        return false;
+    if (isInsideSelectionPanel(mouseX, mouseY))
+        return false;
 
     const sf::Vector2u windowSize = _window.getSize();
-    const float panelLeft = static_cast<float>(windowSize.x) - WorldRenderer::INFO_PANEL_WIDTH - WorldRenderer::INFO_PANEL_MARGIN;
-    if (_selectedTile.has_value() && static_cast<float>(mouseX) >= panelLeft && static_cast<float>(mouseY) <= WorldRenderer::INFO_PANEL_MARGIN + WorldRenderer::INFO_PANEL_HEIGHT)
-        return;
-
     const sf::Vector2f worldPos = _window.mapPixelToCoords({mouseX, mouseY}, _worldView);
     const float totalMapWidth = static_cast<float>(mapWidth) * WorldRenderer::TILE_SIZE;
     const float totalMapHeight = static_cast<float>(mapHeight) * WorldRenderer::TILE_SIZE;
@@ -188,9 +193,155 @@ void WindowManager::select2DTile(const GameWorld& world, int mouseX, int mouseY)
     const int tileY = static_cast<int>(std::floor((worldPos.y - offsetY) / WorldRenderer::TILE_SIZE));
 
     if (tileX < 0 || tileX >= mapWidth || tileY < 0 || tileY >= mapHeight)
-        return;
+        return false;
     _selectedTile = {tileX, tileY};
+    _selectedPlayerId.reset();
     _pendingTileRequest = _selectedTile;
+    return true;
+}
+
+bool WindowManager::select2DPlayer(const GameWorld& world, int mouseX, int mouseY)
+{
+    const int mapWidth = world.getWidth();
+    const int mapHeight = world.getHeight();
+
+    if (mapWidth <= 0 || mapHeight <= 0 || world.getMap().empty())
+        return false;
+    if (isInsideSelectionPanel(mouseX, mouseY))
+        return false;
+
+    const sf::Vector2u windowSize = _window.getSize();
+    const sf::Vector2f worldPos = _window.mapPixelToCoords({mouseX, mouseY}, _worldView);
+    const float totalMapWidth = static_cast<float>(mapWidth) * WorldRenderer::TILE_SIZE;
+    const float totalMapHeight = static_cast<float>(mapHeight) * WorldRenderer::TILE_SIZE;
+    const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
+    const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
+    const float playerHalfSize = WorldRenderer::TILE_SIZE * 0.25f;
+    const auto& players = world.getPlayers();
+    const Player* closestPlayer = nullptr;
+    float closestDistance = std::numeric_limits<float>::max();
+
+    for (const auto& pair : players) {
+        const Player& player = pair.second;
+        const float centerX = static_cast<float>(player.x) * WorldRenderer::TILE_SIZE +
+            offsetX + (WorldRenderer::TILE_SIZE / 2.0f);
+        const float centerY = static_cast<float>(player.y) * WorldRenderer::TILE_SIZE +
+            offsetY + (WorldRenderer::TILE_SIZE / 2.0f);
+
+        if (std::abs(worldPos.x - centerX) > playerHalfSize ||
+            std::abs(worldPos.y - centerY) > playerHalfSize)
+            continue;
+        const float dx = worldPos.x - centerX;
+        const float dy = worldPos.y - centerY;
+        const float distance = dx * dx + dy * dy;
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestPlayer = &player;
+        }
+    }
+    if (closestPlayer == nullptr)
+        return false;
+    _selectedPlayerId = closestPlayer->id;
+    _selectedTile = {closestPlayer->x, closestPlayer->y};
+    _pendingTileRequest.reset();
+    return true;
+}
+
+bool WindowManager::handleTimeControlMousePressed(int mouseX, int mouseY)
+{
+    if (!isInsideTimeControlPanel(mouseX, mouseY))
+        return false;
+
+    const float panelX = WorldRenderer::TIME_PANEL_MARGIN;
+    const float panelY = WorldRenderer::TIME_PANEL_MARGIN;
+    const float buttonsY = panelY + 62.0f;
+    const float buttonWidth = 74.0f;
+    const float buttonHeight = 28.0f;
+    const float gap = 10.0f;
+    const sf::FloatRect pauseButton(panelX + 16.0f, buttonsY, buttonWidth, buttonHeight);
+    const sf::FloatRect slowerButton(panelX + 16.0f + buttonWidth + gap,
+        buttonsY, buttonWidth, buttonHeight);
+    const sf::FloatRect fasterButton(panelX + 16.0f + (buttonWidth + gap) * 2.0f,
+        buttonsY, buttonWidth, buttonHeight);
+    const float mx = static_cast<float>(mouseX);
+    const float my = static_cast<float>(mouseY);
+
+    if (pauseButton.contains(mx, my)) {
+        if (_timePaused) {
+            _serverFreq = std::clamp(_resumeServerFreq, MIN_SERVER_FREQ,
+                MAX_SERVER_FREQ);
+            _timePaused = false;
+        } else {
+            _resumeServerFreq = std::clamp(_serverFreq, MIN_SERVER_FREQ,
+                MAX_SERVER_FREQ);
+            _serverFreq = MIN_SERVER_FREQ;
+            _timePaused = true;
+        }
+        _pendingTimeRequest = _serverFreq;
+        return true;
+    }
+    if (slowerButton.contains(mx, my)) {
+        if (_timePaused) {
+            _resumeServerFreq = std::clamp(_resumeServerFreq / 2,
+                MIN_SERVER_FREQ, MAX_SERVER_FREQ);
+        } else {
+            _serverFreq = std::clamp(_serverFreq / 2, MIN_SERVER_FREQ,
+                MAX_SERVER_FREQ);
+            _resumeServerFreq = _serverFreq;
+            _pendingTimeRequest = _serverFreq;
+        }
+        return true;
+    }
+    if (fasterButton.contains(mx, my)) {
+        if (_timePaused) {
+            _resumeServerFreq = std::clamp(_resumeServerFreq * 2,
+                MIN_SERVER_FREQ, MAX_SERVER_FREQ);
+        } else {
+            _serverFreq = std::clamp(_serverFreq * 2, MIN_SERVER_FREQ,
+                MAX_SERVER_FREQ);
+            _resumeServerFreq = _serverFreq;
+            _pendingTimeRequest = _serverFreq;
+        }
+        return true;
+    }
+    return true;
+}
+
+bool WindowManager::isInsideSelectionPanel(int mouseX, int mouseY) const
+{
+    if (!_selectedPlayerId.has_value() && !_selectedTile.has_value())
+        return false;
+
+    const sf::Vector2u windowSize = _window.getSize();
+    const float panelX = static_cast<float>(windowSize.x) - 
+        (_selectedPlayerId.has_value() ? WorldRenderer::PLAYER_PANEL_WIDTH :
+        WorldRenderer::INFO_PANEL_WIDTH) - WorldRenderer::INFO_PANEL_MARGIN;
+    const float panelY = WorldRenderer::INFO_PANEL_MARGIN;
+    const float panelWidth = _selectedPlayerId.has_value() ? WorldRenderer::PLAYER_PANEL_WIDTH : WorldRenderer::INFO_PANEL_WIDTH;
+    const float panelHeight = _selectedPlayerId.has_value() ? WorldRenderer::PLAYER_PANEL_HEIGHT : WorldRenderer::INFO_PANEL_HEIGHT;
+
+    return static_cast<float>(mouseX) >= panelX &&
+        static_cast<float>(mouseX) <= panelX + panelWidth &&
+        static_cast<float>(mouseY) >= panelY &&
+        static_cast<float>(mouseY) <= panelY + panelHeight;
+}
+
+bool WindowManager::isInsideTimeControlPanel(int mouseX, int mouseY) const
+{
+    const sf::FloatRect panel(WorldRenderer::TIME_PANEL_MARGIN,
+        WorldRenderer::TIME_PANEL_MARGIN, WorldRenderer::TIME_PANEL_WIDTH,
+        WorldRenderer::TIME_PANEL_HEIGHT);
+
+    return panel.contains(static_cast<float>(mouseX),
+        static_cast<float>(mouseY));
+}
+
+void WindowManager::clearSelection()
+{
+    _selectedTile.reset();
+    _selectedPlayerId.reset();
+    _pendingTileRequest.reset();
 }
 
 std::optional<std::pair<int, int>> WindowManager::consumeTileRequest()
@@ -199,6 +350,31 @@ std::optional<std::pair<int, int>> WindowManager::consumeTileRequest()
 
     _pendingTileRequest.reset();
     return request;
+}
+
+std::optional<int> WindowManager::consumeTimeRequest()
+{
+    std::optional<int> request = _pendingTimeRequest;
+
+    _pendingTimeRequest.reset();
+    return request;
+}
+
+void WindowManager::setServerFreq(int freq)
+{
+    _serverFreq = std::clamp(freq, MIN_SERVER_FREQ, MAX_SERVER_FREQ);
+    if (!_timePaused)
+        _resumeServerFreq = _serverFreq;
+}
+
+int WindowManager::getServerFreq() const
+{
+    return _serverFreq;
+}
+
+bool WindowManager::isTimePaused() const
+{
+    return _timePaused;
 }
 
 const std::string& WindowManager::getMenuIp() const
@@ -211,8 +387,7 @@ const std::string& WindowManager::getMenuPort() const
     return _menuPort;
 }
 
-void WindowManager::setMenuConnectionInfo(const std::string& ip,
-    const std::string& port)
+void WindowManager::setMenuConnectionInfo(const std::string& ip, const std::string& port)
 {
     _menuIp = ip;
     _menuPort = port;
@@ -344,7 +519,15 @@ bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& wor
         }
     } else if (event.type == sf::Event::MouseButtonPressed &&
         event.mouseButton.button == sf::Mouse::Left) {
-        select2DTile(world, event.mouseButton.x, event.mouseButton.y);
+        if (handleTimeControlMousePressed(event.mouseButton.x, event.mouseButton.y))
+            return false;
+        if (isInsideSelectionPanel(event.mouseButton.x, event.mouseButton.y))
+            return false;
+        if (select2DPlayer(world, event.mouseButton.x, event.mouseButton.y))
+            return false;
+        if (select2DTile(world, event.mouseButton.x, event.mouseButton.y))
+            return false;
+        clearSelection();
     }
     return false;
 }
@@ -412,6 +595,7 @@ void WindowManager::drawMenu()
 
 void WindowManager::drawWorld(const GameWorld& world)
 {
-    WorldRenderer::draw(_window, _worldView, world, _selectedTile, _font,
-        _fontLoaded, _showGrid);
+    WorldRenderer::draw(_window, _worldView, world, _selectedTile,
+        _selectedPlayerId, _font, _fontLoaded, _showGrid, _serverFreq,
+        _timePaused);
 }
