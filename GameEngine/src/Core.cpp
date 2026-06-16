@@ -65,9 +65,25 @@ void Core::setupMenuDefaults([[maybe_unused]] int ac, [[maybe_unused]] char** av
 {
     // const std::string port = (ac > 1) ? av[1] : "4242";
     // const std::string ip = (ac > 2) ? av[2] : "127.0.0.1";
+    std::string port = "4242";
+    std::string ip = "127.0.0.1";
 
-    const std::string port = "4242";
-    const std::string ip = "127.0.0.1";
+    for (int i = 1; i < ac; i++) {
+        std::string arg = av[i];
+
+        if ((arg == "-p" || arg == "--port") && i + 1 < ac) {
+            port = av[i + 1];
+            i++;
+        } else if ((arg == "-h" || arg == "--host" || arg == "--machine")
+            && i + 1 < ac) {
+            ip = av[i + 1];
+            i++;
+        } else if (i == 1) {
+            port = arg;
+        } else if (i == 2) {
+            ip = arg;
+        }
+    }
 
     _windowManager.setMenuConnectionInfo(ip, port);
 }
@@ -144,7 +160,13 @@ void Core::initCommands()
         _world.setMapSize(width, height);
     };
 
-    _commands["tna"] = [this](std::stringstream& ss) { std::string teamName; ss >> teamName; _windowManager.addMenuTeamName(teamName);};
+    _commands["tna"] = [this](std::stringstream& ss) {
+        std::string teamName;
+
+        ss >> teamName;
+        _windowManager.addMenuTeamName(teamName);
+        _world.addTeamName(teamName);
+    };
 
     _commands["pnw"] = [this](std::stringstream& ss) {
         Player p;
@@ -203,6 +225,12 @@ void Core::initCommands()
         parseValue(ss, eggId);
         std::cout << "[Graphic] edi handler: eggId=" << eggId << std::endl;
         _world.removeEgg(eggId);
+    };
+
+    _commands["tna"] = [this](std::stringstream& ss) {
+        std::string teamName;
+        ss >> teamName;
+        _windowManager.addMenuTeamName(teamName);
     };
 }
 

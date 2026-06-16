@@ -49,10 +49,24 @@ void WindowManager::loadTextures()
     tm.loadTexture("egg", "oeuf.png");
 
     tm.loadTexture("playerFace", "character_face.png");
-    tm.loadTexture("bluePlayer", "bleu_character.png");
     tm.loadTexture("playerBack", "character_back.png");
     tm.loadTexture("playerRight", "character_right.png");
     tm.loadTexture("playerLeft", "character_left.png");
+
+    tm.loadTexture("bluePlayer", "blue_character.png");
+    tm.loadTexture("blueBack", "blue_back.png");
+    tm.loadTexture("blueRight", "blue_right.png");
+    tm.loadTexture("blueLeft", "blue_left.png");
+
+    tm.loadTexture("greenPlayer", "green_character.png");
+    tm.loadTexture("greenBack", "green_back.png");
+    tm.loadTexture("greenRight", "green_right.png");
+    tm.loadTexture("greenLeft", "green_left.png");
+
+    tm.loadTexture("pinkPlayer", "pink_character.png");
+    tm.loadTexture("pinkBack", "pink_back.png");
+    tm.loadTexture("pinkRight", "pink_right.png");
+    tm.loadTexture("pinkLeft", "pink_left.png");
 }
 
 void WindowManager::loadFont()

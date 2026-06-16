@@ -37,6 +37,7 @@
         int level = 1;
         std::string teamName;
         Resources inventory;
+        int teamColor = 2; // 1: blue, 2: red, 3: green, 4: pink
     };
 
     struct Egg {
@@ -53,6 +54,7 @@
         ~GameWorld();
 
         void setMapSize(int width, int height);
+        void addTeamName(const std::string& teamName);
         void setTileResources(int x, int y, const Resources& res);
         Resources resToResources(int q0, int q1, int q2, int q3, int q4, int q5, int q6);
         void addPlayer(const Player& player);
@@ -69,8 +71,10 @@
         const std::map<int, Egg>& getEggs() const;
 
     private:
+        int getTeamColor(const std::string& teamName);
         int _width = 0;
         int _height = 0;
+        std::vector<std::string> _teamNames;
         std::vector<std::vector<Tile>> _map;
         std::map<int, Player> _players;
         std::map<int, Egg> _eggs;
