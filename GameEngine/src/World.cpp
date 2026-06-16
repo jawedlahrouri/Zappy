@@ -9,14 +9,12 @@
 #include "GraphicalUtils.hpp"
 #include "TextureManager.hpp"
 
-void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView,
-    const GameWorld& world,
-    const std::optional<std::pair<int, int>>& selectedTile,
-    const sf::Font& font, bool fontLoaded, bool showGrid)
+void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const sf::Font& font, bool fontLoaded, bool showGrid)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
 
+    drawBackground(window);
     if (mapWidth <= 0 || mapHeight <= 0 || world.getMap().empty())
         return;
 
@@ -44,8 +42,31 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView,
     drawInfoPanel(window, world, selectedTile, font, fontLoaded);
 }
 
-void WorldRenderer::drawTiles(sf::RenderWindow& window, const GameWorld& world,
-    float offsetX, float offsetY)
+void WorldRenderer::drawBackground(sf::RenderWindow& window)
+{
+    const sf::View previousView = window.getView();
+    const sf::Vector2u windowSize = window.getSize();
+    const sf::Texture& texture = TextureManager::getInstance().getTexture("spursBackground");
+    const sf::Vector2u textureSize = texture.getSize();
+
+    window.setView(window.getDefaultView());
+    if (textureSize.x == 0 || textureSize.y == 0) {
+        sf::RectangleShape background({static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)});
+
+        background.setFillColor(sf::Color(18, 24, 30));
+        window.draw(background);
+        window.setView(previousView);
+        return;
+    }
+
+    sf::Sprite background(texture);
+
+    background.setScale(static_cast<float>(windowSize.x) / static_cast<float>(textureSize.x), static_cast<float>(windowSize.y) / static_cast<float>(textureSize.y));
+    window.draw(background);
+    window.setView(previousView);
+}
+
+void WorldRenderer::drawTiles(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY)
 {
     const TextureManager& tm = TextureManager::getInstance();
     sf::Sprite tileSprite(tm.getTexture("ground"));
@@ -58,15 +79,12 @@ void WorldRenderer::drawTiles(sf::RenderWindow& window, const GameWorld& world,
 
             tileSprite.setPosition(posX, posY);
             window.draw(tileSprite);
-            GraphicalUtils::drawResources(window, map[x][y], TILE_SIZE,
-                offsetX, offsetY);
+            GraphicalUtils::drawResources(window, map[x][y], TILE_SIZE, offsetX, offsetY);
         }
     }
 }
 
-void WorldRenderer::drawSelectedTile(sf::RenderWindow& window, int x, int y,
-    float posX, float posY,
-    const std::optional<std::pair<int, int>>& selectedTile)
+void WorldRenderer::drawSelectedTile(sf::RenderWindow& window, int x, int y, float posX, float posY, const std::optional<std::pair<int, int>>& selectedTile)
 {
     if (!selectedTile.has_value() || selectedTile->first != x ||
         selectedTile->second != y)
@@ -81,8 +99,7 @@ void WorldRenderer::drawSelectedTile(sf::RenderWindow& window, int x, int y,
     window.draw(selection);
 }
 
-void WorldRenderer::drawGrid(sf::RenderWindow& window, const GameWorld& world,
-    float offsetX, float offsetY)
+void WorldRenderer::drawGrid(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
@@ -93,22 +110,18 @@ void WorldRenderer::drawGrid(sf::RenderWindow& window, const GameWorld& world,
         const float posX = offsetX + static_cast<float>(x) * TILE_SIZE;
 
         lines.append(sf::Vertex(sf::Vector2f(posX, offsetY), gridColor));
-        lines.append(sf::Vertex(sf::Vector2f(posX,
-            offsetY + static_cast<float>(mapHeight) * TILE_SIZE), gridColor));
+        lines.append(sf::Vertex(sf::Vector2f(posX, offsetY + static_cast<float>(mapHeight) * TILE_SIZE), gridColor));
     }
     for (int y = 0; y <= mapHeight; y++) {
         const float posY = offsetY + static_cast<float>(y) * TILE_SIZE;
 
         lines.append(sf::Vertex(sf::Vector2f(offsetX, posY), gridColor));
-        lines.append(sf::Vertex(sf::Vector2f(
-            offsetX + static_cast<float>(mapWidth) * TILE_SIZE, posY),
-            gridColor));
+        lines.append(sf::Vertex(sf::Vector2f(offsetX + static_cast<float>(mapWidth) * TILE_SIZE, posY), gridColor));
     }
     window.draw(lines);
 }
 
-void WorldRenderer::drawPlayers(sf::RenderWindow& window, const GameWorld& world,
-    float offsetX, float offsetY)
+void WorldRenderer::drawPlayers(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY)
 {
     const auto& players = world.getPlayers();
 
@@ -116,20 +129,15 @@ void WorldRenderer::drawPlayers(sf::RenderWindow& window, const GameWorld& world
         GraphicalUtils::drawPlayer(window, pair.second, TILE_SIZE, offsetX, offsetY);
 }
 
-void WorldRenderer::drawEggs(sf::RenderWindow& window, const GameWorld& world,
-    float offsetX, float offsetY)
+void WorldRenderer::drawEggs(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY)
 {
     const auto& eggs = world.getEggs();
 
-    for (const auto& pair : eggs) {
+    for (const auto& pair : eggs)
         GraphicalUtils::drawEgg(window, pair.second, TILE_SIZE, offsetX, offsetY);
-    }
 }
 
-void WorldRenderer::drawInfoPanel(sf::RenderWindow& window,
-    const GameWorld& world,
-    const std::optional<std::pair<int, int>>& selectedTile,
-    const sf::Font& font, bool fontLoaded)
+void WorldRenderer::drawInfoPanel(sf::RenderWindow& window, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const sf::Font& font, bool fontLoaded)
 {
     if (!selectedTile.has_value() || !fontLoaded)
         return;
@@ -137,15 +145,13 @@ void WorldRenderer::drawInfoPanel(sf::RenderWindow& window,
     const int x = selectedTile->first;
     const int y = selectedTile->second;
 
-    if (x < 0 || y < 0 || x >= world.getWidth() ||
-        y >= world.getHeight() || world.getMap().empty())
+    if (x < 0 || y < 0 || x >= world.getWidth() || y >= world.getHeight() || world.getMap().empty())
         return;
 
     const Resources& resources = world.getMap()[x][y].resources;
     const sf::View previousView = window.getView();
     const sf::Vector2u windowSize = window.getSize();
-    const float panelX = static_cast<float>(windowSize.x) -
-        INFO_PANEL_WIDTH - INFO_PANEL_MARGIN;
+    const float panelX = static_cast<float>(windowSize.x) - INFO_PANEL_WIDTH - INFO_PANEL_MARGIN;
     const float panelY = INFO_PANEL_MARGIN;
     sf::RectangleShape panel({INFO_PANEL_WIDTH, INFO_PANEL_HEIGHT});
     sf::Text text;
@@ -161,33 +167,22 @@ void WorldRenderer::drawInfoPanel(sf::RenderWindow& window,
     text.setCharacterSize(16);
     text.setFillColor(sf::Color(235, 240, 245));
 
-    drawInfoLine(window, text, "Case " + std::to_string(x) + " " +
-        std::to_string(y), 0, 20, panelX, panelY);
-    drawInfoLine(window, text, "food: " + std::to_string(resources.food), 2,
-        16, panelX, panelY);
-    drawInfoLine(window, text, "brick: " +
-        std::to_string(resources.linemate), 3, 16, panelX, panelY);
-    drawInfoLine(window, text, "shoe: " +
-        std::to_string(resources.deraumere), 4, 16, panelX, panelY);
-    drawInfoLine(window, text, "balloon: " + std::to_string(resources.sibur), 5,
-        16, panelX, panelY);
-    drawInfoLine(window, text, "jersey: " +
-        std::to_string(resources.mendiane), 6, 16, panelX, panelY);
-    drawInfoLine(window, text, "trophy: " + std::to_string(resources.phiras),
-        7, 16, panelX, panelY);
-    drawInfoLine(window, text, "card: " +
-        std::to_string(resources.thystame), 8, 16, panelX, panelY);
+    drawInfoLine(window, text, "Case " + std::to_string(x) + " " + std::to_string(y), 0, 20, panelX, panelY);
+    drawInfoLine(window, text, "food: " + std::to_string(resources.food), 2, 16, panelX, panelY);
+    drawInfoLine(window, text, "brick: " + std::to_string(resources.linemate), 3, 16, panelX, panelY);
+    drawInfoLine(window, text, "shoe: " + std::to_string(resources.deraumere), 4, 16, panelX, panelY);
+    drawInfoLine(window, text, "balloon: " + std::to_string(resources.sibur), 5, 16, panelX, panelY);
+    drawInfoLine(window, text, "jersey: " + std::to_string(resources.mendiane), 6, 16, panelX, panelY);
+    drawInfoLine(window, text, "trophy: " + std::to_string(resources.phiras), 7, 16, panelX, panelY);
+    drawInfoLine(window, text, "card: " + std::to_string(resources.thystame), 8, 16, panelX, panelY);
 
     window.setView(previousView);
 }
 
-void WorldRenderer::drawInfoLine(sf::RenderWindow& window, sf::Text& text,
-    const std::string& value, int row, unsigned int size,
-    float panelX, float panelY)
+void WorldRenderer::drawInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY)
 {
     text.setString(value);
     text.setCharacterSize(size);
-    text.setPosition(panelX + 18.0f,
-        panelY + 16.0f + static_cast<float>(row) * 25.0f);
+    text.setPosition(panelX + 18.0f, panelY + 16.0f + static_cast<float>(row) * 25.0f);
     window.draw(text);
 }

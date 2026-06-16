@@ -4,7 +4,7 @@
 # Configuration des variables du jeu
 # ==========================================
 PORT=4242
-WIDTH=10
+WIDTH=25
 HEIGHT=10
 TEAM1="TeamA"
 TEAM2="TeamB"

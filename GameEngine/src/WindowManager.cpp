@@ -39,6 +39,7 @@ void WindowManager::loadTextures()
     TextureManager& tm = TextureManager::getInstance();
     
     tm.loadTexture("menuBackground", "background_menu.png");
+    tm.loadTexture("spursBackground", "spurs_background.png");
     tm.loadTexture("ground", "ground.png");
     tm.loadTexture("food", "food.png");
     tm.loadTexture("linemate",  "brique.png");
@@ -211,8 +212,7 @@ const std::string& WindowManager::getMenuPort() const
     return _menuPort;
 }
 
-void WindowManager::setMenuConnectionInfo(const std::string& ip,
-    const std::string& port)
+void WindowManager::setMenuConnectionInfo(const std::string& ip, const std::string& port)
 {
     _menuIp = ip;
     _menuPort = port;
