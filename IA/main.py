@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-import time
 import argparse
+import select
 from src.server_link import ZappyNetwork
 from src.command import ZappyCommand
 from src.Ai_agent import ZappyAgent
@@ -15,10 +15,10 @@ def wait_for_welcome(net):
 
     print("[Handshake] En attente du WELCOME...")
     welcome_received = False
-    timeout = 0
-    max_timeout = 5000
+    iterations = 0
+    max_iterations = 50
     
-    while timeout < max_timeout and not welcome_received:
+    while iterations < max_iterations and not welcome_received:
         messages = net.receive_messages()
         for msg in messages:
             if msg == "WELCOME":
@@ -26,8 +26,8 @@ def wait_for_welcome(net):
                 print("[Handshake] WELCOME reçu")
                 return True
         if not welcome_received:
-            time.sleep(0.1)
-            timeout += 100
+            select.select([net.sock], [], [])
+            iterations += 1
     print("[Erreur] WELCOME pas reçu du serveur (timeout)")
     return False
 
@@ -40,10 +40,10 @@ def wait_for_infos(net):
     print("[Handshake] En attente de CLIENT-NUM et dimensions...")
     client_num = None
     dimensions = None
-    timeout = 0
-    max_timeout = 5000 
+    iterations = 0
+    max_iterations = 50 
     
-    while timeout < max_timeout and (client_num is None or dimensions is None):
+    while iterations < max_iterations and (client_num is None or dimensions is None):
         messages = net.receive_messages()
         for msg in messages:
             if msg == "ko":
@@ -64,8 +64,8 @@ def wait_for_infos(net):
             except (ValueError, IndexError):
                 pass
         if client_num is None or dimensions is None:
-            time.sleep(0.1)
-            timeout += 100
+            select.select([net.sock], [], [])
+            iterations += 1
     if client_num is None or dimensions is None:
         print(f"[Erreur] Handshake incomplet (CLIENT-NUM: {client_num}, Dimensions: {dimensions})")
         return False, None, None
@@ -79,16 +79,16 @@ def handshake(net, team_name):
     Retourne True si le handshake est réussi, False sinon."""
 
     if not wait_for_welcome(net):
-        return False
+        return False, None, None
     print(f"[Handshake] Envoi du nom de team: {team_name}")
     if not net.send_command(team_name):
         print("[Erreur] Impossible d'envoyer le team_name")
-        return False
+        return False, None, None
     success, client_num, dimensions = wait_for_infos(net)
     if not success:
-        return False
+        return False, None, None
     print("[Handshake] Succès! Démarrage de l'agent...")
-    return True
+    return True, client_num, dimensions
 
 def main(port, machine, team_name):
     """Point d'entrée principal du client Zappy. Gère la connexion, le handshake, et lance l'agent.
@@ -109,12 +109,13 @@ def main(port, machine, team_name):
         return 84
     if not net.connected:
         return 84
-    if not handshake(net, team_name):
+    is_connected, client_num, dimensions = handshake(net, team_name)
+    if not is_connected:
         net.close()
-        return 84 
+        return 84
     try:
         cmd_interface = ZappyCommand(net)
-        agent = ZappyAgent(cmd_interface, team_name)
+        agent = ZappyAgent(cmd_interface, team_name, dimensions, client_num)
         agent.run()
         logger.info("[Agent] Agent terminé correctement")
     except KeyboardInterrupt:
