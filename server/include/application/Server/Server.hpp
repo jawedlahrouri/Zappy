@@ -42,14 +42,17 @@ class Server : public INetworkProvider {
         void sendEvent(const class IEventElement& event) override;
         const std::unordered_map<int, std::shared_ptr<class Client>>& getClients() const override;
         void addPollEvent(int fd, NetworkEvent event) override;
+        void executeCommand(std::shared_ptr<class AI> ai, const std::string& command) override;
+        void notifyVictory(const std::string& teamName) override;
+        int getCommandDuration(const std::string& command) const override;
 
     private:
         void runPollLoop();
-        void processPollEvent(size_t& i);
+        void processPollEvent(size_t i);
         bool handleClientData(size_t pollIndex);
         bool handleWritable(size_t index);
         void cleanup();
-        void removeClient(int clientSocket);
+        void removeClient(int clientSocket) override;
 
         ILogger& _logger;
         std::unique_ptr<ISocket> _masterSocket;

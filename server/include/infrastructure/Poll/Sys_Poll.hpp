@@ -17,6 +17,7 @@ namespace SysPoll {
         EventOut = 4,
         EventErr = 8,
         EventHup = 16,
+        EventNval = 32,
     };
 
     struct PollFd {

@@ -20,6 +20,9 @@ void ConnectionHandler::acceptClient(ISocket& masterSocket, IPoll& poll, ClientM
 {
     try {
         std::unique_ptr<ISocket> client_socket = masterSocket.acceptConnection();
+        if (!client_socket) {
+            return;
+        }
         int fd = client_socket->getSocket();
         
         if (fd != -1) {
@@ -63,11 +66,15 @@ void ConnectionHandler::detectClientType(int clientSocket, ClientManager& client
                 auto ai_client = std::make_shared<AI>(client->releaseSocket(), playerId);
                 ai_client->setTeamName(line);
                 clientManager.addClient(clientSocket, ai_client);
-                Login::login_ai(ai_client, line, network);
-                logger.info("Client " + std::to_string(clientSocket) + " authenticated as AI in team " + line);
+                if (Login::login_ai(ai_client, line, network)) {
+                    logger.info("Client " + std::to_string(clientSocket) + " authenticated as AI in team " + line);
+                } else {
+                    logger.warn("Client " + std::to_string(clientSocket) + " could not join team " + line + ": no slots available");
+                    network.removeClient(clientSocket);
+                }
             } else {
                 clientManager.sendResponse(clientSocket, "ko");
-                clientManager.removeClient(clientSocket);
+                network.removeClient(clientSocket);
             }
         }
     } catch (const std::exception &e) {
