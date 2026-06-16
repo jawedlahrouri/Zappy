@@ -52,6 +52,9 @@ std::unique_ptr<ISocket> Socket::acceptConnection()
 {
     int fd = SysSocket::acceptInet(_socket);
     if (fd == -1) {
+        if (SysSocket::wouldBlock()) {
+            return nullptr;
+        }
         throw ServerException(std::string("Socket acceptance failed: ") + SysSocket::getLastError());
     }
     return std::make_unique<Socket>(fd);
