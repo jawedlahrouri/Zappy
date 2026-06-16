@@ -13,6 +13,7 @@ class AgentState(Enum): # Enum pour représenter les différents états de compo
     LEADER = 6
     FOLLOWER = 7
     FEEDER = 8
+    PUSHING = 9
 
 class StateComportment:
     def __init__(self, agent):
@@ -53,4 +54,11 @@ class StateComportment:
         Retourne:
             - AgentState: l'etat dans lequel l'agent doit etre.
         """
-        
+    
+    def act_pushing(self):
+        """Eject
+        Params:
+            - Aucun parametres
+        Retourne:
+            - Ne return rien
+        """
