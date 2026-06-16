@@ -11,7 +11,7 @@ class AgentState(Enum): # Enum pour représenter les différents états de compo
     ELEVATION = 4
     FORKING = 5
     BALISE = 6
-    BEGINER = 7
+    BEGINNER = 7
     FEEDER = 8
 
 class StateComportment:
@@ -164,22 +164,22 @@ class StateComportment:
         if self.agent.balise_k is not None and self.agent.balise_k > 0:
             self.agent.grouper._move_towards_sound(self.agent.balise_k)
             self.agent.balise_k = None
-            return AgentState.BEGINER
+            return AgentState.BEGINNER
         
         elif self.agent.heard_balise:
             self.agent.cmd.send_command("Inventory")
-            return AgentState.BEGINER
+            return AgentState.BEGINNER
         
         else:
             if not self.agent.ping_sent:
                 self.agent.cmd.send_command("Broadcast TEAM_PING")
                 self.agent.ping_sent = True
-                return AgentState.BEGINER
+                return AgentState.BEGINNER
 
             elif self.agent.wait_counter < 3:
                 self.agent.cmd.send_command("Inventory")
                 self.agent.wait_counter += 1
-                return AgentState.BEGINER
+                return AgentState.BEGINNER
             
             
             else:

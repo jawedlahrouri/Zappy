@@ -66,15 +66,6 @@ class Grouper:
             -vision (list): La vision actuelle de l'agent.
         Retourne:
             -bool: True si le regroupement est réussi, False sinon."""
-
-        if self.current_k is not None:
-            self.role = 'FOLLOWER'
-        elif self.role is None:
-            self.role = 'LEADER'
-        if self.role == 'FOLLOWER':
-            return self.act_follower(level, my_id, vision)
-        elif self.role == 'LEADER':
-            return self.act_leader(level, my_id, vision)
         
     def act_follower(self, level, my_id, vision):
         """Effectue les actions d'un agent suiveur en fonction du niveau, de l'ID et de la vision.\n
@@ -84,25 +75,7 @@ class Grouper:
             -vision (list): La vision actuelle de l'agent.
         Retourne:
             -bool: True si l'action est réussie, False sinon."""
-    
-        if self.current_k is None:
-            return False
-        if self.current_k == 0:
-            players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
-            needed = self.player_reqs.get(level, 1)
-            if players_on_tile >= needed:
-                logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
-                self.current_k = None
-                return True
-            else:
-                logger.info(f"agent : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
-                self.current_k = None
-                return False
-        else:
-            logger.info(f"agent : En route vers K={self.current_k} pour rejoindre le LEADER.")
-            self._move_towards_sound(self.current_k)
-            self.current_k = None
-            return False
+
 
     def act_leader(self, level, my_id, vision):
         """Effectue les actions d'un agent leader en fonction du niveau, de l'ID et de la vision.\n
@@ -112,13 +85,3 @@ class Grouper:
             -vision (list): La vision actuelle de l'agent.
         Retourne:
             -bool: True si l'action est réussie, False sinon."""
-
-        players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
-        needed = self.player_reqs.get(level, 1)
-        if players_on_tile >= needed:
-            logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
-            return True
-        logger.info(f"agent : Attente alliés. Broadcast...")
-        secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
-        self.cmd.send_command(f"Broadcast {secret_msg}")
-        return False

@@ -32,7 +32,7 @@ class ZappyAgent:
         self.unread_messages = [] # Messages reçus du serveur mais pas encore traités.
         self.agent_id = random.randint(1000, 9999) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
         self.is_alive = True # Flag pour savoir si l'agent est encore en vie.
-        self.state = AgentState.BEGINER # État initial de l'agent, il commencera en mode survie pour sécuriser sa position avant de faire autre chose.
+        self.state = AgentState.BEGINNER # État initial de l'agent, il commencera en mode survie pour sécuriser sa position avant de faire autre chose.
         self.level = 1 # Niveau actuel de l'agent, commence à 1 et augmente avec les incantations réussies.
         self.inventory = {} # Dictionnaire pour stocker les ressources que l'agent a en sa possession (nourriture, pierres, etc).
         self.vision = [] # Ce que l'agent voit autour de lui, mis à jour à chaque cycle.
@@ -166,7 +166,7 @@ class ZappyAgent:
             self.elect_queen()  
         food = self.inventory.get('food', 0)
         
-        if self.state not in [AgentState.BEGINER, AgentState.BALISE, AgentState.FEEDER]:
+        if self.state not in [AgentState.BEGINNER, AgentState.BALISE, AgentState.FEEDER]:
             if food > 25 and self.heard_balise:
                 logger.info(f"L'agent {self.agent_id} a beaucoup de nourriture ({food}). Il passe en mode FEEDER pour ravitailler la balise.")
                 self.state = AgentState.FEEDER
@@ -175,7 +175,7 @@ class ZappyAgent:
         if food <= self.food_minimum and self.state != AgentState.BALISE:
             self.state = AgentState.SURVIVAL
             return
-        if self.state == AgentState.BEGINER and self.balise_k is not None:
+        if self.state == AgentState.BEGINNER and self.balise_k is not None:
             if self.balise_k == 0:
                 self.x = 0
                 self.y = 0
@@ -185,7 +185,7 @@ class ZappyAgent:
                 return
             else:
                 return
-        if self.state in [AgentState.BEGINER, AgentState.BALISE]:
+        if self.state in [AgentState.BEGINNER, AgentState.BALISE]:
             return
         call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.decoded_messages)
         if call_k is not None:
@@ -271,7 +271,7 @@ class ZappyAgent:
                 self.state = self.comportment.act_forking()
             case AgentState.BALISE:
                 self.state = self.comportment.act_balise()
-            case AgentState.BEGINER:
+            case AgentState.BEGINNER:
                 self.state = self.comportment.act_beginer()
             case AgentState.FEEDER:
                 self.state = self.comportment.act_feeder()

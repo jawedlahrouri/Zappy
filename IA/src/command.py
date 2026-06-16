@@ -25,7 +25,7 @@ class ZappyCommand:
         while True:
             first_response = self._wait_for_response(expect_incantation=True)
             if first_response in ["Elevation underway", "ko"]:
-                break     
+                break
         if first_response == "Elevation underway":
             second_response = self._wait_for_response(expect_incantation=True)
             logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
@@ -54,7 +54,6 @@ class ZappyCommand:
                     logger.warning(f"l'agent a été éjecté par un autre joueur. Détails: {msg}")
                 elif msg == "dead":
                     self.system_queue.append("dead")
-                    # logger.warning(f"l'agent est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
                 else:
                     self.system_queue.append(msg)
             if not messages:
