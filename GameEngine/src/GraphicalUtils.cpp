@@ -9,82 +9,6 @@
 #include "TextureManager.hpp"
 #include <cmath>
 
-std::string GraphicalUtils::getPlayerTextureKey(const Player& player)
-{
-    if (player.teamColor == 1) {
-        if (player.orientation == 1)
-            return "blueBack";
-        if (player.orientation == 2)
-            return "blueRight";
-        if (player.orientation == 4)
-            return "blueLeft";
-        return "bluePlayer";
-    }
-    if (player.teamColor == 3) {
-        if (player.orientation == 1)
-            return "greenBack";
-        if (player.orientation == 2)
-            return "greenRight";
-        if (player.orientation == 4)
-            return "greenLeft";
-        return "greenPlayer";
-    }
-    if (player.teamColor == 4) {
-        if (player.orientation == 1)
-            return "pinkBack";
-        if (player.orientation == 2)
-            return "pinkRight";
-        if (player.orientation == 4)
-            return "pinkLeft";
-        return "pinkPlayer";
-    }
-    if (player.orientation == 1)
-        return "playerBack";
-    if (player.orientation == 2)
-        return "playerRight";
-    if (player.orientation == 4)
-        return "playerLeft";
-    return "playerFace";
-}
-
-std::string GraphicalUtils::getPlayerTextureKey(const Player& player, int orientation)
-{
-    if (player.teamColor == 1) {
-        if (orientation == 1)
-            return "blueBack";
-        if (orientation == 2)
-            return "blueRight";
-        if (orientation == 4)
-            return "blueLeft";
-        return "bluePlayer";
-    }
-    if (player.teamColor == 3) {
-        if (orientation == 1)
-            return "greenBack";
-        if (orientation == 2)
-            return "greenRight";
-        if (orientation == 4)
-            return "greenLeft";
-        return "greenPlayer";
-    }
-    if (player.teamColor == 4) {
-        if (orientation == 1)
-            return "pinkBack";
-        if (orientation == 2)
-            return "pinkRight";
-        if (orientation == 4)
-            return "pinkLeft";
-        return "pinkPlayer";
-    }
-    if (orientation == 1)
-        return "playerBack";
-    if (orientation == 2)
-        return "playerRight";
-    if (orientation == 4)
-        return "playerLeft";
-    return "playerFace";
-}
-
 void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, float tileSize, float offsetX, float offsetY)
 {
     float startX = tile.x * tileSize + offsetX;
@@ -145,23 +69,6 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
         thystameSprite.setPosition(startX + 25.5f + (static_cast<float>(i) * 2.5f), startY + 4.0f);
         target.draw(thystameSprite);
     }
-}
-
-void GraphicalUtils::drawPlayerPortrait(sf::RenderTarget& target, const Player& player, float x, float y, float size)
-{
-    const TextureManager& tm = TextureManager::getInstance();
-    sf::Sprite portrait(tm.getTexture(getPlayerTextureKey(player, 3)));
-    const sf::Vector2u texSize = tm.getTexture(getPlayerTextureKey(player, 3)).getSize();
-
-    if (texSize.x > 0 && texSize.y > 0) {
-        const float scaleX = size / static_cast<float>(texSize.x);
-        const float scaleY = size / static_cast<float>(texSize.y);
-
-        portrait.setScale(scaleX, scaleY);
-    }
-    portrait.setPosition(x, y);
-    portrait.setColor(sf::Color(255, 255, 255, 255));
-    target.draw(portrait);
 }
 
 void GraphicalUtils::drawEgg(sf::RenderTarget& target, const Egg& egg, float tileSize, float offsetX, float offsetY)

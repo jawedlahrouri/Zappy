@@ -8,11 +8,12 @@
 #ifndef WORLD_HPP_
     #define WORLD_HPP_
 
-    #include <SFML/Graphics.hpp>
-    #include "GameWorld.hpp"
-    #include <optional>
-    #include <string>
-    #include <utility>
+#include <SFML/Graphics.hpp>
+#include "GameWorld.hpp"
+#include "Players.hpp"
+#include <optional>
+#include <string>
+#include <utility>
 
     class WorldRenderer {
         public:
@@ -34,14 +35,10 @@
             static void drawTiles(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawGrid(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawSelectedTile(sf::RenderWindow& window, int x, int y, float posX, float posY, const std::optional<std::pair<int, int>>& selectedTile);
-            static void drawSelectedPlayer(sf::RenderWindow& window, const Player& player, float offsetX, float offsetY);
-            static void drawPlayers(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawEggs(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawTimePanel(sf::RenderWindow& window, const sf::Font& font, bool fontLoaded, int serverFreq, bool timePaused);
             static void drawTimeButton(sf::RenderWindow& window, sf::Text& text, const std::string& label, const sf::FloatRect& rect, bool active);
             static void drawInfoPanel(sf::RenderWindow& window, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded);
-            static void drawPlayerPanel(sf::RenderWindow& window, const GameWorld& world, int playerId, const sf::Font& font, bool fontLoaded);
-            static void drawPlayerInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY);
             static void drawInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY);
         };
 

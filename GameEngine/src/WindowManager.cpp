@@ -216,34 +216,18 @@ bool WindowManager::select2DPlayer(const GameWorld& world, int mouseX, int mouse
     const float totalMapHeight = static_cast<float>(mapHeight) * WorldRenderer::TILE_SIZE;
     const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
     const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
-    const float playerHalfSize = WorldRenderer::TILE_SIZE * 0.25f;
-    const auto& players = world.getPlayers();
-    const Player* closestPlayer = nullptr;
-    float closestDistance = std::numeric_limits<float>::max();
+    int selectedPlayerId = 0;
 
-    for (const auto& pair : players) {
-        const Player& player = pair.second;
-        const float centerX = static_cast<float>(player.x) * WorldRenderer::TILE_SIZE +
-            offsetX + (WorldRenderer::TILE_SIZE / 2.0f);
-        const float centerY = static_cast<float>(player.y) * WorldRenderer::TILE_SIZE +
-            offsetY + (WorldRenderer::TILE_SIZE / 2.0f);
-
-        if (std::abs(worldPos.x - centerX) > playerHalfSize ||
-            std::abs(worldPos.y - centerY) > playerHalfSize)
-            continue;
-        const float dx = worldPos.x - centerX;
-        const float dy = worldPos.y - centerY;
-        const float distance = dx * dx + dy * dy;
-
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestPlayer = &player;
-        }
-    }
-    if (closestPlayer == nullptr)
+    if (!Players::pickPlayer(world, worldPos, offsetX, offsetY,
+            selectedPlayerId))
         return false;
-    _selectedPlayerId = closestPlayer->id;
-    _selectedTile = {closestPlayer->x, closestPlayer->y};
+    const auto& players = world.getPlayers();
+    const auto it = players.find(selectedPlayerId);
+
+    if (it == players.end())
+        return false;
+    _selectedPlayerId = selectedPlayerId;
+    _selectedTile = {it->second.x, it->second.y};
     _pendingTileRequest.reset();
     return true;
 }
