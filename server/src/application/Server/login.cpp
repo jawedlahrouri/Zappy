@@ -33,9 +33,13 @@ static int countTeamEggs(INetworkProvider &network, const std::string &team_name
 }
 
 static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetworkProvider &network) {
+    int x = 0;
+    int y = 0;
     if (egg) {
-        ai->setX(egg->x);
-        ai->setY(egg->y);
+        x = egg->x;
+        y = egg->y;
+        ai->setX(x);
+        ai->setY(y);
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(1, 4);
@@ -46,6 +50,13 @@ static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetw
         ai->setY(0);
         ai->setOrientation(1);
     }
+    auto& engine = network.getGameEngine();
+    if (engine) {
+        auto& tile = engine->getMap().getTile(x, y);
+        for (int i = 1; i < RESOURCE_COUNT; ++i) {
+            tile.resources[i] = 0;
+        }
+    }
 }
 
 // protocol:
@@ -53,18 +64,26 @@ static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetw
 // --> TEAM-NAME
 // <-- CLIENT-NUM (unused slots)
 // <-- X Y (map dimensions)
-void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network)
+bool Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network)
 {
     try {
         int slots = countTeamEggs(network, team_name);
-        std::shared_ptr<Egg> egg = nullptr;
+        if (slots <= 0) {
+            int fd = ai->getId();
+            network.sendResponse(fd, "0");
+            return false;
+        }
 
+        std::shared_ptr<Egg> egg = nullptr;
         if (network.getGameEngine()) {
             egg = network.getGameEngine()->getMap().getAndRemoveRandomEggForTeam(team_name);
         }
+        if (!egg) {
+            return false;
+        }
 
         int fd = ai->getId();
-        network.sendResponse(fd, std::to_string(slots > 0 ? slots - 1 : 0));
+        network.sendResponse(fd, std::to_string(slots - 1));
 
         if (network.getGameEngine()) {
             spawnAiOnEgg(ai, egg, network);
@@ -75,6 +94,7 @@ void Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetw
         }
         
         network.sendEvent(PnwEvent(ai));
+        return true;
     } catch (const std::exception &e) {
         throw ServerException(std::string("Login::login_ai: ") + e.what());
     }

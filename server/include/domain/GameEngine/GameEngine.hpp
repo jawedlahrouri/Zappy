@@ -38,6 +38,7 @@ class GameEngine {
         int generateEggId() { return _nextEggId++; }
 
         bool checkIncantationRequirements(int x, int y, int level) const;
+        int getRequiredPlayersForIncantation(int level) const;
         std::vector<std::shared_ptr<AI>> getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const;
         void consumeIncantationResources(int x, int y, int level);
         void checkVictory(const std::string& teamName, INetworkProvider& network) const;
@@ -51,7 +52,6 @@ class GameEngine {
         void handleAiActiveCommand(std::shared_ptr<AI> ai, INetworkProvider& network);
         void handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& network);
         void executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& network);
-        int getCommandDuration(const std::string& command);
 
         struct IncantationRequirement {
             int players;

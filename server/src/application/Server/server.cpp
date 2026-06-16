@@ -14,6 +14,7 @@
 #include "GameEngine.hpp"
 #include "application/Event/GUI/EventVisitor.hpp"
 #include "application/Event/GUI/IEventElement.hpp"
+#include "application/Event/GUI/SegEvent.hpp"
 #include "AI.hpp"
 #include "GUI.hpp"
 #include <chrono>
@@ -174,13 +175,12 @@ void Server::cleanup()
     }
 }
 
-void Server::processPollEvent(size_t &i)
+void Server::processPollEvent(size_t i)
 {
     try {
         if (_poll->isError(i)) {
             if (i > 0) {
                 removeClient(_poll->getFd(i));
-                --i;
             }
             return;
         }
@@ -189,15 +189,12 @@ void Server::processPollEvent(size_t &i)
                 ConnectionHandler::acceptClient(*_masterSocket, *_poll, _clientManager, _logger);
             } else {
                 if (handleClientData(i)) {
-                    --i;
                     return;
                 }
             }
         }
         if (i > 0 && i < _poll->getSize() && _poll->isWritable(i)) {
-            if (handleWritable(i)) {
-                --i;
-            }
+            handleWritable(i);
         }
     } catch (const std::exception &e) {
         throw ServerException(std::string("Server::processPollEvent: ") + e.what());
@@ -230,8 +227,12 @@ void Server::runPollLoop()
                 throw ServerException(std::string("poll failed"));
             }
 
-            for (size_t i = 0; i < _poll->getSize(); ++i) {
-                processPollEvent(i);
+            size_t i = _poll->getSize();
+            while (i > 0) {
+                --i;
+                if (i < _poll->getSize()) {
+                    processPollEvent(i);
+                }
             }
 
             now = std::chrono::steady_clock::now();
@@ -296,6 +297,7 @@ int Server::getFreq() const
     return _freq;
 }
 
+
 const std::vector<std::string>& Server::getTeamNames() const
 {
     return _teamNames;
@@ -309,4 +311,37 @@ const std::unique_ptr<GameEngine>& Server::getGameEngine() const
 ILogger& Server::getLogger() const
 {
     return _logger;
+}
+
+void Server::executeCommand(std::shared_ptr<AI> ai, const std::string& command)
+{
+    try {
+        AiCommandParser parser;
+        parser.executeCommand(ai, command, *this);
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("Server::executeCommand: ") + e.what());
+    }
+}
+
+void Server::notifyVictory(const std::string& teamName)
+{
+    try {
+        sendEvent(SegEvent(teamName));
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("Server::notifyVictory: ") + e.what());
+    }
+}
+
+int Server::getCommandDuration(const std::string& command) const
+{
+    try {
+        std::string action = command.substr(0, command.find(' '));
+        auto it = ai_cmds.find(action);
+        if (it != ai_cmds.end()) {
+            return it->second.duration;
+        }
+        return 0;
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("Server::getCommandDuration: ") + e.what());
+    }
 }
