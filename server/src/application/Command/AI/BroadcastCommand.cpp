@@ -97,6 +97,7 @@ void AiVisitor::visit(BroadcastCommand *element) {
             _network.sendResponse(other.second->getId(), messages);
         }
         _network.sendResponse(element->getClient()->getId(), "ok\n");
+        _network.sendToGuis("pbc " + std::to_string(element->getClient()->getId()) + " " + element->getMessage() + "\n");
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

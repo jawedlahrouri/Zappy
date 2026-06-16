@@ -77,6 +77,23 @@ void AiVisitor::visit([[maybe_unused]] SetCommand *element) {
         _network.getGameEngine()->getMap().addResourceToTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
         
         _network.sendResponse(element->getClient()->getId(), "ok\n");
+
+        std::string pdr_msg = "pdr " + std::to_string(element->getClient()->getId()) + " " + std::to_string(resType) + "\n";
+        _network.sendToGuis(pdr_msg);
+
+        auto ai = element->getClient();
+        auto& inv = ai->getInventory();
+        std::string pin_msg = "pin " + std::to_string(ai->getId()) + " " +
+                            std::to_string(ai->getX()) + " " +
+                            std::to_string(ai->getY()) + " " +
+                            std::to_string(inv.at("food")) + " " +
+                            std::to_string(inv.at("linemate")) + " " +
+                            std::to_string(inv.at("deraumere")) + " " +
+                            std::to_string(inv.at("sibur")) + " " +
+                            std::to_string(inv.at("mendiane")) + " " +
+                            std::to_string(inv.at("phiras")) + " " +
+                            std::to_string(inv.at("thystame")) + "\n";
+        _network.sendToGuis(pin_msg);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
