@@ -74,10 +74,18 @@ void AiVisitor::visit([[maybe_unused]] SetCommand *element) {
         }
         
         inventory[resource_name]--;
-        _network.getGameEngine()->addResourceToTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
+        _network.getGameEngine()->getMap().addResourceToTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
         
         _network.sendResponse(element->getClient()->getId(), "ok\n");
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
+}
+
+void SetCommand::setResourceName(const std::string& name) {
+    _resourceName = name;
+}
+
+std::string SetCommand::getResourceName() const {
+    return _resourceName;
 }

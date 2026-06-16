@@ -35,9 +35,9 @@ void AiCommandParser::parse_look([[maybe_unused]] std::shared_ptr<AI> client, [[
 }
 
 static std::pair<int, int> getTileCoordinates(int base_x, int base_y, int orientation, int d, int w) {
-    if (orientation == 0) return {base_x + w, base_y - d}; // NORTH
-    if (orientation == 1) return {base_x + d, base_y + w}; // EAST
-    if (orientation == 2) return {base_x - w, base_y + d}; // SOUTH
+    if (orientation == 1) return {base_x + w, base_y - d}; // NORTH
+    if (orientation == 2) return {base_x + d, base_y + w}; // EAST
+    if (orientation == 3) return {base_x - w, base_y + d}; // SOUTH
     return {base_x - d, base_y - w}; // WEST
 }
 
@@ -71,7 +71,7 @@ static std::string buildLookOutput(std::shared_ptr<AI> client, GameEngine* engin
     for (int d = 0; d <= level; d++) {
         for (int w = -d; w <= d; w++) {
             auto [tile_x, tile_y] = getTileCoordinates(pos_x, pos_y, orientation, d, w);
-            auto tile = engine->getTile(tile_x, tile_y);
+            auto tile = engine->getMap().getTile(tile_x, tile_y);
             output += getTileContentString(tile);
             if (d != level || w != d) {
                 output += ",";

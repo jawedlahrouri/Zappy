@@ -8,21 +8,18 @@
 #ifndef BROADCASTCOMMAND_HPP_
 #define BROADCASTCOMMAND_HPP_
 
-#include "application/Command/AI/IAiCommandElement.hpp"
+#include "application/Command/AI/BaseAiCommand.hpp"
 #include "application/Command/AI/IAiVisitor.hpp"
 #include "domain/Client/AI.hpp"
 #include <memory>
 
-class BroadcastCommand : public IAiCommandElement {
+class BroadcastCommand : public BaseAiCommand {
 public:
   void Accept(IAiVisitor *visitor) override;
-  void setClient(std::shared_ptr<AI> client) { _client = client; }
-  std::shared_ptr<AI> getClient() const { return _client; }
-  void setMessage(const std::string& message) { _message = message; }
-  std::string getMessage() const { return _message; }
+  void setMessage(const std::string& message);
+  std::string getMessage() const;
 
 private:
-  std::shared_ptr<AI> _client;
   std::string _message;
 };
 

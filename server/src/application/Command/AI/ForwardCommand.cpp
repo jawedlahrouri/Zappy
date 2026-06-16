@@ -51,17 +51,31 @@ void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client,
 
 void AiVisitor::visit([[maybe_unused]] ForwardCommand *element) {
     try {
-        int orientation = element->getClient()->getOrientation();
+        auto client = element->getClient();
+        int old_x = client->getX();
+        int old_y = client->getY();
+        int orientation = client->getOrientation();
         
-        if (orientation == 0) // NORTH
-            element->getClient()->setY(element->getClient()->getY() + 1);
-        else if (orientation == 1) // EAST
-            element->getClient()->setX(element->getClient()->getX() + 1);
-        else if (orientation == 2) // SOUTH
-            element->getClient()->setY(element->getClient()->getY() - 1);
-        else if (orientation == 3) // WEST
-            element->getClient()->setX(element->getClient()->getX() - 1);
-        borderWrap(element->getClient(), _network.getGameEngine()->getWidth(), _network.getGameEngine()->getHeight()); // teleport to the other side if the player goes out of bounds
+        if (orientation == 1) // NORTH
+            client->setY(old_y - 1);
+        else if (orientation == 2) // EAST
+            client->setX(old_x + 1);
+        else if (orientation == 3) // SOUTH
+            client->setY(old_y + 1);
+        else if (orientation == 4) // WEST
+            client->setX(old_x - 1);
+            
+        borderWrap(client, _network.getGameEngine()->getWidth(), _network.getGameEngine()->getHeight());
+        
+        _network.getGameEngine()->getMap().moveAi(client->getId(), old_x, old_y, client->getX(), client->getY());
+        
+        _network.sendResponse(client->getId(), "ok\n");
+        
+        std::string ppo_msg = "ppo " + std::to_string(client->getId()) + " " +
+                            std::to_string(client->getX()) + " " +
+                            std::to_string(client->getY()) + " " +
+                            std::to_string(client->getOrientation()) + "\n";
+        _network.sendToGuis(ppo_msg);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

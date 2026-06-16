@@ -36,15 +36,19 @@ void AiCommandParser::parse_inventory(
 
 void AiVisitor::visit([[maybe_unused]] InventoryCommand *element) {
     try {
-        auto inventory = element->getClient()->getInventory();
-
+        auto& inventory = element->getClient()->getInventory();
+        std::vector<std::string> resources = {
+            "food", "linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"
+        };
         std::string output = "[";
-        if (!inventory.empty()) {
-            for (auto it = inventory.begin(); it != inventory.end(); ++it) {
-                output += it->first + " " + std::to_string(it->second) + ", ";
+
+        for (size_t i = 0; i < resources.size(); ++i) {
+            std::string res = resources[i];
+            int qty = inventory.count(res) ? inventory.at(res) : 0;
+            output += res + " " + std::to_string(qty);
+            if (i < resources.size() - 1) {
+                output += ", ";
             }
-            output.pop_back();
-            output.pop_back();
         }
         output += "]\n";
         _network.sendResponse(element->getClient()->getId(), output);

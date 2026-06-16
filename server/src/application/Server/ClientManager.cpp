@@ -10,6 +10,7 @@
 #include "shared/ILogger.hpp"
 #include "application/Event/GUI/PdiEvent.hpp"
 #include "AI.hpp"
+#include "domain/GameEngine/GameEngine.hpp"
 #include "ServerException.hpp"
 
 ClientManager::ClientManager(INetworkProvider& network, ILogger& logger)
@@ -28,8 +29,12 @@ void ClientManager::removeClient(int fd)
     if (it != _clients.end()) {
         if (it->second->getType() == ClientType::AI) {
             auto ai = std::dynamic_pointer_cast<AI>(it->second);
-            if (ai)
+            if (ai) {
                 _network.sendEvent(PdiEvent(ai->getId()));
+                if (_network.getGameEngine()) {
+                    _network.getGameEngine()->getMap().removeAiFromTile(ai->getId(), ai->getX(), ai->getY());
+                }
+            }
         }
         if (!it->second->getWriteBuffer().empty()) {
             try {

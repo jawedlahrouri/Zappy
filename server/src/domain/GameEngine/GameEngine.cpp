@@ -17,29 +17,14 @@
 #include <algorithm>
 #include "shared/ILogger.hpp"
 
-int Egg::getId() const
+Map& GameEngine::getMap()
 {
-    return id;
+    return _map;
 }
 
-int Egg::getOwnerId() const
+const Map& GameEngine::getMap() const
 {
-    return ownerId;
-}
-
-void Tile::addEgg(std::shared_ptr<Egg> egg)
-{
-    eggs.push_back(egg);
-}
-
-void Tile::removeEgg(int eggId)
-{
-    eggs.erase(std::remove_if(eggs.begin(), eggs.end(), [eggId](const std::shared_ptr<Egg>& egg){ return egg->getId() == eggId; }), eggs.end());
-}
-
-const std::vector<std::shared_ptr<Egg>>& Tile::getEggs() const
-{
-    return eggs;
+    return _map;
 }
 
 int GameEngine::getWidth() const
@@ -53,10 +38,9 @@ int GameEngine::getHeight() const
 }
 
 GameEngine::GameEngine(int width, int height, ILogger& logger)
-    : _logger(logger), _width(width), _height(height)
+    : _logger(logger), _width(width), _height(height), _map(width, height)
 {
     try {
-        _map.resize(_height, std::vector<Tile>(_width));
         generateInitialResources();
     } catch (const std::exception &e) {
         throw ServerException(std::string("GameEngine::GameEngine: ") + e.what());
@@ -72,7 +56,7 @@ void GameEngine::update(INetworkProvider& network)
             spawnResourcesCycle();
             for (int y = 0; y < _height; y++) {
                 for (int x = 0; x < _width; x++) {
-                    const Tile &t = _map[y][x];
+                    const Tile &t = _map.getTile(x, y);
                     std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
                                           std::to_string(t.resources[FOOD]) + " " +
                                           std::to_string(t.resources[LINEMATE]) + " " +
@@ -114,7 +98,7 @@ void GameEngine::spawnResourcesCycle()
     for (int i = 0; i < RESOURCE_COUNT; i++) {
         int amount_to_spawn = std::max(1, static_cast<int>(std::floor(_width * _height * _densities[i] * 0.1)));
         for (int q = 0; q < amount_to_spawn; q++) {
-            _map[dis_y(gen)][dis_x(gen)].resources[i]++;
+            _map.addResourceToTile(dis_x(gen), dis_y(gen), static_cast<ResourceType>(i), 1);
         }
     }
 }
@@ -213,62 +197,7 @@ int GameEngine::getCommandDuration(const std::string& command)
     }
 }
 
-const Tile& GameEngine::getTile(int x, int y) const
-{
-    int toric_x = (x % _width + _width) % _width;
-    int toric_y = (y % _height + _height) % _height;
 
-    return _map[toric_y][toric_x];
-}
-
-void GameEngine::addResourceToTile(int x, int y, ResourceType type, int quantity)
-{
-    int toric_x = (x % _width + _width) % _width;
-    int toric_y = (y % _height + _height) % _height;
-
-    _map[toric_y][toric_x].resources[type] += quantity;
-}
-
-void GameEngine::removeResourceFromTile(int x, int y, ResourceType type, int quantity)
-{
-    int toric_x = (x % _width + _width) % _width;
-    int toric_y = (y % _height + _height) % _height;
-
-    _map[toric_y][toric_x].resources[type] -= quantity;
-    if (_map[toric_y][toric_x].resources[type] < 0)
-        _map[toric_y][toric_x].resources[type] = 0;
-}
-
-void GameEngine::removeEgg(int eggId)
-{
-    for (int y = 0; y < _height; y++) {
-        for (int x = 0; x < _width; x++) {
-            auto& eggs = _map[y][x].eggs;
-            for (auto it = eggs.begin(); it != eggs.end(); ++it) {
-                if ((*it)->getId() == eggId) {
-                    eggs.erase(it);
-                    return;
-                }
-            }
-        }
-    }
-}
-
-void GameEngine::addEgg(std::shared_ptr<Egg> egg)
-{
-    int toric_x = (egg->x % _width + _width) % _width;
-    int toric_y = (egg->y % _height + _height) % _height;
-
-    _map[toric_y][toric_x].addEgg(egg);
-}
-
-void GameEngine::addAiToTile(int aiId, int x, int y)
-{
-    int toric_x = (x % _width + _width) % _width;
-    int toric_y = (y % _height + _height) % _height;
-
-    _map[toric_y][toric_x].playerIds.push_back(aiId);
-}
 
 const std::unordered_map<int, GameEngine::IncantationRequirement> GameEngine::_incantationReqs = {
     {1, {1, {0, 1, 0, 0, 0, 0, 0}}},
@@ -283,7 +212,7 @@ const std::unordered_map<int, GameEngine::IncantationRequirement> GameEngine::_i
 std::vector<std::shared_ptr<AI>> GameEngine::getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const
 {
     std::vector<std::shared_ptr<AI>> players;
-    const Tile& t = getTile(x, y);
+    const Tile& t = _map.getTile(x, y);
     for (int pid : t.playerIds) {
         auto it = network.getClients().find(pid);
         if (it != network.getClients().end()) {
@@ -302,7 +231,7 @@ bool GameEngine::checkIncantationRequirements(int x, int y, int level) const
     if (reqIt == _incantationReqs.end()) return false;
     const auto& req = reqIt->second;
 
-    const Tile& t = getTile(x, y);
+    const Tile& t = _map.getTile(x, y);
     for (int i = 1; i < RESOURCE_COUNT; ++i) {
         if (t.resources[i] != req.resources[i]) {
             return false;
@@ -318,7 +247,7 @@ void GameEngine::consumeIncantationResources(int x, int y, int level)
     const auto& req = reqIt->second;
 
     for (int i = 1; i < RESOURCE_COUNT; ++i) {
-        removeResourceFromTile(x, y, static_cast<ResourceType>(i), req.resources[i]);
+        _map.removeResourceFromTile(x, y, static_cast<ResourceType>(i), req.resources[i]);
     }
 }
 
@@ -364,23 +293,7 @@ bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider&
     return true;
 }
 
-void GameEngine::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
-{
-    int toric_old_x = (oldX % _width + _width) % _width;
-    int toric_old_y = (oldY % _height + _height) % _height;
-    int toric_new_x = (newX % _width + _width) % _width;
-    int toric_new_y = (newY % _height + _height) % _height;
 
-    auto& oldPlayers = _map[toric_old_y][toric_old_x].playerIds;
-    for (auto it = oldPlayers.begin(); it != oldPlayers.end(); ++it) {
-        if (*it == aiId) {
-            oldPlayers.erase(it);
-            break;
-        }
-    }
-    
-    _map[toric_new_y][toric_new_x].playerIds.push_back(aiId);
-}
 
 void GameEngine::generateInitialResources()
 {
@@ -400,11 +313,37 @@ void GameEngine::generateInitialResources()
             for (int q = 0; q < total_quantity; q++) {
                 int rand_x = dis_x(gen);
                 int rand_y = dis_y(gen);
-                _map[rand_y][rand_x].resources[i]++;
+                _map.addResourceToTile(rand_x, rand_y, static_cast<ResourceType>(i), 1);
             }
         }
         _logger.info("[MAP] Initial resources generated successfully.");
     } catch (const std::exception &e) {
         throw ServerException(std::string("GameEngine::generateInitialResources: ") + e.what());
+    }
+}
+
+void GameEngine::generateInitialEggs(const std::vector<std::string>& teamNames, int initialSlots)
+{
+    try {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis_x(0, _width - 1);
+        std::uniform_int_distribution<> dis_y(0, _height - 1);
+
+        for (const auto& teamName : teamNames) {
+            for (int i = 0; i < initialSlots; ++i) {
+                int eggId = generateEggId();
+                auto egg = std::make_shared<Egg>();
+                egg->id = eggId;
+                egg->ownerId = -1;
+                egg->teamName = teamName;
+                egg->x = dis_x(gen);
+                egg->y = dis_y(gen);
+                _map.addEgg(egg);
+            }
+        }
+        _logger.info("[MAP] Initial eggs generated successfully.");
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("GameEngine::generateInitialEggs: ") + e.what());
     }
 }

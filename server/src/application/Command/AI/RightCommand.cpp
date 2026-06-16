@@ -35,18 +35,26 @@ void AiCommandParser::parse_right(std::shared_ptr<AI> client, const std::string 
 }
 
 void AiVisitor::visit(RightCommand *element) {
-    (void)element;
     try {
-        int orientation = element->getClient()->getOrientation();
+        auto client = element->getClient();
+        int orientation = client->getOrientation();
 
-        if (orientation == 0) // NORTH
-            element->getClient()->setOrientation(1);
-        else if (orientation == 1) // EAST
-            element->getClient()->setOrientation(2);
-        else if (orientation == 2) // SOUTH
-            element->getClient()->setOrientation(3);
-        else if (orientation == 3) // WEST
-            element->getClient()->setOrientation(0);
+        if (orientation == 1) // NORTH
+            client->setOrientation(2);
+        else if (orientation == 2) // EAST
+            client->setOrientation(3);
+        else if (orientation == 3) // SOUTH
+            client->setOrientation(4);
+        else if (orientation == 4) // WEST
+            client->setOrientation(1);
+            
+        _network.sendResponse(client->getId(), "ok\n");
+        
+        std::string ppo_msg = "ppo " + std::to_string(client->getId()) + " " +
+                            std::to_string(client->getX()) + " " +
+                            std::to_string(client->getY()) + " " +
+                            std::to_string(client->getOrientation()) + "\n";
+        _network.sendToGuis(ppo_msg);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
