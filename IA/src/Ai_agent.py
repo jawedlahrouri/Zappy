@@ -2,7 +2,6 @@
 
 import decimal
 import random
-import time
 import sys
 import subprocess
 from enum import Enum
@@ -28,7 +27,7 @@ class ZappyAgent:
         self.utils = utils(self.cmd, team_name) # Utilitaires divers, comme le lancement de clones.
         self.comportment = StateComportment(self) # Comportement de l'agent selon son état (survie, farming, grouping, etc).
         
-        self.client_num = client_num
+        self.client_num = client_num # Le nombre de slots clients attribués à notre équipe, utilisé pour décider si on doit faire du forking dès le départ.
         self.team_name = team_name # Le nom de l'équipe.
         self.unread_messages = [] # Messages reçus du serveur mais pas encore traités.
         self.agent_id = random.randint(1000, 9999) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
@@ -41,7 +40,7 @@ class ZappyAgent:
         self.food_safe = 15 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité pour faire des actions plus risquées comme le farming ou le regroupement.
         self.team_roster = {} # Dictionnaire pour suivre les alliés connus et leur dernière activité.
         self.population_target = 10 # Nombre d'agents que nous voulons idéalement dans l'équipe, utilisé pour décider quand faire du forking.
-        self.last_ping_time = time.time() # Timestamp du dernier ping envoyé pour vérifier la présence des alliés.
+        self.last_ping_cycle = 0 # Cycle de vie lors du dernier ping envoyé pour vérifier la présence des alliés.
         self.x = 0 # position en X
         self.y = 0 # position en Y
         self.direction = 0 # direction dans laquelle le robot regarde
@@ -55,6 +54,13 @@ class ZappyAgent:
         self.wait_counter = 0 # temps d'attente avant de commencer a envoyer des messages
         self.balise_k = None # direction de la balise (set ses coords a zero)
         self.heard_balise = False # Indique si l'agent a déjà entendu la balise
+        self.cycles_lived = 0 # Compte le nombre de cycles de vie de l'agent.
+        self.is_queen_elected = False # Flag pour savoir si la reine a été élue.
+        self.is_queen = False # Flag pour savoir si cet agent est la reine.
+        self.last_connect_nbr = client_num # Nombre de slots clients lors du dernier check, utilisé pour détecter les oeufs éclos.
+        self.unclaimed_clones = 0 # Nombre d'agents nés mais pas encore connectés.
+        self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
+        self.initial_cascade_pending = True # Flag pour savoir si la cascade initiale de forking est en cours.
 
     def handle_command_success(self, cmd_name: str):
         """Met à jour la position et direction internes suite à une commande réussie."""
@@ -117,11 +123,10 @@ class ZappyAgent:
                     self.decoded_messages.append({'k': k, 'data': decoded})
             except Exception:
                 continue
-        current_time = time.time()
-        if current_time - self.last_ping_time > 15:
+        if self.cycles_lived - self.last_ping_cycle > 10:
             secret_msg = self.comms.encode(str(self.agent_id), "ping")
             self.cmd.send_command(f"Broadcast {secret_msg}")
-            self.last_ping_time = current_time
+            self.last_ping_cycle = self.cycles_lived
 
     def process_radio_and_demographics(self):
         """Traite les messages radio reçus pour mettre à jour la liste des alliés connus
@@ -130,12 +135,11 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
-        current_time = time.time()
         for msg_obj in self.decoded_messages:
             decoded = msg_obj['data']
             if decoded['command'] == 'ping':
                 sender_id = int(decoded['param'])
-                self.team_roster[sender_id] = current_time
+                self.team_roster[sender_id] = self.cycles_lived
             elif decoded['command'] == 'needmate':
                 sender_id = int(decoded['param'].split('-')[1])
                 self.team_roster[sender_id] = current_time
@@ -157,6 +161,9 @@ class ZappyAgent:
         if self.state == AgentState.ELEVATION:
             return
         self.process_radio_and_demographics()
+        self.cycles_lived += 1
+        if not self.is_queen_elected and self.cycles_lived > 5:
+            self.elect_queen()  
         food = self.inventory.get('food', 0)
         
         if self.state not in [AgentState.BEGINER, AgentState.BALISE, AgentState.FEEDER]:
@@ -197,6 +204,23 @@ class ZappyAgent:
             return
         self.state = AgentState.SURVIVAL
 
+    def elect_queen(self):
+        """Détermine si cet agent doit devenir la Reine, après avoir laissé le temps aux pings d'arriver.
+        Params:
+            -Aucun paramètre.
+        Retourne rien, mais défini l'agent comme reine si les conditions sont réunies.
+        """
+
+        highest_id = self.agent_id
+        for ally_id in self.team_roster.keys():
+            if ally_id > highest_id:
+                highest_id = ally_id
+        if highest_id == self.agent_id:
+            self.is_queen = True
+            self.agent_id = 9999
+            logger.info("Agent élu comme REINE (ID 9999).")
+        self.is_queen_elected = True
+
     def check_population(self, food, current_population):
         """Vérifie si les conditions sont réunies pour pondre un oeuf\n
         Params:
@@ -204,12 +228,7 @@ class ZappyAgent:
             -current_population (int): Le nombre actuel d'agents connus dans l'équipe
         Retourne 1 si on décide de faire de pondre un oeuf, 0 sinon."""
 
-        is_queen = True
-        for ally_id in self.team_roster.keys():
-            if ally_id > self.agent_id:
-                is_queen = False
-                break
-        if is_queen and food > self.food_safe:
+        if self.is_queen and food > self.food_safe:
             if not self.utils.is_food_critical_for_action(42, self.inventory, self.food_minimum):
                 logger.info(f"l'agent {self.agent_id} est la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
                 self.state = AgentState.FORKING
@@ -268,6 +287,13 @@ class ZappyAgent:
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
         while self.is_alive:
             self.update_internal_state()
+            if not self.is_alive:
+                break
             self.evaluate_situation()
+            if not self.is_alive:
+                break                
             self.act_based_on_state()
-            time.sleep(0.1)
+            if self.is_queen_elected:
+                self.manage_demographics()
+        self.cmd.network.close()
+        logger.info(f"l'agent {self.agent_id} a terminé son cycle de vie (Déconnecté).")

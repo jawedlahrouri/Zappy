@@ -97,7 +97,8 @@ class StateComportment:
 
         success = self.agent.cmd.send_command("Fork")
         if success:
-            self.agent.utils.launch_clone()
+            self.agent.eggs_laid += 1
+            logger.info("Reine : Un oeuf a été pondu. En attente de l'éclosion (600 TU)...")
         return AgentState.SURVIVAL
 
     def act_balise(self):
