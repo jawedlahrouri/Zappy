@@ -12,6 +12,7 @@ class AgentState(Enum): # Enum pour représenter les différents états de compo
     FORKING = 5
     BALISE = 6
     BEGINER = 7
+    FEEDER = 8
 
 class StateComportment:
     def __init__(self, agent):
@@ -107,14 +108,18 @@ class StateComportment:
             -AgentState: L'état dans lequel l'agent doit rester a un endroit precis pour servir de (0,0) pour les autres."""
         if self.agent.is_alive:
             food = self.agent.inventory.get('food', 0)
-            current_population = len(self.agent.team_roster) + 1
+            if len(self.agent.vision) > 0 and self.agent.vision[0].count('food') > 0:
+                self.agent.cmd.send_command("Take food")
+                logger.info(f"La BALISE (ID {self.agent.agent_id}) se nourrit de la nourriture déposée.")
+                
+            current_population = len(self.agent.team_roster)
             if current_population < self.agent.population_target:
                 is_queen = True
                 for ally_id in self.agent.team_roster.keys():
                     if ally_id > self.agent.agent_id:
                         is_queen = False
                         break
-                if is_queen and food > self.agent.food_safe:
+                if is_queen and food > 5:
                     if not self.agent.utils.is_food_critical_for_action(42, self.agent.inventory, self.agent.food_minimum):
                         logger.info(f"La BALISE (ID {self.agent.agent_id}) est la REINE et initie un Fork pour recruter un nouveau drone. Pop actuelle: {current_population}/{self.agent.population_target}.")
                         success = self.agent.cmd.send_command("Fork")
@@ -125,6 +130,28 @@ class StateComportment:
             secret_msg = self.agent.comms.encode(str(self.agent.agent_id), "balise")
             self.agent.cmd.send_command(f"Broadcast {secret_msg}")
         return AgentState.BALISE
+        
+    def act_feeder(self):
+        """Effectue les actions de ravitaillement de la balise.\n
+        Params:
+            -Aucun paramètre.
+        Retourne:
+            -AgentState: L'état dans lequel l'agent doit rester."""
+        if self.agent.balise_k is None:
+            return AgentState.SURVIVAL
+            
+        if self.agent.balise_k == 0:
+            food = self.agent.inventory.get('food', 0)
+            if food > self.agent.food_safe:
+                self.agent.cmd.send_command("Set food")
+                logger.info(f"Ouvrière (ID {self.agent.agent_id}) dépose de la nourriture pour la balise.")
+                return AgentState.FEEDER
+            else:
+                return AgentState.SURVIVAL
+        else:
+            self.agent.grouper._move_towards_sound(self.agent.balise_k)
+            self.agent.balise_k = None
+            return AgentState.FEEDER
     
     def act_beginer(self):
         """Effectue les actions attendus de la part d'un bot qui vient d'arriver.

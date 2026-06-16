@@ -27,7 +27,8 @@ class ZappyAgent:
         self.grouper = Grouper(self.cmd, self.comms) # Module de groupage contenant la logique de regroupement de notre agent.
         self.utils = utils(self.cmd, team_name) # Utilitaires divers, comme le lancement de clones.
         self.comportment = StateComportment(self) # Comportement de l'agent selon son état (survie, farming, grouping, etc).
-
+        
+        self.client_num = client_num
         self.team_name = team_name # Le nom de l'équipe.
         self.unread_messages = [] # Messages reçus du serveur mais pas encore traités.
         self.agent_id = random.randint(1000, 9999) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
@@ -138,8 +139,7 @@ class ZappyAgent:
             elif decoded['command'] == 'needmate':
                 sender_id = int(decoded['param'].split('-')[1])
                 self.team_roster[sender_id] = current_time
-            elif decoded['command'] == 'balise' and self.state == AgentState.BEGINER:
-                # self.state = AgentState.SURVIVAL
+            elif decoded['command'] == 'balise':
                 self.balise_k = msg_obj['k']
                 self.heard_balise = True
 
@@ -158,7 +158,14 @@ class ZappyAgent:
             return
         self.process_radio_and_demographics()
         food = self.inventory.get('food', 0)
-        if food <= self.food_minimum:
+        
+        if self.state not in [AgentState.BEGINER, AgentState.BALISE, AgentState.FEEDER]:
+            if food > 25 and self.heard_balise:
+                logger.info(f"L'agent {self.agent_id} a beaucoup de nourriture ({food}). Il passe en mode FEEDER pour ravitailler la balise.")
+                self.state = AgentState.FEEDER
+                return
+
+        if food <= self.food_minimum and self.state != AgentState.BALISE:
             self.state = AgentState.SURVIVAL
             return
         if self.state == AgentState.BEGINER and self.balise_k is not None:
@@ -247,6 +254,8 @@ class ZappyAgent:
                 self.state = self.comportment.act_balise()
             case AgentState.BEGINER:
                 self.state = self.comportment.act_beginer()
+            case AgentState.FEEDER:
+                self.state = self.comportment.act_feeder()
         
     def run(self):
         """Lance la boucle principale de l'agent.\n
@@ -254,6 +263,8 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
+        if self.client_num > 0:
+            self.utils.launch_clone()
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
         while self.is_alive:
             self.update_internal_state()
