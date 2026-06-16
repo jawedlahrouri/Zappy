@@ -54,24 +54,27 @@ void GameEngine::update(INetworkProvider& network)
 
         if (_resourceSpawnTicks >= 20) {
             spawnResourcesCycle();
-            for (int y = 0; y < _height; y++) {
-                for (int x = 0; x < _width; x++) {
-                    const Tile &t = _map.getTile(x, y);
-                    std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
-                                          std::to_string(t.resources[FOOD]) + " " +
-                                          std::to_string(t.resources[LINEMATE]) + " " +
-                                          std::to_string(t.resources[DERAUMERE]) + " " +
-                                          std::to_string(t.resources[SIBUR]) + " " +
-                                          std::to_string(t.resources[MENDIANE]) + " " +
-                                          std::to_string(t.resources[PHIRAS]) + " " +
-                                          std::to_string(t.resources[THYSTAME]);
-                    network.sendToGuis(bct_msg);
-                }
+
+            for (int key : _map.getDirtyTiles()) {
+                int x = key % _width;
+                int y = key / _width;
+                const Tile& t = _map.getTile(x, y);
+                std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
+                                      std::to_string(t.resources[FOOD]) + " " +
+                                      std::to_string(t.resources[LINEMATE]) + " " +
+                                      std::to_string(t.resources[DERAUMERE]) + " " +
+                                      std::to_string(t.resources[SIBUR]) + " " +
+                                      std::to_string(t.resources[MENDIANE]) + " " +
+                                      std::to_string(t.resources[PHIRAS]) + " " +
+                                      std::to_string(t.resources[THYSTAME]);
+                network.sendToGuis(bct_msg);
             }
+
+            _map.clearDirtyTiles();
             _resourceSpawnTicks = 0;
             _logger.info("[MAP] Resources respawn cycle triggered and pushed to GUIs.");
         }
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         throw ServerException(std::string("GameEngine::update: ") + e.what());
     }
 }
