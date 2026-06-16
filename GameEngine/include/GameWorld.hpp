@@ -59,6 +59,8 @@
         Resources resToResources(int q0, int q1, int q2, int q3, int q4, int q5, int q6);
         void addPlayer(const Player& player);
         void movePlayer(int id, int x, int y, int orientation);
+        void setPlayerLevel(int id, int level);
+        void setPlayerInventory(int id, int x, int y, const Resources& inventory);
         void removePlayer(int id);
         void addEgg(int id, int parentId, int x, int y);
         void hatchEgg(int id);

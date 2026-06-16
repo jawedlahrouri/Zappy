@@ -7,9 +7,15 @@
 
 #include "World.hpp"
 #include "GraphicalUtils.hpp"
+#include "Players.hpp"
 #include "TextureManager.hpp"
 
-void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const sf::Font& font, bool fontLoaded, bool showGrid)
+void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView,
+    const GameWorld& world,
+    const std::optional<std::pair<int, int>>& selectedTile,
+    const std::optional<int>& selectedPlayerId,
+    const sf::Font& font, bool fontLoaded, bool showGrid, int serverFreq,
+    bool timePaused)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
@@ -23,8 +29,10 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, co
     const sf::Vector2u windowSize = window.getSize();
     const float totalMapWidth = static_cast<float>(mapWidth) * TILE_SIZE;
     const float totalMapHeight = static_cast<float>(mapHeight) * TILE_SIZE;
-    const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) / 2.0f;
-    const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) / 2.0f;
+    const float offsetX = (static_cast<float>(windowSize.x) - totalMapWidth) /
+        2.0f;
+    const float offsetY = (static_cast<float>(windowSize.y) - totalMapHeight) /
+        2.0f;
 
     drawTiles(window, world, offsetX, offsetY);
     if (showGrid)
@@ -37,9 +45,11 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, co
 
         drawSelectedTile(window, x, y, posX, posY, selectedTile);
     }
-    drawPlayers(window, world, offsetX, offsetY);
+    Players::draw(window, world, offsetX, offsetY, selectedPlayerId);
     drawEggs(window, world, offsetX, offsetY);
-    drawInfoPanel(window, world, selectedTile, font, fontLoaded);
+    drawInfoPanel(window, world, selectedTile, selectedPlayerId, font,
+        fontLoaded);
+    drawTimePanel(window, font, fontLoaded, serverFreq, timePaused);
 }
 
 void WorldRenderer::drawBackground(sf::RenderWindow& window)
@@ -103,7 +113,7 @@ void WorldRenderer::drawGrid(sf::RenderWindow& window, const GameWorld& world, f
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
-    const sf::Color gridColor(255, 255, 255, 75);
+    const sf::Color gridColor(255, 255, 255, 95);
     sf::VertexArray lines(sf::Lines);
 
     for (int x = 0; x <= mapWidth; x++) {
@@ -121,24 +131,96 @@ void WorldRenderer::drawGrid(sf::RenderWindow& window, const GameWorld& world, f
     window.draw(lines);
 }
 
-void WorldRenderer::drawPlayers(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY)
-{
-    const auto& players = world.getPlayers();
-
-    for (const auto& pair : players)
-        GraphicalUtils::drawPlayer(window, pair.second, TILE_SIZE, offsetX, offsetY);
-}
-
-void WorldRenderer::drawEggs(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY)
+void WorldRenderer::drawEggs(sf::RenderWindow& window, const GameWorld& world,
+    float offsetX, float offsetY)
 {
     const auto& eggs = world.getEggs();
 
-    for (const auto& pair : eggs)
-        GraphicalUtils::drawEgg(window, pair.second, TILE_SIZE, offsetX, offsetY);
+    for (const auto& pair : eggs) {
+        GraphicalUtils::drawEgg(window, pair.second, TILE_SIZE, offsetX,
+            offsetY);
+    }
 }
 
-void WorldRenderer::drawInfoPanel(sf::RenderWindow& window, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const sf::Font& font, bool fontLoaded)
+void WorldRenderer::drawTimePanel(sf::RenderWindow& window, const sf::Font& font,
+    bool fontLoaded, int serverFreq, bool timePaused)
 {
+    if (!fontLoaded)
+        return;
+
+    const sf::View previousView = window.getView();
+    const float panelX = TIME_PANEL_MARGIN;
+    const float panelY = TIME_PANEL_MARGIN;
+    const float buttonY = panelY + 64.0f;
+    const sf::FloatRect pauseButton(panelX + 16.0f, buttonY, TIME_BUTTON_WIDTH,
+        TIME_BUTTON_HEIGHT);
+    const sf::FloatRect slowerButton(panelX + 16.0f + TIME_BUTTON_WIDTH + 10.0f,
+        buttonY, TIME_BUTTON_WIDTH, TIME_BUTTON_HEIGHT);
+    const sf::FloatRect fasterButton(panelX + 16.0f +
+        (TIME_BUTTON_WIDTH + 10.0f) * 2.0f, buttonY, TIME_BUTTON_WIDTH,
+        TIME_BUTTON_HEIGHT);
+    sf::RectangleShape panel({TIME_PANEL_WIDTH, TIME_PANEL_HEIGHT});
+    sf::Text text;
+
+    window.setView(window.getDefaultView());
+    panel.setPosition(panelX, panelY);
+    panel.setFillColor(sf::Color(18, 24, 30, 225));
+    panel.setOutlineColor(sf::Color(120, 200, 255, 220));
+    panel.setOutlineThickness(2.0f);
+    window.draw(panel);
+
+    text.setFont(font);
+    text.setFillColor(sf::Color(235, 240, 245));
+    text.setCharacterSize(18);
+    text.setPosition(panelX + 16.0f, panelY + 16.0f);
+    text.setString("Time");
+    window.draw(text);
+
+    text.setCharacterSize(15);
+    text.setPosition(panelX + 16.0f, panelY + 38.0f);
+    text.setString("freq: " + std::to_string(serverFreq) +
+        (timePaused ? " (pause)" : ""));
+    window.draw(text);
+
+    drawTimeButton(window, text, timePaused ? "Resume" : "Pause", pauseButton,
+        timePaused);
+    drawTimeButton(window, text, "-", slowerButton, false);
+    drawTimeButton(window, text, "+", fasterButton, false);
+
+    window.setView(previousView);
+}
+
+void WorldRenderer::drawTimeButton(sf::RenderWindow& window, sf::Text& text,
+    const std::string& label, const sf::FloatRect& rect, bool active)
+{
+    sf::RectangleShape button({rect.width, rect.height});
+
+    button.setPosition(rect.left, rect.top);
+    button.setFillColor(active ? sf::Color(120, 200, 255, 210)
+        : sf::Color(36, 44, 52, 255));
+    button.setOutlineColor(sf::Color(120, 200, 255, 220));
+    button.setOutlineThickness(2.0f);
+    window.draw(button);
+
+    text.setCharacterSize(16);
+    text.setString(label);
+    const sf::FloatRect bounds = text.getLocalBounds();
+    text.setPosition(rect.left + (rect.width - bounds.width) / 2.0f -
+        bounds.left,
+        rect.top + (rect.height - bounds.height) / 2.0f - bounds.top - 2.0f);
+    window.draw(text);
+}
+
+void WorldRenderer::drawInfoPanel(sf::RenderWindow& window,
+    const GameWorld& world,
+    const std::optional<std::pair<int, int>>& selectedTile,
+    const std::optional<int>& selectedPlayerId, const sf::Font& font,
+    bool fontLoaded)
+{
+    if (selectedPlayerId.has_value()) {
+        Players::drawPanel(window, world, *selectedPlayerId, font, fontLoaded);
+        return;
+    }
     if (!selectedTile.has_value() || !fontLoaded)
         return;
 
@@ -179,7 +261,9 @@ void WorldRenderer::drawInfoPanel(sf::RenderWindow& window, const GameWorld& wor
     window.setView(previousView);
 }
 
-void WorldRenderer::drawInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY)
+void WorldRenderer::drawInfoLine(sf::RenderWindow& window, sf::Text& text,
+    const std::string& value, int row, unsigned int size, float panelX,
+    float panelY)
 {
     text.setString(value);
     text.setCharacterSize(size);

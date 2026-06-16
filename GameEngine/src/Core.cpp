@@ -39,6 +39,8 @@ int Core::run(int ac, char** av)
             _appState = MENU;
         }
         if (_appState == GAME)
+            sendPendingTimeRequest();
+        if (_appState == GAME)
             sendPendingTileRequest();
 
         if (_network.isConnected()) {
@@ -139,6 +141,18 @@ void Core::sendPendingTileRequest()
     _network.sendCommand(command);
 }
 
+void Core::sendPendingTimeRequest()
+{
+    std::optional<int> request = _windowManager.consumeTimeRequest();
+
+    if (!request.has_value())
+        return;
+
+    const std::string command = "sst " + std::to_string(*request) + "\n";
+
+    _network.sendCommand(command);
+}
+
 void Core::parseValue(std::stringstream& ss, int& value)
 {
     ss >> std::ws;
@@ -185,6 +199,39 @@ void Core::initCommands()
         parseValue(ss, y);
         parseValue(ss, orientation);
         _world.movePlayer(id, x, y, orientation);
+    };
+
+    _commands["sgt"] = [this](std::stringstream& ss) {
+        int freq = 0;
+
+        parseValue(ss, freq);
+        _windowManager.setServerFreq(freq);
+    };
+
+    _commands["plv"] = [this](std::stringstream& ss) {
+        int id = 0, level = 0;
+
+        parseValue(ss, id);
+        parseValue(ss, level);
+        _world.setPlayerLevel(id, level);
+    };
+
+    _commands["pin"] = [this](std::stringstream& ss) {
+        int id = 0, x = 0, y = 0;
+        int q0 = 0, q1 = 0, q2 = 0, q3 = 0, q4 = 0, q5 = 0, q6 = 0;
+
+        parseValue(ss, id);
+        parseValue(ss, x);
+        parseValue(ss, y);
+        parseValue(ss, q0);
+        parseValue(ss, q1);
+        parseValue(ss, q2);
+        parseValue(ss, q3);
+        parseValue(ss, q4);
+        parseValue(ss, q5);
+        parseValue(ss, q6);
+        _world.setPlayerInventory(id, x, y,
+            _world.resToResources(q0, q1, q2, q3, q4, q5, q6));
     };
 
     _commands["bct"] = [this](std::stringstream& ss) {

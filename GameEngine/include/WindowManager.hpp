@@ -25,6 +25,7 @@ public:
     bool handleMenuEvents();
     bool handleGameEvents(const GameWorld& world);
     std::optional<std::pair<int, int>> consumeTileRequest();
+    std::optional<int> consumeTimeRequest();
 
     void clear();
     void display();
@@ -38,12 +39,17 @@ public:
     void resetMenuTeamNames();
     void addMenuTeamName(const std::string& teamName);
     bool consumeMenuConnectionEdited();
+    void setServerFreq(int freq);
+    int getServerFreq() const;
+    bool isTimePaused() const;
 
     private:
         static constexpr float ZOOM_STEP = 1.1f;
         static constexpr float MIN_ZOOM = 0.35f;
         static constexpr float MAX_ZOOM = 3.0f;
         static constexpr float PAN_SPEED = 650.0f;
+        static constexpr int MIN_SERVER_FREQ = 1;
+        static constexpr int MAX_SERVER_FREQ = 1000;
 
         enum MenuField {
             IP_FIELD = 0,
@@ -62,7 +68,12 @@ public:
         void handleMenuTextEntered(sf::Uint32 unicode);
         bool handleMenuMousePressed(const sf::Event& event);
         std::string& getActiveMenuInput();
-        void select2DTile(const GameWorld& world, int mouseX, int mouseY);
+        bool select2DTile(const GameWorld& world, int mouseX, int mouseY);
+        bool select2DPlayer(const GameWorld& world, int mouseX, int mouseY);
+        bool handleTimeControlMousePressed(int mouseX, int mouseY);
+        bool isInsideSelectionPanel(int mouseX, int mouseY) const;
+        bool isInsideTimeControlPanel(int mouseX, int mouseY) const;
+        void clearSelection();
 
         sf::RenderWindow _window;
         sf::View _worldView;
@@ -70,7 +81,9 @@ public:
         sf::Vector2f _viewCenter;
         sf::Clock _panClock;
         std::optional<std::pair<int, int>> _selectedTile;
+        std::optional<int> _selectedPlayerId;
         std::optional<std::pair<int, int>> _pendingTileRequest;
+        std::optional<int> _pendingTimeRequest;
         float _zoomLevel;
         unsigned int _width;
         unsigned int _height;
@@ -84,6 +97,9 @@ public:
         std::vector<std::string> _menuTeamNames;
         bool _menuConnectionEdited;
         bool _showGrid;
+        int _serverFreq;
+        int _resumeServerFreq;
+        bool _timePaused;
         MenuField _activeMenuField;
     };
 
