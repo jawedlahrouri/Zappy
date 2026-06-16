@@ -7,9 +7,7 @@
 
 #include "application/Event/GUI/PdrEvent.hpp"
 #include "application/Event/GUI/EventVisitor.hpp"
-
 #include "ServerException.hpp"
-#include <string>
 
 PdrEvent::PdrEvent(int playerId, int resource) : _playerId(playerId), _resource(resource) {}
 

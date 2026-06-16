@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import time
+import select
 from src.server_link import ZappyNetwork
 from src.logger import ZappyLogger
 
@@ -13,37 +13,32 @@ class ZappyCommand:
         self.system_queue = [] # Queue pour stocker les messages système (comme les réponses aux commandes) reçus du serveur, à traiter par l'agent.
 
     def wait_for_incantation_follower(self):
-        """Attends les messages d'incantation pour un follower, en gérant les cas de timeout et de réponses inattendues.\n
+        """Attends les messages d'incantation pour un follower, en gérant les réponses inattendues.\n
         Params:
             -Aucun paramètre.
-        Retourne True si l'incantation réussit, False en cas d'échec ou de timeout."""
+        Retourne True si l'incantation réussit, False en cas d'échec."""
 
         logger.info(f"l'agent attend les messages d'incantation.")
-        start_time = time.time()
         first_response = None
         
-        while time.time() - start_time < 10.0:
-            first_response = self._wait_for_response(expect_incantation=True, timeout=1.0)
+        while True:
+            first_response = self._wait_for_response(expect_incantation=True)
             if first_response in ["Elevation underway", "ko"]:
                 break     
         if first_response == "Elevation underway":
-            second_response = self._wait_for_response(expect_incantation=True, timeout=300.0)
+            second_response = self._wait_for_response(expect_incantation=True)
             logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
             if second_response and second_response.startswith("Current level"):
                 return True
         return False
 
-    def _wait_for_response(self, expect_incantation=False, timeout=None):
+    def _wait_for_response(self, expect_incantation=False):
         """Attends une réponse du serveur, en filtrant les messages de diffusion et en gérant les cas d'incantation.\n
         Params:
             -expect_incantation (bool): Indique si on s'attend à une réponse d'incantation.
-            -timeout (float): Le délai maximum d'attente en secondes.
-        Retourne la réponse reçue ou "timeout" en cas de dépassement du délai."""
+        Retourne la réponse reçue."""
 
-        start_time = time.time()
         while True:
-            if timeout and (time.time() - start_time > timeout):
-                return "timeout"
             if self.system_queue:
                 msg = self.system_queue.pop(0)
                 if not expect_incantation:
@@ -58,10 +53,11 @@ class ZappyCommand:
                     logger.warning(f"l'agent a été éjecté par un autre joueur. Détails: {msg}")
                 elif msg == "dead":
                     self.system_queue.append("dead")
-                    logger.warning(f"l'agent est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
+                    logger.warning(f"l'agent est mort.")
                 else:
                     self.system_queue.append(msg)
-            time.sleep(0.05)
+            if not messages:
+                select.select([self.network.sock], [], [])
     
     def get_unread_broadcasts(self):
         """Récupère les messages de diffusion non lus et les vide de la queue.\n

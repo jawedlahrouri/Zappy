@@ -8,7 +8,7 @@
 #ifndef BCTCOMMAND_HPP_
 #define BCTCOMMAND_HPP_
 
-#include "application/Command/GUI/IGuiCommandElement.hpp"
+#include "application/Command/GUI/BaseGuiCommand.hpp"
 #include <memory>
 
 class GUI;

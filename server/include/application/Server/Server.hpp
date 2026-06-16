@@ -28,11 +28,12 @@ class Server : public INetworkProvider {
 
         void openServer(int port, int clientsNb, const std::vector<std::string>& teamNames, int freq, int width, int height);
 
-        int getClientsNb() const;
-        int getFreq() const;
-        const std::vector<std::string>& getTeamNames() const;
-        const std::unique_ptr<GameEngine>& getGameEngine() const;
-        ILogger& getLogger() const;
+        int getClientsNb() const override;
+        void setClientsNb(int nb) override;
+        int getFreq() const override;
+        const std::vector<std::string>& getTeamNames() const override;
+        const std::unique_ptr<GameEngine>& getGameEngine() const override;
+        ILogger& getLogger() const override;
 
         // INetworkProvider Implementation
         void sendResponse(int clientId, const std::string& message) override;

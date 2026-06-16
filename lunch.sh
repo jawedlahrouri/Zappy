@@ -46,7 +46,6 @@ echo "[+] Lancement des clients IA..."
 # Lancement de 2 drones pour la TeamA et 1 pour la TeamB
 # On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
 ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
-./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
 ./zappy_ai -p $PORT -n $TEAM2 -h $MACHINE > /dev/null 2>&1 &
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
@@ -59,7 +58,7 @@ sleep 3
 # ==========================================
 echo "[+] Lancement du zappy_gui..."
 # Le GUI a besoin du port et de l'hôte
-./zappy_gui -p $PORT -h $MACHINE &
+env WAYLAND_DISPLAY="" ./zappy_gui -p $PORT -h $MACHINE &
 
 # On attend que le processus du serveur se termine (bloque le script ici)
 wait $SERVER_PID

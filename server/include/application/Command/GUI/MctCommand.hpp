@@ -8,13 +8,10 @@
 #ifndef MCTCOMMAND_HPP_
 #define MCTCOMMAND_HPP_
 
-#include "application/Command/GUI/IGuiCommandElement.hpp"
+#include "application/Command/GUI/BaseGuiCommand.hpp"
 #include <memory>
-class GUI;
 
-class IGuiVisitor;
-
-class MctCommand : public IGuiCommandElement {
+class MctCommand : public BaseGuiCommand {
 public:
     void Accept(IGuiVisitor *visitor) override;
     void setClient(std::shared_ptr<GUI> client);
