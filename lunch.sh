@@ -12,6 +12,19 @@ CLIENTS_NB=3
 FREQ=100
 MACHINE="127.0.0.1"
 
+DEBUG_MODE=0
+while getopts "d" opt; do
+  case ${opt} in
+    d )
+      DEBUG_MODE=1
+      ;;
+    \? )
+      echo "Usage: ./lunch.sh [-d]"
+      exit 1
+      ;;
+  esac
+done
+
 # ==========================================
 # Fonction de nettoyage (Clean exit)
 # ==========================================
@@ -58,7 +71,12 @@ sleep 3
 # ==========================================
 echo "[+] Lancement du zappy_gui..."
 # Le GUI a besoin du port et de l'hôte
-env WAYLAND_DISPLAY="" ./zappy_gui -p $PORT -h $MACHINE &
+if [ $DEBUG_MODE -eq 1 ]; then
+    echo "[!] Mode DEBUG: Lancement de zappy_gui.AppImage"
+    env WAYLAND_DISPLAY="" ./zappy_gui.AppImage -p $PORT -h $MACHINE &
+else
+    env WAYLAND_DISPLAY="" ./zappy_gui -p $PORT -h $MACHINE &
+fi
 
 # On attend que le processus du serveur se termine (bloque le script ici)
 wait $SERVER_PID
