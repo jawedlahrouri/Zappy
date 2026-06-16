@@ -26,6 +26,7 @@ void AiCommandParser::parse_incantation([[maybe_unused]] std::shared_ptr<AI> cli
 {
     try {
         IncantationCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
