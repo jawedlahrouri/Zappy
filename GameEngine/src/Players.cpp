@@ -1,8 +1,12 @@
 #include "Players.hpp"
 #include "World.hpp"
 #include "TextureManager.hpp"
+#include <algorithm>
 #include <cmath>
+#include <chrono>
+#include <iomanip>
 #include <limits>
+#include <sstream>
 
 std::string Players::getPlayerTextureKey(const Player& player)
 {
@@ -118,6 +122,19 @@ std::string Players::getSelectedPlayerTextureKey(const Player& player)
     return "whiteRedFace";
 }
 
+std::string Players::getIncantationTextureKey(const IncantationState& incantation)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - incantation.startTime).count();
+    const int durationMs = std::max(1, incantation.durationMs);
+    const int frameDurationMs = std::max(1, durationMs / SAYEN_FRAME_COUNT);
+    const int frameIndex = static_cast<int>((elapsedMs / frameDurationMs) % SAYEN_FRAME_COUNT) + 1;
+    std::ostringstream key;
+
+    key << "sayen" << std::setw(2) << std::setfill('0') << frameIndex;
+    return key.str();
+}
+
 static bool shouldShowSelectedSprite()
 {
     static const sf::Clock clock;
@@ -133,6 +150,8 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
 
     for (const auto& pair : players) {
         const Player& player = pair.second;
+        const std::optional<IncantationState> incantation =
+            world.getPlayerIncantation(player.id);
         const bool selected = selectedPlayerId.has_value() &&
             *selectedPlayerId == player.id;
         const float centerX = player.x * WorldRenderer::TILE_SIZE + offsetX +
@@ -140,14 +159,21 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const float centerY = player.y * WorldRenderer::TILE_SIZE + offsetY +
             (WorldRenderer::TILE_SIZE / 2.0f);
         const TextureManager& tm = TextureManager::getInstance();
-        const bool showSelected = selected && shouldShowSelectedSprite();
-        const std::string texKey = showSelected ? getSelectedPlayerTextureKey(player) :
-            getPlayerTextureKey(player);
+        std::string texKey;
+
+        if (incantation.has_value())
+            texKey = getIncantationTextureKey(*incantation);
+        else if (selected && shouldShowSelectedSprite())
+            texKey = getSelectedPlayerTextureKey(player);
+        else
+            texKey = getPlayerTextureKey(player);
         sf::Sprite sprite(tm.getTexture(texKey));
         const sf::Vector2u texSize = tm.getTexture(texKey).getSize();
 
         if (texSize.x > 0 && texSize.y > 0) {
-            const float desired = WorldRenderer::TILE_SIZE * PLAYER_SIZE_RATIO;
+            const float desired = incantation.has_value()
+                ? WorldRenderer::TILE_SIZE * INCANTATION_SIZE_RATIO
+                : WorldRenderer::TILE_SIZE * PLAYER_SIZE_RATIO;
             const float scaleX = desired / static_cast<float>(texSize.x);
             const float scaleY = desired / static_cast<float>(texSize.y);
             sprite.setScale(scaleX, scaleY);
@@ -254,12 +280,10 @@ void Players::drawPanel(sf::RenderWindow& window, const GameWorld& world,
     const Player& player = it->second;
     const sf::View previousView = window.getView();
     const sf::Vector2u windowSize = window.getSize();
-    const float panelX = static_cast<float>(windowSize.x) -
-        PANEL_WIDTH - PANEL_MARGIN;
+    const float panelX = static_cast<float>(windowSize.x) - PANEL_WIDTH - PANEL_MARGIN;
     const float panelY = PANEL_MARGIN;
     sf::RectangleShape panel({PANEL_WIDTH, PANEL_HEIGHT});
-    sf::RectangleShape portraitFrame({PORTRAIT_SIZE + 14.0f,
-        PORTRAIT_SIZE + 14.0f});
+    sf::RectangleShape portraitFrame({PORTRAIT_SIZE + 14.0f, PORTRAIT_SIZE + 14.0f});
     sf::RectangleShape portraitBack({PORTRAIT_SIZE, PORTRAIT_SIZE});
 
     window.setView(window.getDefaultView());
@@ -291,7 +315,6 @@ void Players::drawInfoLine(sf::RenderWindow& window, sf::Text& text,
 {
     text.setString(value);
     text.setCharacterSize(size);
-    text.setPosition(panelX + 18.0f,
-        panelY + 18.0f + static_cast<float>(row) * 23.0f);
+    text.setPosition(panelX + 18.0f, panelY + 18.0f + static_cast<float>(row) * 23.0f);
     window.draw(text);
 }

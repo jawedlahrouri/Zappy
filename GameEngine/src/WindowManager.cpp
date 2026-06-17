@@ -66,6 +66,24 @@ void WindowManager::loadTextures()
     tm.loadTexture("whiteRedRight", "white_red_right.png");
     tm.loadTexture("whiteRedLeft", "white_red_left.png");
 
+    tm.loadTexture("sayen01", "sayen01.png");
+    tm.loadTexture("sayen02", "sayen02.png");
+    tm.loadTexture("sayen03", "sayen03.png");
+    tm.loadTexture("sayen04", "sayen04.png");
+    tm.loadTexture("sayen05", "sayen05.png");
+    tm.loadTexture("sayen06", "sayen06.png");
+    tm.loadTexture("sayen07", "sayen07.png");
+    tm.loadTexture("sayen08", "sayen08.png");
+    tm.loadTexture("sayen09", "sayen09.png");
+    tm.loadTexture("sayen10", "sayen10.png");
+    tm.loadTexture("sayen11", "sayen11.png");
+    tm.loadTexture("sayen12", "sayen12.png");
+    tm.loadTexture("sayen13", "sayen13.png");
+    tm.loadTexture("sayen14", "sayen14.png");
+    tm.loadTexture("sayen15", "sayen15.png");
+    tm.loadTexture("sayen16", "sayen16.png");
+    tm.loadTexture("sayen17", "sayen17.png");
+
     tm.loadTexture("bluePlayer", "blue_character.png");
     tm.loadTexture("blueBack", "blue_back.png");
     tm.loadTexture("blueRight", "blue_right.png");

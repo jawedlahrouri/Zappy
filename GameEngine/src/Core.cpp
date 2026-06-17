@@ -6,7 +6,28 @@
 */
 
 #include "Core.hpp"
+#include <algorithm>
+#include <vector>
 #include <limits>
+
+static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss)
+{
+    std::vector<int> playerIds;
+
+    while (true) {
+        ss >> std::ws;
+        if (ss.eof())
+            break;
+        if (ss.peek() == '#')
+            ss.get();
+        int playerId = 0;
+
+        if (!(ss >> playerId))
+            break;
+        playerIds.push_back(playerId);
+    }
+    return playerIds;
+}
 
 Core::Core() : _appState(MENU), _isRunning(false)
 {
@@ -234,6 +255,30 @@ void Core::initCommands()
             _world.resToResources(q0, q1, q2, q3, q4, q5, q6));
     };
 
+    _commands["pic"] = [this](std::stringstream& ss) {
+        int x = 0, y = 0, level = 0;
+        std::vector<int> playerIds;
+        const int serverFreq = std::max(1, _windowManager.getServerFreq());
+        const int durationMs = 300000 / serverFreq;
+
+        parseValue(ss, x);
+        parseValue(ss, y);
+        parseValue(ss, level);
+        playerIds = parseTrailingPlayerIds(ss);
+        (void)level;
+        _world.startIncantation(x, y, playerIds, durationMs);
+    };
+
+    _commands["pie"] = [this](std::stringstream& ss) {
+        int x = 0, y = 0, result = 0;
+
+        parseValue(ss, x);
+        parseValue(ss, y);
+        parseValue(ss, result);
+        (void)result;
+        _world.stopIncantation(x, y);
+    };
+
     _commands["bct"] = [this](std::stringstream& ss) {
         int x = 0, y = 0, q0 = 0, q1 = 0, q2 = 0, q3 = 0, q4 = 0, q5 = 0, q6 = 0;
         parseValue(ss, x);
@@ -271,12 +316,6 @@ void Core::initCommands()
         std::cout << "[Graphic] edi handler: eggId=" << eggId << std::endl;
         _world.removeEgg(eggId);
     };
-
-    _commands["tna"] = [this](std::stringstream& ss) {
-        std::string teamName;
-        ss >> teamName;
-        _windowManager.addMenuTeamName(teamName);
-    };
 }
 
 void Core::parseCommand(const std::string& command)
@@ -296,6 +335,6 @@ void Core::parseCommand(const std::string& command)
     if (it != _commands.end()) {
         it->second(ss);
     } else {
-        std::cout << "[Graphic] No handler found for: " << cmdType << std::endl;
+        // std::cout << "[Graphic] No handler found for: " << cmdType << std::endl;
     }
 }

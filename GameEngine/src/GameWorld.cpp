@@ -6,6 +6,7 @@
 */
 
 #include "GameWorld.hpp"
+#include <algorithm>
 
 GameWorld::GameWorld()
 {
@@ -122,6 +123,36 @@ void GameWorld::setPlayerInventory(int id, int x, int y, const Resources& invent
     player->second.inventory = inventory;
 }
 
+void GameWorld::startIncantation(int x, int y, const std::vector<int>& playerIds, int durationMs)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const std::pair<int, int> tileKey {x, y};
+    std::vector<int> activePlayers;
+
+    for (int id : playerIds) {
+        auto player = _players.find(id);
+        if (player == _players.end())
+            continue;
+        _incantingPlayers[id] = {x, y, durationMs, now};
+        activePlayers.push_back(id);
+    }
+    if (!activePlayers.empty())
+        _incantationTiles[tileKey] = activePlayers;
+}
+
+void GameWorld::stopIncantation(int x, int y)
+{
+    const std::pair<int, int> tileKey {x, y};
+    auto tile = _incantationTiles.find(tileKey);
+
+    if (tile == _incantationTiles.end())
+        return;
+
+    for (int id : tile->second)
+        _incantingPlayers.erase(id);
+    _incantationTiles.erase(tile);
+}
+
 void GameWorld::addEgg(int id, int parentId, int x, int y)
 {
     _eggs[id] = {id, x, y, parentId, false};
@@ -142,6 +173,16 @@ const std::map<int, Egg>&  GameWorld::getEggs() const
 
 void GameWorld::removePlayer(int id)
 {
+    _incantingPlayers.erase(id);
+    for (auto it = _incantationTiles.begin(); it != _incantationTiles.end(); ) {
+        auto& players = it->second;
+
+        players.erase(std::remove(players.begin(), players.end(), id), players.end());
+        if (players.empty())
+            it = _incantationTiles.erase(it);
+        else
+            ++it;
+    }
     _players.erase(id);
 }
 
@@ -160,4 +201,20 @@ const std::vector<std::vector<Tile>>& GameWorld::getMap() const
 const std::map<int, Player>& GameWorld::getPlayers() const
 {
     return _players;
+}
+
+std::optional<IncantationState> GameWorld::getPlayerIncantation(int id) const
+{
+    const auto it = _incantingPlayers.find(id);
+
+    if (it == _incantingPlayers.end())
+        return std::nullopt;
+
+    const auto now = std::chrono::steady_clock::now();
+    const auto endTime = it->second.startTime +
+        std::chrono::milliseconds(it->second.durationMs);
+
+    if (now >= endTime)
+        return std::nullopt;
+    return it->second;
 }

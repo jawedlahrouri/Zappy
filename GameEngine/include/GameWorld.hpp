@@ -11,6 +11,8 @@
     #include <vector>
     #include <string>
     #include <map>
+    #include <chrono>
+    #include <optional>
     #include <iostream>
 
     struct Resources {
@@ -48,6 +50,13 @@
         bool isHatched; // false = pondu, true = éclos/prêt
     };
 
+    struct IncantationState {
+        int x = 0;
+        int y = 0;
+        int durationMs = 0;
+        std::chrono::steady_clock::time_point startTime;
+    };
+
     class GameWorld {
     public:
         GameWorld();
@@ -61,6 +70,8 @@
         void movePlayer(int id, int x, int y, int orientation);
         void setPlayerLevel(int id, int level);
         void setPlayerInventory(int id, int x, int y, const Resources& inventory);
+        void startIncantation(int x, int y, const std::vector<int>& playerIds, int durationMs);
+        void stopIncantation(int x, int y);
         void removePlayer(int id);
         void addEgg(int id, int parentId, int x, int y);
         void hatchEgg(int id);
@@ -71,6 +82,7 @@
         const std::vector<std::vector<Tile>>& getMap() const;
         const std::map<int, Player>& getPlayers() const;
         const std::map<int, Egg>& getEggs() const;
+        std::optional<IncantationState> getPlayerIncantation(int id) const;
 
     private:
         int getTeamColor(const std::string& teamName);
@@ -80,6 +92,8 @@
         std::vector<std::vector<Tile>> _map;
         std::map<int, Player> _players;
         std::map<int, Egg> _eggs;
+        std::map<int, IncantationState> _incantingPlayers;
+        std::map<std::pair<int, int>, std::vector<int>> _incantationTiles;
     };
 
 #endif /* !GAMEWORLD_HPP_ */
