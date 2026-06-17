@@ -71,8 +71,11 @@ public:
         bool select2DTile(const GameWorld& world, int mouseX, int mouseY);
         bool select2DPlayer(const GameWorld& world, int mouseX, int mouseY);
         bool handleTimeControlMousePressed(int mouseX, int mouseY);
+        bool handleGlobalInfoMousePressed(const GameWorld& world, int mouseX,
+            int mouseY);
         bool isInsideSelectionPanel(int mouseX, int mouseY) const;
         bool isInsideTimeControlPanel(int mouseX, int mouseY) const;
+        bool isInsideGlobalInfoPanel(int mouseX, int mouseY) const;
         void clearSelection();
 
         sf::RenderWindow _window;
@@ -84,6 +87,7 @@ public:
         std::optional<int> _selectedPlayerId;
         std::optional<std::pair<int, int>> _pendingTileRequest;
         std::optional<int> _pendingTimeRequest;
+        std::optional<std::string> _openedTeamInventory;
         float _zoomLevel;
         unsigned int _width;
         unsigned int _height;
@@ -97,6 +101,7 @@ public:
         std::vector<std::string> _menuTeamNames;
         bool _menuConnectionEdited;
         bool _showGrid;
+        bool _showInfoPanel;
         int _serverFreq;
         int _resumeServerFreq;
         bool _timePaused;
