@@ -15,11 +15,11 @@ class PinCommand : public BaseGuiCommand {
 public:
     void Accept(IGuiVisitor *visitor) override;
 
-    void setTargetPlayerId(int id);
-    int getTargetPlayerId() const;
+    void setPlayerId(int id);
+    int getPlayerId() const;
 
 private:
-    int _targetPlayerId = 0;
+    int _playerId = 0;
 };
 
 #endif /* !PINCOMMAND_HPP_ */

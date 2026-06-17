@@ -23,14 +23,14 @@ void PinCommand::Accept(IGuiVisitor *visitor)
     }
 }
 
-void PinCommand::setTargetPlayerId(int id)
+void PinCommand::setPlayerId(int id)
 {
-    _targetPlayerId = id;
+    _playerId = id;
 }
 
-int PinCommand::getTargetPlayerId() const
+int PinCommand::getPlayerId() const
 {
-    return _targetPlayerId;
+    return _playerId;
 }
 
 void GuiCommandParser::parse_gui_pin(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network)
@@ -45,7 +45,7 @@ void GuiCommandParser::parse_gui_pin(std::shared_ptr<GUI> client, const std::str
             return;
         }
         PinCommand pinCmd;
-        pinCmd.setTargetPlayerId(targetId);
+        pinCmd.setPlayerId(targetId);
         pinCmd.setClient(client);
         GuiVisitor visitor(network);
         pinCmd.Accept(&visitor);
@@ -60,7 +60,7 @@ void GuiVisitor::visit(PinCommand *element) {
         if (!server)
             return;
 
-        int targetId = element->getTargetPlayerId();
+        int targetId = element->getPlayerId();
         const auto& clients = server->getClients();
         auto it = clients.find(targetId);
 
