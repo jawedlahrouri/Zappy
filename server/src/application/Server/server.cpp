@@ -310,3 +310,8 @@ ILogger& Server::getLogger() const
 {
     return _logger;
 }
+
+void Server::setFreq(int freq)
+{
+    _freq = freq;
+}
