@@ -32,6 +32,7 @@
         bool connectFromMenu();
         void parseCommand(const std::string& command);
         void sendPendingTileRequest();
+        void sendPendingTimeRequest();
         void initCommands();
         void parseValue(std::stringstream& ss, int& value);
 
