@@ -46,6 +46,7 @@ void WindowManager::loadTextures()
     TextureManager& tm = TextureManager::getInstance();
     
     tm.loadTexture("menuBackground", "background_menu.png");
+    tm.loadTexture("spursBackground", "spurs_background.png");
     tm.loadTexture("ground", "ground.png");
     tm.loadTexture("food", "food.png");
     tm.loadTexture("linemate",  "brique.png");

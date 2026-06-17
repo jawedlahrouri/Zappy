@@ -32,6 +32,7 @@
         
             static void draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, int serverFreq, bool timePaused);
         private:
+            static void drawBackground(sf::RenderWindow& window);
             static void drawTiles(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawGrid(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawSelectedTile(sf::RenderWindow& window, int x, int y, float posX, float posY, const std::optional<std::pair<int, int>>& selectedTile);
