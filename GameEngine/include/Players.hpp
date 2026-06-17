@@ -17,10 +17,6 @@ public:
 
 private:
     static constexpr float PLAYER_SIZE_RATIO = 0.5f;
-    static constexpr float SELECTED_TINT_R = 255.0f;
-    static constexpr float SELECTED_TINT_G = 0.0f;
-    static constexpr float SELECTED_TINT_B = 217.0f;
-    static constexpr float SELECTED_TINT_A = 255.0f;
 
     static constexpr float PANEL_WIDTH = 330.0f;
     static constexpr float PANEL_HEIGHT = 380.0f;
@@ -29,6 +25,7 @@ private:
 
     static std::string getPlayerTextureKey(const Player& player);
     static std::string getPlayerTextureKey(const Player& player, const int orientation);
+    static std::string getSelectedPlayerTextureKey(const Player& player);
     static void drawPlayerPortrait(sf::RenderTarget& target, const Player& player, float x, float y, float size);
     static void drawInfoLine(sf::RenderWindow& window, sf::Text& text,
         const std::string& value, int row, unsigned int size, float panelX, float panelY);

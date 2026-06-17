@@ -61,21 +61,37 @@ void WindowManager::loadTextures()
     tm.loadTexture("playerBack", "character_back.png");
     tm.loadTexture("playerRight", "character_right.png");
     tm.loadTexture("playerLeft", "character_left.png");
+    tm.loadTexture("whiteRedFace", "white_red_face.png");
+    tm.loadTexture("whiteRedBack", "white_red_back.png");
+    tm.loadTexture("whiteRedRight", "white_red_right.png");
+    tm.loadTexture("whiteRedLeft", "white_red_left.png");
 
     tm.loadTexture("bluePlayer", "blue_character.png");
     tm.loadTexture("blueBack", "blue_back.png");
     tm.loadTexture("blueRight", "blue_right.png");
     tm.loadTexture("blueLeft", "blue_left.png");
+    tm.loadTexture("whiteBlueFace", "white_blue_face.png");
+    tm.loadTexture("whiteBlueBack", "white_blue_back.png");
+    tm.loadTexture("whiteBlueRight", "white_blue_right.png");
+    tm.loadTexture("whiteBlueLeft", "white_blue_left.png");
 
     tm.loadTexture("greenPlayer", "green_character.png");
     tm.loadTexture("greenBack", "green_back.png");
     tm.loadTexture("greenRight", "green_right.png");
     tm.loadTexture("greenLeft", "green_left.png");
+    tm.loadTexture("whiteGreenFace", "white_green_face.png");
+    tm.loadTexture("whiteGreenBack", "white_green_back.png");
+    tm.loadTexture("whiteGreenRight", "white_green_right.png");
+    tm.loadTexture("whiteGreenLeft", "white_green_left.png");
 
     tm.loadTexture("pinkPlayer", "pink_character.png");
     tm.loadTexture("pinkBack", "pink_back.png");
     tm.loadTexture("pinkRight", "pink_right.png");
     tm.loadTexture("pinkLeft", "pink_left.png");
+    tm.loadTexture("whitePinkFace", "white_pink_face.png");
+    tm.loadTexture("whitePinkBack", "white_pink_back.png");
+    tm.loadTexture("whitePinkRight", "white_pink_right.png");
+    tm.loadTexture("whitePinkLeft", "white_pink_left.png");
 }
 
 void WindowManager::loadFont()

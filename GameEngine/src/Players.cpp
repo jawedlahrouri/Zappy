@@ -80,6 +80,44 @@ std::string Players::getPlayerTextureKey(const Player& player, const int orienta
     return "playerFace";
 }
 
+std::string Players::getSelectedPlayerTextureKey(const Player& player)
+{
+    if (player.teamColor == 1) {
+        if (player.orientation == 1)
+            return "whiteBlueBack";
+        if (player.orientation == 2)
+            return "whiteBlueRight";
+        if (player.orientation == 4)
+            return "whiteBlueLeft";
+        return "whiteBlueFace";
+    }
+    if (player.teamColor == 3) {
+        if (player.orientation == 1)
+            return "whiteGreenBack";
+        if (player.orientation == 2)
+            return "whiteGreenRight";
+        if (player.orientation == 4)
+            return "whiteGreenLeft";
+        return "whiteGreenFace";
+    }
+    if (player.teamColor == 4) {
+        if (player.orientation == 1)
+            return "whitePinkBack";
+        if (player.orientation == 2)
+            return "whitePinkRight";
+        if (player.orientation == 4)
+            return "whitePinkLeft";
+        return "whitePinkFace";
+    }
+    if (player.orientation == 1)
+        return "whiteRedBack";
+    if (player.orientation == 2)
+        return "whiteRedRight";
+    if (player.orientation == 4)
+        return "whiteRedLeft";
+    return "whiteRedFace";
+}
+
 void Players::draw(sf::RenderWindow& target, const GameWorld& world,
     float offsetX, float offsetY, const std::optional<int>& selectedPlayerId)
 {
@@ -94,7 +132,8 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const float centerY = player.y * WorldRenderer::TILE_SIZE + offsetY +
             (WorldRenderer::TILE_SIZE / 2.0f);
         const TextureManager& tm = TextureManager::getInstance();
-        const std::string texKey = getPlayerTextureKey(player);
+        const std::string texKey = selected ? getSelectedPlayerTextureKey(player) :
+            getPlayerTextureKey(player);
         sf::Sprite sprite(tm.getTexture(texKey));
         const sf::Vector2u texSize = tm.getTexture(texKey).getSize();
 
@@ -107,13 +146,6 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
                 static_cast<float>(texSize.y) / 2.0f);
         }
         sprite.setPosition(centerX, centerY);
-        if (selected)
-            sprite.setColor(sf::Color(static_cast<sf::Uint8>(SELECTED_TINT_R),
-                static_cast<sf::Uint8>(SELECTED_TINT_G),
-                static_cast<sf::Uint8>(SELECTED_TINT_B),
-                static_cast<sf::Uint8>(SELECTED_TINT_A)));
-        else
-            sprite.setColor(sf::Color::White);
         target.draw(sprite);
     }
 }
