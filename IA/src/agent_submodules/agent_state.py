@@ -39,15 +39,15 @@ class StateComportment:
             self.agent.pathfinder.explore(self.agent.level)
         return AgentState.SURVIVAL
 
-    def act_farming(self):
+    def act_farming(self, item):
         """Effectue les actions de farming pour collecter les ressources nécessaires à l'incantation.\n
         Params:
-            -Aucun paramètre.
+            -item (str): Le nom de l'item à collecter.
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour farming."""
         
         if self.agent.role == self.agent.AgentRole.PEASANT or self.agent.role == self.agent.AgentRole.GUARD:
-            success = self.agent.pathfinder.search_and_take_items("food", self.agent.vision)
+            success = self.agent.pathfinder.search_and_take_items([item], self.agent.vision)
             if not success:
                 self.agent.pathfinder.explore(self.agent.level)
         if self.agent.role == self.agent.AgentRole.PROTECTOR or self.agent.role == self.agent.AgentRole.QUEEN:

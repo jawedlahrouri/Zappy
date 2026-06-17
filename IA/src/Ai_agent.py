@@ -72,11 +72,11 @@ class ZappyAgent:
             self.is_alive = False
             return
         self.vision = response
-        self.message_stack = self.analyze_calls()
-        self.process_radio_and_demographics()
         ping_content = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
         secret_message = self.comms.encode(ping_content, "ping")
         self.cmd.send_command(f"broadcast {secret_message}")
+        self.message_stack = self.analyze_calls()
+        self.process_radio_and_demographics()
         return
 
     def analyze_calls(self): 
@@ -120,6 +120,8 @@ class ZappyAgent:
             if agent_id not in self.team_roster:
                 self.team_roster[agent_id] = {"last_seen": 0, "level": 1}
             self.team_roster[agent_id]["last_seen"] = 0
+            if agent_id == 9999:
+                self.is_queen_elected = True
         for agent_id in list(self.team_roster.keys()):
             if agent_id not in self.message_stack:
                 self.team_roster[agent_id]["last_seen"] += 1
@@ -132,14 +134,18 @@ class ZappyAgent:
             -Aucun paramètre.
         Retourne immédiatement si l'agent est déjà en mode ÉLÉVATION, sinon retourne l'état décidé après évaluation."""
 
-        if self.level < 2 and self.role == AgentRole.PEASANT:
+        if self.level < 3 and self.role == AgentRole.PEASANT:
             self.state = AgentState.BEGINNER
-        if self.level >= 2 and not self.is_queen_elected and self.agent_id == max(self.team_roster): # peut etre sujet a des problemes
+        if self.level >= 3 and not self.is_queen_elected and self.agent_id == max(self.team_roster): # peut etre sujet a des problemes
             self.state = AgentState.SURVIVAL
             self.role = AgentRole.QUEEN
-            self.is_queen == True
+            self.is_queen = True
+            self.is_queen_elected = True
             self.agent_id = 9999
-        self.role = AgentRole.self.utils.which_role()
+            queen_msg = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
+            secret_message = self.comms.encode(queen_msg, "evaqueen")
+            self.cmd.send_command(f"broadcast {secret_message}")
+        self.role = self.utils.which_role()
 
     def check_population(self, food, current_population):
         """Vérifie si les conditions sont réunies pour pondre un oeuf\n
@@ -186,11 +192,12 @@ class ZappyAgent:
             case AgentState.ELEVATION:
                 self.state = self.comportment.act_elevating()
             case AgentState.BEGINNER:
-                self.state = self.comportment.act_beginer()
+                self.state = self.comportment.act_beginner()
             case AgentState.FEEDER:
                 self.state = self.comportment.act_feeder()
             case AgentState.PUSHING:
                 self.state = self.comportment.act_pushing()
+        #TODO: remove code mort si jamais utilisé
         
     def run(self):
         """Lance la boucle principale de l'agent.\n

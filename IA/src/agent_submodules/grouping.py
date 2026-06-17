@@ -73,7 +73,7 @@ class Grouper:
         Retourne:
             -bool: True si le regroupement est réussi, False sinon."""
 
-        call_k, grouping_type = self.read_messages(level, my_id)
+        call_k, grouping_type = self.analyze_messages(level, my_id, self.agent.messages_stack)
         if grouping_type == 'LEADER':
             self.act_leader(level, my_id, vision)
         elif grouping_type == 'FOLLOWER':
@@ -123,7 +123,7 @@ class Grouper:
 
         if self.agent.role == AgentRole.QUEEN:
             logger.info(f"Reine : J'ai lancé un appel de regroupement royal. Tous les alliés doivent se rassembler.")
-            self.cmd.send_command("Broadcast " + self.comms.encode(f"lv{level}-{my_id}", "grouping"))
+            self.cmd.send_command("Broadcast " + self.comms.encode(f"{my_id}-lv{level}", "grouping"))
         elif self.agent.role == AgentRole.GUARD:
             if call_k == 0:
                 logger.info(f"Garde : Je suis arrivé à la case de la Reine. Je vais m'elever.")

@@ -4,6 +4,7 @@ import random
 import sys
 import subprocess
 from enum import Enum
+from IA.src.agent_submodules.agent_role import AgentRole
 from src.command import ZappyCommand
 from src.agent_submodules.pathfinding import Pathfinder
 from src.agent_submodules.farm import Farmer
@@ -79,13 +80,13 @@ class utils:
         messages = self.verify_id_message(9999)
         params = self.verify_command("royalsummon", messages)
         if self.is_queen == True:
-            return 1
+            return AgentRole.QUEEN
         for e in params:
             if self.agent.agent_id == e and e <= 5:
-                return 2
+                return AgentRole.GUARD
             if self.agent.agent_id == e and e > 5:
-                return 3
-        return 4
+                return AgentRole.PROTECTOR
+        return AgentRole.PEASANT
     
     def is_grouping(self):
         messages = self.verify_id_message(9999)
