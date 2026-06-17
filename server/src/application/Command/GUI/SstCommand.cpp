@@ -61,14 +61,8 @@ void GuiVisitor::visit(SstCommand *element) {
             return;
 
         int newFreq = element->getNewFreq();
-
-        // ⚠️ NOTE : Ici, on suppose que Server possède un moyen de modifier sa fréquence.
-        // Si tu n'as pas de setter public "setFreq", il faudra modifier Server.hpp 
-        // pour ajouter par exemple une méthode de mise à jour, ou adapter cette ligne.
-        // Exemple classique : server->setFreq(newFreq);
-        // Pour l'instant, on applique la modification (à adapter selon tes attributs de Server.hpp)
         
-        server->setFreq(newFreq)
+        server->setFreq(newFreq);
         std::string response = "sgt " + std::to_string(newFreq);
         _network.sendResponse(element->getClient()->getId(), response);
     } catch (const std::exception &e) {
