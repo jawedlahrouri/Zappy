@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <array>
+#include <unordered_set>
 
 enum ResourceType {
     FOOD = 0,
@@ -59,6 +60,9 @@ class Map {
         void addResourceToTile(int x, int y, ResourceType type, int quantity);
         void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
         
+        const std::unordered_set<int>& getDirtyTiles() const;
+        void clearDirtyTiles();
+
         void addEgg(std::shared_ptr<Egg> egg);
         void removeEgg(int eggId);
         std::shared_ptr<Egg> getAndRemoveRandomEggForTeam(const std::string& teamName);
@@ -73,6 +77,7 @@ class Map {
         int _width;
         int _height;
         std::vector<std::vector<Tile>> _grid;
+        std::unordered_set<int> _dirtyTiles;
 };
 
 #endif /* !MAP_HPP_ */

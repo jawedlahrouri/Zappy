@@ -14,7 +14,6 @@
 class SgtCommand : public BaseGuiCommand {
 public:
     void Accept(IGuiVisitor *visitor) override;
-
 };
 
 #endif /* !SGTCOMMAND_HPP_ */

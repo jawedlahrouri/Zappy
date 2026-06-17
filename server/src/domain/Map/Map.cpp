@@ -11,20 +11,24 @@
 #include <random>
 
 
-int Egg::getId() const {
+int Egg::getId() const
+{
     return id;
 }
 
 
-int Egg::getOwnerId() const {
+int Egg::getOwnerId() const
+{
     return ownerId;
 }
 
-void Tile::addEgg(std::shared_ptr<Egg> egg) {
+void Tile::addEgg(std::shared_ptr<Egg> egg)
+{
     eggs.push_back(egg);
 }
 
-void Tile::removeEgg(int eggId) {
+void Tile::removeEgg(int eggId)
+{
     auto it = std::remove_if(eggs.begin(), eggs.end(),
         [eggId](const std::shared_ptr<Egg>& egg) { return egg->getId() == eggId; });
     if (it != eggs.end()) {
@@ -32,7 +36,8 @@ void Tile::removeEgg(int eggId) {
     }
 }
 
-const std::vector<std::shared_ptr<Egg>>& Tile::getEggs() const {
+const std::vector<std::shared_ptr<Egg>>& Tile::getEggs() const
+{
     return eggs;
 }
 
@@ -44,46 +49,72 @@ Map::Map(int width, int height) : _width(width), _height(height)
     }
 }
 
-int Map::getWidth() const { return _width; }
-int Map::getHeight() const { return _height; }
+int Map::getWidth() const
+{
+    return _width;
+}
+
+int Map::getHeight() const
+{
+    return _height;
+}
 
 std::pair<int, int> Map::borderWrap(int x, int y) const
 {
     int toric_x = (x % _width + _width) % _width;
     int toric_y = (y % _height + _height) % _height;
+
     return {toric_x, toric_y};
 }
 
 Tile& Map::getTile(int x, int y)
 {
     auto [toric_x, toric_y] = borderWrap(x, y);
+
     return _grid[toric_y][toric_x];
 }
 
 const Tile& Map::getTile(int x, int y) const
 {
     auto [toric_x, toric_y] = borderWrap(x, y);
+
     return _grid[toric_y][toric_x];
 }
 
 void Map::addResourceToTile(int x, int y, ResourceType type, int quantity)
 {
     auto [toric_x, toric_y] = borderWrap(x, y);
+
     _grid[toric_y][toric_x].resources[type] += quantity;
+    _dirtyTiles.insert(toric_y * _width + toric_x);
 }
 
 void Map::removeResourceFromTile(int x, int y, ResourceType type, int quantity)
 {
     auto [toric_x, toric_y] = borderWrap(x, y);
+
     if (_grid[toric_y][toric_x].resources[type] >= quantity) {
         _grid[toric_y][toric_x].resources[type] -= quantity;
+        _dirtyTiles.insert(toric_y * _width + toric_x);
     }
+}
+
+const std::unordered_set<int>& Map::getDirtyTiles() const
+{
+    return _dirtyTiles;
+}
+
+void Map::clearDirtyTiles()
+{
+    _dirtyTiles.clear();
 }
 
 void Map::addEgg(std::shared_ptr<Egg> egg)
 {
-    if (!egg) return;
+    if (!egg)
+        return;
     auto [toric_x, toric_y] = borderWrap(egg->x, egg->y);
+
     _grid[toric_y][toric_x].addEgg(egg);
 }
 
@@ -99,6 +130,7 @@ void Map::removeEgg(int eggId)
 void Map::addAiToTile(int aiId, int x, int y)
 {
     auto [toric_x, toric_y] = borderWrap(x, y);
+
     _grid[toric_y][toric_x].playerIds.push_back(aiId);
 }
 
@@ -147,6 +179,7 @@ void Map::removeAiFromTile(int aiId, int x, int y)
     auto [toric_x, toric_y] = borderWrap(x, y);
     auto& players = _grid[toric_y][toric_x].playerIds;
     auto it = std::find(players.begin(), players.end(), aiId);
+
     if (it != players.end()) {
         players.erase(it);
     }

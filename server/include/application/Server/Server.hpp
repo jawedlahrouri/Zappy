@@ -35,6 +35,8 @@ class Server : public INetworkProvider {
         const std::unique_ptr<GameEngine>& getGameEngine() const override;
         ILogger& getLogger() const override;
 
+        void setFreq(int freq);
+
         // INetworkProvider Implementation
         void sendResponse(int clientId, const std::string& message) override;
         void sendToGuis(const std::string& message) override;
