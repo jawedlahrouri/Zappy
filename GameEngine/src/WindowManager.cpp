@@ -6,7 +6,9 @@
 */
 
 #include "WindowManager.hpp"
+#include "InfoPanel.hpp"
 #include "Menu.hpp"
+#include "Players.hpp"
 #include "TextureManager.hpp"
 #include "World.hpp"
 #include <algorithm>
@@ -20,6 +22,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _selectedPlayerId(std::nullopt),
     _pendingTileRequest(std::nullopt),
     _pendingTimeRequest(std::nullopt),
+    _openedTeamInventory(std::nullopt),
     _zoomLevel(1.0f),
     _width(width),
     _height(height),
@@ -31,6 +34,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _menuTeamNames(),
     _menuConnectionEdited(false),
     _showGrid(false),
+    _showInfoPanel(true),
     _serverFreq(100),
     _resumeServerFreq(100),
     _timePaused(false),
@@ -56,6 +60,10 @@ void WindowManager::loadTextures()
     tm.loadTexture("phiras", "trophy.png");
     tm.loadTexture("thystame",  "carte.png");
     tm.loadTexture("egg", "oeuf.png");
+    tm.loadTexture("timePauseButton", "1boutonpause.png");
+    tm.loadTexture("timePlayButton", "boutonplay.png");
+    tm.loadTexture("timeSlowerButton", "boutongauche.png");
+    tm.loadTexture("timeFasterButton", "boutondroite.png");
 
     tm.loadTexture("playerFace", "character_face.png");
     tm.loadTexture("playerBack", "character_back.png");
@@ -238,17 +246,21 @@ bool WindowManager::handleTimeControlMousePressed(int mouseX, int mouseY)
     if (!isInsideTimeControlPanel(mouseX, mouseY))
         return false;
 
-    const float panelX = WorldRenderer::TIME_PANEL_MARGIN;
-    const float panelY = WorldRenderer::TIME_PANEL_MARGIN;
+    const sf::Vector2u windowSize = _window.getSize();
+    const sf::FloatRect timePanel =
+        InfoPanelRenderer::getTimePanelRect(windowSize);
+    const float panelX = timePanel.left;
+    const float panelY = timePanel.top;
     const float buttonsY = panelY + 62.0f;
-    const float buttonWidth = 74.0f;
-    const float buttonHeight = 28.0f;
-    const float gap = 10.0f;
-    const sf::FloatRect pauseButton(panelX + 16.0f, buttonsY, buttonWidth, buttonHeight);
-    const sf::FloatRect slowerButton(panelX + 16.0f + buttonWidth + gap,
+    const float buttonWidth = InfoPanelRenderer::TIME_BUTTON_WIDTH;
+    const float buttonHeight = InfoPanelRenderer::TIME_BUTTON_HEIGHT;
+    const float gap = 24.0f;
+    const sf::FloatRect slowerButton(panelX + 16.0f, buttonsY, buttonWidth,
+        buttonHeight);
+    const sf::FloatRect pauseButton(panelX + 16.0f + buttonWidth + gap,
         buttonsY, buttonWidth, buttonHeight);
-    const sf::FloatRect fasterButton(panelX + 16.0f + (buttonWidth + gap) * 2.0f,
-        buttonsY, buttonWidth, buttonHeight);
+    const sf::FloatRect fasterButton(panelX + 16.0f +
+        (buttonWidth + gap) * 2.0f, buttonsY, buttonWidth, buttonHeight);
     const float mx = static_cast<float>(mouseX);
     const float my = static_cast<float>(mouseY);
 
@@ -293,18 +305,43 @@ bool WindowManager::handleTimeControlMousePressed(int mouseX, int mouseY)
     return true;
 }
 
+bool WindowManager::handleGlobalInfoMousePressed(const GameWorld& world,
+    int mouseX, int mouseY)
+{
+    if (!isInsideGlobalInfoPanel(mouseX, mouseY))
+        return false;
+
+    const std::optional<std::string> team =
+        InfoPanelRenderer::getTeamInventoryAt(world, _openedTeamInventory,
+            mouseX, mouseY);
+
+    if (team.has_value()) {
+        if (_openedTeamInventory.has_value() && *_openedTeamInventory == *team)
+            _openedTeamInventory.reset();
+        else
+            _openedTeamInventory = *team;
+    }
+    return true;
+}
+
 bool WindowManager::isInsideSelectionPanel(int mouseX, int mouseY) const
 {
     if (!_selectedPlayerId.has_value() && !_selectedTile.has_value())
         return false;
 
     const sf::Vector2u windowSize = _window.getSize();
-    const float panelX = static_cast<float>(windowSize.x) - 
-        (_selectedPlayerId.has_value() ? WorldRenderer::PLAYER_PANEL_WIDTH :
-        WorldRenderer::INFO_PANEL_WIDTH) - WorldRenderer::INFO_PANEL_MARGIN;
-    const float panelY = WorldRenderer::INFO_PANEL_MARGIN;
-    const float panelWidth = _selectedPlayerId.has_value() ? WorldRenderer::PLAYER_PANEL_WIDTH : WorldRenderer::INFO_PANEL_WIDTH;
-    const float panelHeight = _selectedPlayerId.has_value() ? WorldRenderer::PLAYER_PANEL_HEIGHT : WorldRenderer::INFO_PANEL_HEIGHT;
+    const float panelX = static_cast<float>(windowSize.x) -
+        (_selectedPlayerId.has_value() ?
+        InfoPanelRenderer::PLAYER_PANEL_WIDTH :
+        InfoPanelRenderer::INFO_PANEL_WIDTH) -
+        InfoPanelRenderer::INFO_PANEL_MARGIN;
+    const float panelY = InfoPanelRenderer::INFO_PANEL_MARGIN;
+    const float panelWidth = _selectedPlayerId.has_value() ?
+        InfoPanelRenderer::PLAYER_PANEL_WIDTH :
+        InfoPanelRenderer::INFO_PANEL_WIDTH;
+    const float panelHeight = _selectedPlayerId.has_value() ?
+        InfoPanelRenderer::PLAYER_PANEL_HEIGHT :
+        InfoPanelRenderer::INFO_PANEL_HEIGHT;
 
     return static_cast<float>(mouseX) >= panelX &&
         static_cast<float>(mouseX) <= panelX + panelWidth &&
@@ -314,9 +351,23 @@ bool WindowManager::isInsideSelectionPanel(int mouseX, int mouseY) const
 
 bool WindowManager::isInsideTimeControlPanel(int mouseX, int mouseY) const
 {
-    const sf::FloatRect panel(WorldRenderer::TIME_PANEL_MARGIN,
-        WorldRenderer::TIME_PANEL_MARGIN, WorldRenderer::TIME_PANEL_WIDTH,
-        WorldRenderer::TIME_PANEL_HEIGHT);
+    const sf::Vector2u windowSize = _window.getSize();
+    const sf::FloatRect panel =
+        InfoPanelRenderer::getTimePanelRect(windowSize);
+
+    return panel.contains(static_cast<float>(mouseX),
+        static_cast<float>(mouseY));
+}
+
+bool WindowManager::isInsideGlobalInfoPanel(int mouseX, int mouseY) const
+{
+    if (!_showInfoPanel)
+        return false;
+
+    const sf::FloatRect panel(InfoPanelRenderer::INFO_PANEL_MARGIN,
+        InfoPanelRenderer::INFO_PANEL_MARGIN,
+        InfoPanelRenderer::GLOBAL_PANEL_WIDTH,
+        InfoPanelRenderer::GLOBAL_PANEL_HEIGHT);
 
     return panel.contains(static_cast<float>(mouseX),
         static_cast<float>(mouseY));
@@ -501,10 +552,15 @@ bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& wor
             resetZoom();
         } else if (event.key.code == sf::Keyboard::G) {
             _showGrid = !_showGrid;
+        } else if (event.key.code == sf::Keyboard::I) {
+            _showInfoPanel = !_showInfoPanel;
         }
     } else if (event.type == sf::Event::MouseButtonPressed &&
         event.mouseButton.button == sf::Mouse::Left) {
         if (handleTimeControlMousePressed(event.mouseButton.x, event.mouseButton.y))
+            return false;
+        if (handleGlobalInfoMousePressed(world, event.mouseButton.x,
+            event.mouseButton.y))
             return false;
         if (isInsideSelectionPanel(event.mouseButton.x, event.mouseButton.y))
             return false;
@@ -582,5 +638,5 @@ void WindowManager::drawWorld(const GameWorld& world)
 {
     WorldRenderer::draw(_window, _worldView, world, _selectedTile,
         _selectedPlayerId, _font, _fontLoaded, _showGrid, _serverFreq,
-        _timePaused);
+        _timePaused, _showInfoPanel, _openedTeamInventory);
 }
