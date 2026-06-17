@@ -18,10 +18,16 @@
 #include "AI.hpp"
 #include "GUI.hpp"
 #include <chrono>
+#include "application/Server/Handlers/PendingClientHandler.hpp"
+#include "presentation/Handlers/AiClientHandler.hpp"
+#include "presentation/Handlers/GuiClientHandler.hpp"
 
 Server::Server(ILogger& logger, std::unique_ptr<ISocket> masterSocket, std::unique_ptr<IPoll> poll)
     : _logger(logger), _masterSocket(std::move(masterSocket)), _poll(std::move(poll)), _clientManager(*this, logger)
 {
+    _dataHandlers[ClientType::PENDING] = std::make_unique<PendingClientHandler>();
+    _dataHandlers[ClientType::AI] = std::make_unique<AiClientHandler>();
+    _dataHandlers[ClientType::GUI] = std::make_unique<GuiClientHandler>();
 }
 
 Server::~Server()
@@ -61,6 +67,11 @@ void Server::sendEvent(const IEventElement &event)
 const std::unordered_map<int, std::shared_ptr<Client>>& Server::getClients() const
 {
     return _clientManager.getClients();
+}
+
+ClientManager& Server::getClientManager()
+{
+    return _clientManager;
 }
 
 void Server::addPollEvent(int fd, NetworkEvent event)
@@ -144,19 +155,11 @@ bool Server::handleClientData(size_t pollIndex)
             return true;
         }
 
-        if (client->getType() == ClientType::PENDING) {
-            ConnectionHandler::detectClientType(client_socket, _clientManager, *this, _logger, _teamNames);
+        auto handler = _dataHandlers.find(client->getType());
+        if (handler != _dataHandlers.end()) {
+            handler->second->handleData(client, *this);
         } else {
-            std::string line;
-            while (client->extractLine(line)) {
-                if (client->getType() == ClientType::GUI) {
-                    auto gui_client = std::dynamic_pointer_cast<GUI>(client);
-                    Parsing::parse_gui_command(gui_client, line, *this);
-                } else if (client->getType() == ClientType::AI) {
-                    auto ai_client = std::dynamic_pointer_cast<AI>(client);
-                    Parsing::parse_ai_command(ai_client, line, *this);
-                }
-            }
+            _logger.warn("No data handler found for client type");
         }
         return false;
     } catch (const std::exception &e) {
