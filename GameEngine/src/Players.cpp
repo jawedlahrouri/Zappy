@@ -118,6 +118,14 @@ std::string Players::getSelectedPlayerTextureKey(const Player& player)
     return "whiteRedFace";
 }
 
+static bool shouldShowSelectedSprite()
+{
+    static const sf::Clock clock;
+    static constexpr int BLINK_PERIOD_MS = 350;
+
+    return ((clock.getElapsedTime().asMilliseconds() / BLINK_PERIOD_MS) % 2) == 0;
+}
+
 void Players::draw(sf::RenderWindow& target, const GameWorld& world,
     float offsetX, float offsetY, const std::optional<int>& selectedPlayerId)
 {
@@ -132,7 +140,8 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const float centerY = player.y * WorldRenderer::TILE_SIZE + offsetY +
             (WorldRenderer::TILE_SIZE / 2.0f);
         const TextureManager& tm = TextureManager::getInstance();
-        const std::string texKey = selected ? getSelectedPlayerTextureKey(player) :
+        const bool showSelected = selected && shouldShowSelectedSprite();
+        const std::string texKey = showSelected ? getSelectedPlayerTextureKey(player) :
             getPlayerTextureKey(player);
         sf::Sprite sprite(tm.getTexture(texKey));
         const sf::Vector2u texSize = tm.getTexture(texKey).getSize();
