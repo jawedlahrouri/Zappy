@@ -6,6 +6,7 @@
 */
 
 #include "GameWorld.hpp"
+#include <algorithm>
 
 GameWorld::GameWorld()
 {
@@ -30,6 +31,35 @@ void GameWorld::setMapSize(int width, int height)
     }
 }
 
+void GameWorld::addTeamName(const std::string& teamName)
+{
+    if (teamName.empty())
+        return;
+    for (const std::string& name : _teamNames) {
+        if (name == teamName)
+            return;
+    }
+    _teamNames.push_back(teamName);
+}
+
+int GameWorld::getTeamColor(const std::string& teamName)
+{
+    addTeamName(teamName);
+    for (std::size_t index = 0; index < _teamNames.size(); index++) {
+        if (_teamNames[index] == teamName) {
+            if (index == 0)
+                return 1;
+            if (index == 1)
+                return 2;
+            if (index == 2)
+                return 3;
+            if (index == 3)
+                return 4;
+        }
+    }
+    return 2;
+}
+
 void GameWorld::setTileResources(int x, int y, const Resources& res)
 {
     if (x >= 0 && x < _width && y >= 0 && y < _height) {
@@ -52,7 +82,10 @@ Resources GameWorld::resToResources(int q0, int q1, int q2, int q3, int q4, int 
 
 
 void GameWorld::addPlayer(const Player& player) {
-    _players[player.id] = player;
+    Player newPlayer = player;
+
+    newPlayer.teamColor = getTeamColor(player.teamName);
+    _players[player.id] = newPlayer;
     std::cout << "[Graphic] Joueur #" << player.id << " ajouté à la position (" << player.x << ", " << player.y << ")" << std::endl;
 }
 
@@ -68,6 +101,56 @@ void GameWorld::movePlayer(int id, int x, int y, int orientation)
     newPlayer.y = y;
     newPlayer.orientation = orientation;
     _players[id] = newPlayer;
+}
+
+void GameWorld::setPlayerLevel(int id, int level)
+{
+    auto player = _players.find(id);
+
+    if (player == _players.end())
+        return;
+    player->second.level = level;
+}
+
+void GameWorld::setPlayerInventory(int id, int x, int y, const Resources& inventory)
+{
+    auto player = _players.find(id);
+
+    if (player == _players.end())
+        return;
+    player->second.x = x;
+    player->second.y = y;
+    player->second.inventory = inventory;
+}
+
+void GameWorld::startIncantation(int x, int y, const std::vector<int>& playerIds, int durationMs)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const std::pair<int, int> tileKey {x, y};
+    std::vector<int> activePlayers;
+
+    for (int id : playerIds) {
+        auto player = _players.find(id);
+        if (player == _players.end())
+            continue;
+        _incantingPlayers[id] = {x, y, durationMs, now};
+        activePlayers.push_back(id);
+    }
+    if (!activePlayers.empty())
+        _incantationTiles[tileKey] = activePlayers;
+}
+
+void GameWorld::stopIncantation(int x, int y)
+{
+    const std::pair<int, int> tileKey {x, y};
+    auto tile = _incantationTiles.find(tileKey);
+
+    if (tile == _incantationTiles.end())
+        return;
+
+    for (int id : tile->second)
+        _incantingPlayers.erase(id);
+    _incantationTiles.erase(tile);
 }
 
 void GameWorld::addEgg(int id, int parentId, int x, int y)
@@ -90,6 +173,16 @@ const std::map<int, Egg>&  GameWorld::getEggs() const
 
 void GameWorld::removePlayer(int id)
 {
+    _incantingPlayers.erase(id);
+    for (auto it = _incantationTiles.begin(); it != _incantationTiles.end(); ) {
+        auto& players = it->second;
+
+        players.erase(std::remove(players.begin(), players.end(), id), players.end());
+        if (players.empty())
+            it = _incantationTiles.erase(it);
+        else
+            ++it;
+    }
     _players.erase(id);
 }
 
@@ -108,4 +201,20 @@ const std::vector<std::vector<Tile>>& GameWorld::getMap() const
 const std::map<int, Player>& GameWorld::getPlayers() const
 {
     return _players;
+}
+
+std::optional<IncantationState> GameWorld::getPlayerIncantation(int id) const
+{
+    const auto it = _incantingPlayers.find(id);
+
+    if (it == _incantingPlayers.end())
+        return std::nullopt;
+
+    const auto now = std::chrono::steady_clock::now();
+    const auto endTime = it->second.startTime +
+        std::chrono::milliseconds(it->second.durationMs);
+
+    if (now >= endTime)
+        return std::nullopt;
+    return it->second;
 }

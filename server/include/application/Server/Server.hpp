@@ -39,6 +39,7 @@ class Server : public INetworkProvider {
         ILogger& getLogger() const override;
 
         ClientManager& getClientManager();
+        void setFreq(int freq);
 
         // INetworkProvider Implementation
         void sendResponse(int clientId, const std::string& message) override;

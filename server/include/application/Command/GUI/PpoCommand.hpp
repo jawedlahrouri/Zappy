@@ -15,11 +15,11 @@ class PpoCommand : public BaseGuiCommand {
 public:
     void Accept(IGuiVisitor *visitor) override;
 
-  void setPlayerId(int id);
-  int getPlayerId() const;
+    void setPlayerId(int id);
+    int getPlayerId() const;
 
 private:
-    int _playerId = -1;
+    int _playerId = 0;
 };
 
 #endif /* !PPOCOMMAND_HPP_ */

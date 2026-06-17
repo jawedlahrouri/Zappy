@@ -71,38 +71,6 @@ void GraphicalUtils::drawResources(sf::RenderTarget& target, const Tile& tile, f
     }
 }
 
-void GraphicalUtils::drawPlayer(sf::RenderTarget& target, const Player& player, float tileSize, float offsetX, float offsetY)
-{
-    if (player.level < 1)
-        return;
-    float centerX = player.x * tileSize + offsetX + (tileSize / 2.0f);
-    float centerY = player.y * tileSize + offsetY + (tileSize / 2.0f);
-
-    const TextureManager& tm = TextureManager::getInstance();
-    std::string texKey = "playerFace";
-    // Orientation : 1: N, 2: E, 3: S, 4: W
-    if (player.orientation == 1)
-        texKey = "playerBack";
-    else if (player.orientation == 2)
-        texKey = "playerRight";
-    else if (player.orientation == 3)
-        texKey = "playerFace";
-    else if (player.orientation == 4)
-        texKey = "playerLeft";
-    
-    sf::Sprite playerSprite(tm.getTexture(texKey));
-    sf::Vector2u texSize = tm.getTexture(texKey).getSize();
-    if (texSize.x > 0 && texSize.y > 0) {
-        float desired = tileSize * 0.5f;
-        float scaleX = desired / static_cast<float>(texSize.x);
-        float scaleY = desired / static_cast<float>(texSize.y);
-        playerSprite.setScale(scaleX, scaleY);
-        playerSprite.setOrigin(static_cast<float>(texSize.x) / 2.0f, static_cast<float>(texSize.y) / 2.0f);
-    }
-    playerSprite.setPosition(centerX, centerY);
-    target.draw(playerSprite);
-}
-
 void GraphicalUtils::drawEgg(sf::RenderTarget& target, const Egg& egg, float tileSize, float offsetX, float offsetY)
 {
     float startX = egg.x * tileSize + offsetX;

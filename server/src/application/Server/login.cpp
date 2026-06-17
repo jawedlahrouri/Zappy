@@ -13,6 +13,8 @@
 #include "application/Event/GUI/PnwEvent.hpp"
 #include "AI.hpp"
 #include "GUI.hpp"
+#include "domain/Map/Map.hpp"
+
 #include <random>
 
 static int countTeamEggs(INetworkProvider &network, const std::string &team_name) {
@@ -109,29 +111,62 @@ bool Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetw
 void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
 {
     try {
-    int fd = gui->getId();
+        int fd = gui->getId();
 
-    if (network.getGameEngine()) {
-        network.sendResponse(fd, "msz " + std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
-    } else {
-        network.sendResponse(fd, "msz 0 0");
-    }
-    network.sendResponse(fd, "sgt " + std::to_string(network.getFreq()));
-    for (const auto &team : network.getTeamNames()) {
-        network.sendResponse(fd, "tna " + team);
-    }
-    for (const auto &[client_fd, client] : network.getClients()) {
-        if (client->getType() == ClientType::AI) {
-            auto ai = std::dynamic_pointer_cast<AI>(client);
-            if (ai) {
-                std::string pnw_msg = "pnw " + std::to_string(ai->getId()) + " " +
-                                    std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
-                                    std::to_string(ai->getOrientation()) + " " +
-                                    std::to_string(ai->getLevel()) + " " + ai->getTeamName();
-                network.sendResponse(fd, pnw_msg);
+        if (network.getGameEngine()) {
+            network.sendResponse(fd, "msz " + std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
+        } else {
+            network.sendResponse(fd, "msz 0 0");
+        }
+        network.sendResponse(fd, "sgt " + std::to_string(network.getFreq()));
+        for (const auto &team : network.getTeamNames()) {
+            network.sendResponse(fd, "tna " + team);
+        }
+
+        if (network.getGameEngine()) {
+            auto& map = network.getGameEngine()->getMap();
+            int width = map.getWidth();
+            int height = map.getHeight();
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    const Tile& tile = map.getTile(x, y);
+                    std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
+                                          std::to_string(tile.resources[FOOD]) + " " +
+                                          std::to_string(tile.resources[LINEMATE]) + " " +
+                                          std::to_string(tile.resources[DERAUMERE]) + " " +
+                                          std::to_string(tile.resources[SIBUR]) + " " +
+                                          std::to_string(tile.resources[MENDIANE]) + " " +
+                                          std::to_string(tile.resources[PHIRAS]) + " " +
+                                          std::to_string(tile.resources[THYSTAME]);
+                    network.sendResponse(fd, bct_msg);
+                }
+            }
+
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    const Tile& tile = map.getTile(x, y);
+                    for (const auto& egg : tile.getEggs()) {
+                        std::string enw_msg = "enw " + std::to_string(egg->getId()) + " " +
+                                              std::to_string(egg->getOwnerId()) + " " +
+                                              std::to_string(x) + " " + std::to_string(y);
+                        network.sendResponse(fd, enw_msg);
+                    }
+                }
             }
         }
-    }
+
+        for (const auto &[client_fd, client] : network.getClients()) {
+            if (client->getType() == ClientType::AI) {
+                auto ai = std::dynamic_pointer_cast<AI>(client);
+                if (ai) {
+                    std::string pnw_msg = "pnw " + std::to_string(ai->getId()) + " " +
+                                        std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
+                                        std::to_string(ai->getOrientation()) + " " +
+                                        std::to_string(ai->getLevel()) + " " + ai->getTeamName();
+                    network.sendResponse(fd, pnw_msg);
+                }
+            }
+        }
     } catch (const std::exception &e) {
         throw ServerException(std::string("Login::login_gui: ") + e.what());
     }

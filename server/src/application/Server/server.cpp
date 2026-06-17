@@ -375,3 +375,7 @@ int Server::getCommandDuration(const std::string& command) const
         throw ServerException(std::string("Server::getCommandDuration: ") + e.what());
     }
 }
+void Server::setFreq(int freq)
+{
+    _freq = freq;
+}

@@ -15,6 +15,11 @@ class SstCommand : public BaseGuiCommand {
 public:
     void Accept(IGuiVisitor *visitor) override;
 
+    void setNewFreq(int freq);
+    int getNewFreq() const;
+
+private:
+    int _newFreq = 0;
 };
 
 #endif /* !SSTCOMMAND_HPP_ */
