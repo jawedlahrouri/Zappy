@@ -68,10 +68,10 @@ class RoleTask:
                 protector_id = ids_restants[:4]
             
             self.agent.decret_royal_append = True
-            self.agent.decret_royal = self.agent.comms.encode("{self.agent.agent_id}-{guard_id[0]}-{guard_id[1]}-{guard_id[2]}-{guard_id[3]}-{guard_id[4]}-{protector_id[0]}-{protector_id[1]}-{protector_id[2]}-{protector_id[3]}", "royalsummon")
+            self.agent.decret_royal = self.agent.comms.encode(f"{self.agent.agent_id}-{guard_id[0]}-{guard_id[1]}-{guard_id[2]}-{guard_id[3]}-{guard_id[4]}-{protector_id[0]}-{protector_id[1]}-{protector_id[2]}-{protector_id[3]}", "royalsummon")
         
-        if self.decret_royal_append == True:
-            self.agent.cmd.send_command("broadcast {self.agent.decret_royal}")
+        if self.agent.decret_royal_append == True:
+            self.agent.cmd.send_command(f"broadcast {self.agent.decret_royal}")
             self.agent.state = AgentState.FARMER
             self.agent.comportment.act_farmer()
     

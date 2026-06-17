@@ -90,8 +90,55 @@ class StateComportment:
             -Aucun paramètre.
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour le regroupement."""
-        # if self.agent.role == AgentRole.PROTECTOR:
 
+        if self.agent.role == AgentRole.PROTECTOR:
+            queen_k = None
+            protector_index = -1
+            
+            for msg_obj in getattr(self.agent, 'decoded_messages', []):
+                k = msg_obj.get('k')
+                decoded = msg_obj.get('data', {})
+                if decoded.get('command') == 'royalsummon':
+                    params = decoded.get('param', [])
+                    if len(params) >= 9:
+                        protectors = params[5:9]
+                        my_id_str = str(self.agent.agent_id)
+                        if my_id_str in protectors:
+                            protector_index = protectors.index(my_id_str)
+                            queen_k = k
+                            break
+
+            if queen_k is not None:
+                if not hasattr(self.agent, 'is_deployed'):
+                    self.agent.is_deployed = False
+
+                if not self.agent.is_deployed:
+                    if queen_k == 0:
+                        # Déploiement en croix autour de la reine
+                        if protector_index == 0:
+                            self.agent.cmd.send_command("Forward")
+                        elif protector_index == 1:
+                            self.agent.cmd.send_command("Right")
+                            self.agent.cmd.send_command("Forward")
+                        elif protector_index == 2:
+                            self.agent.cmd.send_command("Right")
+                            self.agent.cmd.send_command("Right")
+                            self.agent.cmd.send_command("Forward")
+                        elif protector_index == 3:
+                            self.agent.cmd.send_command("Left")
+                            self.agent.cmd.send_command("Forward")
+
+                        self.agent.cmd.send_command("Right")
+                        self.agent.cmd.send_command("Right")
+                        self.agent.is_deployed = True
+                    else:
+                        self.agent.grouper._move_towards_sound(queen_k)
+                else:
+                    if queen_k != 1 and queen_k != 0:
+                        self.agent.is_deployed = False
+                        self.agent.grouper._move_towards_sound(queen_k)
+
+        return AgentState.GROUPING
 
     def act_beginner(self):
         """Effectue les actions attendus de la part d'un bot qui vient d'arriver.

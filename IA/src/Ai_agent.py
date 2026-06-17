@@ -73,7 +73,7 @@ class ZappyAgent:
         self.vision = response
         self.message_stack = self.analyze_calls()
         self.process_radio_and_demographics()
-        ping_content = "{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
+        ping_content = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
         secret_message = self.comms.encode(ping_content, "ping")
         self.cmd.send_command(f"broadcast {secret_message}")
         return
