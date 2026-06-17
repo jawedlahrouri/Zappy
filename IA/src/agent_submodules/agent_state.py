@@ -2,6 +2,10 @@
 from enum import Enum
 from src.logger import ZappyLogger
 from src.agent_submodules.agent_role import AgentRole
+from src.agent_submodules.pathfinding import Pathfinder
+from src.command import ZappyCommand
+from src.agent_submodules.farm import Farmer
+from src.utils import utils
 logger = ZappyLogger.get_logger("AgentState")
 
 class AgentState(Enum): # Enum pour représenter les différents états de comportement de l'agent.
@@ -18,6 +22,10 @@ class AgentState(Enum): # Enum pour représenter les différents états de compo
 class StateComportment:
     def __init__(self, agent):
         self.agent = agent # Référence à l'agent principal pour accéder à ses modules et données.
+        self.pathfinding = Pathfinder
+        self.command = ZappyCommand
+        self.farm = Farmer
+        self.utils = utils
 
     def act_survival(self):
         """Effectue les actions de survie de base, comme chercher de la nourriture pour éviter la mort par faim.\n
@@ -91,54 +99,7 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour le regroupement."""
 
-        if self.agent.role == AgentRole.PROTECTOR:
-            queen_k = None
-            protector_index = -1
-            
-            for msg_obj in getattr(self.agent, 'decoded_messages', []):
-                k = msg_obj.get('k')
-                decoded = msg_obj.get('data', {})
-                if decoded.get('command') == 'royalsummon':
-                    params = decoded.get('param', [])
-                    if len(params) >= 9:
-                        protectors = params[5:9]
-                        my_id_str = str(self.agent.agent_id)
-                        if my_id_str in protectors:
-                            protector_index = protectors.index(my_id_str)
-                            queen_k = k
-                            break
-
-            if queen_k is not None:
-                if not hasattr(self.agent, 'is_deployed'):
-                    self.agent.is_deployed = False
-
-                if not self.agent.is_deployed:
-                    if queen_k == 0:
-                        # Déploiement en croix autour de la reine
-                        if protector_index == 0:
-                            self.agent.cmd.send_command("Forward")
-                        elif protector_index == 1:
-                            self.agent.cmd.send_command("Right")
-                            self.agent.cmd.send_command("Forward")
-                        elif protector_index == 2:
-                            self.agent.cmd.send_command("Right")
-                            self.agent.cmd.send_command("Right")
-                            self.agent.cmd.send_command("Forward")
-                        elif protector_index == 3:
-                            self.agent.cmd.send_command("Left")
-                            self.agent.cmd.send_command("Forward")
-
-                        self.agent.cmd.send_command("Right")
-                        self.agent.cmd.send_command("Right")
-                        self.agent.is_deployed = True
-                    else:
-                        self.agent.grouper._move_towards_sound(queen_k)
-                else:
-                    if queen_k != 1 and queen_k != 0:
-                        self.agent.is_deployed = False
-                        self.agent.grouper._move_towards_sound(queen_k)
-
-        return AgentState.GROUPING
+        self.agent.grouper.process_grouping(self.agent.level, self.agent.id, self.agent.vision)
 
     def act_beginner(self):
         """Effectue les actions attendus de la part d'un bot qui vient d'arriver.
@@ -147,7 +108,19 @@ class StateComportment:
         Retourne:
             - AgentState: l'etat dans lequel l'agent doit etre.
         """
-    
+        if self.agent.level >= 3:
+            self.agent.state = AgentState.FARMING
+            return
+        
+        necessary_ressources = self.farm.get_missing_stones(self.agent.level, self.agent.inventory)
+        if len(necessary_ressources) == 0:
+            if self.utils.is_food_critical_for_action(300, self.agent.inventory) == True:
+                self.command.send_command("Incantation")
+            else:
+                self.pathfinding.search_and_take_items(["food"], self.agent.vision)
+        else:
+            self.pathfinding.search_and_take_items(necessary_ressources, self.agent.vision)
+
     def act_pushing(self):
         """Eject
         Params:
@@ -155,50 +128,15 @@ class StateComportment:
         Retourne:
             - Ne return rien
         """
+        self.command.send_command("Eject")
         
-    def act_follower(self, level, my_id, vision):
-        """Effectue les actions d'un agent suiveur en fonction du niveau, de l'ID et de la vision.\n
-        Params:
-            -level (int): Le niveau actuel de l'agent.
-            -my_id (int): L'ID unique de l'agent.
-            -vision (list): La vision actuelle de l'agent.
-        Retourne:
-            -bool: True si l'action est réussie, False sinon."""
-    
-        if self.current_k is None:
-            return False
-        if self.current_k == 0:
-            players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
-            needed = self.player_reqs.get(level, 1)
-            if players_on_tile >= needed:
-                logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
-                self.current_k = None
-                return True
-            else:
-                logger.info(f"agent : Sur la case, attente des autres alliés ({players_on_tile}/{needed})...")
-                self.current_k = None
-                return False
-        else:
-            logger.info(f"agent : En route vers K={self.current_k} pour rejoindre le LEADER.")
-            self._move_towards_sound(self.current_k)
-            self.current_k = None
-            return False
+    def act_feeder(self):
+        """Jette la nourriture au sol jusqu'à ce qu'il n'en reste que 3 dans l'inventaire.
+        """
 
-    def act_leader(self, level, my_id, vision):
-        """Effectue les actions d'un agent leader en fonction du niveau, de l'ID et de la vision.\n
-        Params:
-            -level (int): Le niveau actuel de l'agent.
-            -my_id (int): L'ID unique de l'agent.
-            -vision (list): La vision actuelle de l'agent.
-        Retourne:
-            -bool: True si l'action est réussie, False sinon."""
+        food_count = self.agent.inventory["food"]
+        food_a_jeter = food_count - 3
 
-        players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
-        needed = self.player_reqs.get(level, 1)
-        if players_on_tile >= needed:
-            logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Ils sont prets pour le rituel !")
-            return True
-        logger.info(f"agent : Attente alliés. Broadcast...")
-        secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
-        self.cmd.send_command(f"Broadcast {secret_msg}")
-        return False
+        if food_a_jeter > 0:
+            for _ in range(food_a_jeter):
+                self.command.send_command("Set food")

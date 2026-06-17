@@ -26,7 +26,7 @@ class ZappyAgent:
         self.pathfinder = Pathfinder(self.cmd) # Module de pathfinding pour se déplacer efficacement.
         self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
         self.comms = StealthComms() # Module de cryptage des message pour sécuriser la communication entre nos agents.
-        self.grouper = Grouper(self.cmd, self.comms) # Module de groupage contenant la logique de regroupement de notre agent.
+        self.grouper = Grouper(self.cmd, self.comms, self) # Module de groupage contenant la logique de regroupement de notre agent.
         self.utils = utils(self.cmd, team_name) # Utilitaires divers, comme le lancement de clones.
         self.comportment = StateComportment(self) # Comportement de l'agent selon son état (survie, farming, grouping, etc).
         self.task = RoleTask(self) # Role de l'agent
@@ -53,6 +53,7 @@ class ZappyAgent:
         self.message_stack = {}
         self.global_inventory = {} # Dictionnaire pour suivre les ressources globales de l'équipe, mis à jour via les messages radio.
         self.direction = 0 # direction dans laquelle le robot regarde
+        self.k_queen = 0
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.
@@ -65,7 +66,7 @@ class ZappyAgent:
         if response == 'dead':
             self.is_alive = False
             return
-        self.inventory == response
+        self.inventory = response
         response = self.cmd.send_command('Look')
         if response == 'dead':
             self.is_alive = False

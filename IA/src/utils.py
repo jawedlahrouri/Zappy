@@ -11,6 +11,7 @@ from src.agent_submodules.grouping import Grouper
 from src.agent_submodules.stealth_comms import StealthComms
 from src.logger import ZappyLogger
 from src.Ai_agent import ZappyAgent
+from src.agent_submodules.agent_state import AgentState
 
 logger = ZappyLogger.get_logger("AgentCore")
 
@@ -92,4 +93,27 @@ class utils:
     
     def is_elevation(self):
         messages = self.verify_id_message(9999)
+        self.agent.k_queen = messages[0]
         return self.verify_instruction("elevation", messages)
+
+    def verify_food(self):
+        """Cette fonction vas servir a verifier le seuil de faim des bots
+        Params : Aucun param
+        Retourne : True si il doit en reramasser et a l'inverse False si non
+        """
+        food_level = self.agent.inventorry["food"]
+        if self.agent.state == AgentState.GROUPING:
+            if (food_level <= 25):
+                return True
+            else:
+                return False
+        if self.agent.state == AgentState.ELEVATION:
+            if (food_level <= 15):
+                return True
+            else:
+                return False
+        else:
+            if (food_level <= 6):
+                return True
+            else:
+                return False

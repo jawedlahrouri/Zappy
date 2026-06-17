@@ -4,6 +4,8 @@ from src.logger import ZappyLogger
 from src.agent_submodules.agent_state import AgentState
 from src.utils import utils
 from src.agent_submodules.farm import Farmer
+from src.agent_submodules.pathfinding import Pathfinder
+from src.agent_submodules.grouping import Grouper
 
 logger = ZappyLogger.get_logger("AgentRole")
 
@@ -18,6 +20,8 @@ class RoleTask:
         self.agent = agent # Référence à l'agent principal pour accéder à ses modules et données.
         self.utils = utils
         self.farm = Farmer
+        self.pathfinding = Pathfinder
+        self.grouping = Grouper
 
     def act_peasant(self):
         """
@@ -27,20 +31,29 @@ class RoleTask:
         FARMING : qui vas agir sur une ressource en particulier
         FEEDER : vas apporter de la nouriture dans une direction precise (k)
         """
+        if self.utils.verify_food() == True:
+            self.agent.state = AgentState.FARMING
+            self.agent.comportment.act_farming('food')
         if self.agent.state == AgentState.BEGINNER:
             if self.agent.level < 2:
                 self.agent.comportment.act_beginner()
             else:
                 self.agent.state = AgentState.FARMING
                 self.agent.comportment.act_farming('food')
-        k, message = self.agent.analyze_calls()
+        k, message = self.agent.analyze_calls() #TODO: à revoir, on ne peut pas faire ça ici
         message_parts = message.split('_')
         if message_parts[1] == 'hungry' or message_parts[2] == 'grouping':
             self.agent.state = AgentState.FEEDER
             self.agent.comportment.act_feeder(k)
     
     def act_queen(self):
-        if len(self.agent.team_roster) <= self.agent.population_target:
+        if self.utils.verify_food() == True:
+            if self.agent.state != AgentState.GROUPING and self.agent.state != AgentState.ELEVATION:
+                self.agent.state = AgentState.FARMING
+                self.agent.comportment.act_farming('food')
+            else:
+                self.command.send_command("Take food")
+        if len(self.agent.team_roster) <= self.agent.population_target and self.agent.state != AgentState.GROUPING:
             self.utils.fork()
         if self.agent.egg_laid >= 1:
             nb_mature_egg = self.agent.cmd.send_command('connect_nbr')
@@ -74,8 +87,14 @@ class RoleTask:
             self.agent.cmd.send_command(f"broadcast {self.agent.decret_royal}")
             self.agent.state = AgentState.FARMER
             self.agent.comportment.act_farmer()
-    
+
     def act_guard(self):
+        if self.utils.verify_food() == True:
+            if self.agent.state != AgentState.GROUPING and self.agent.state != AgentState.ELEVATION:
+                self.agent.state = AgentState.FARMING
+                self.agent.comportment.act_farming('food')
+            else:
+                self.command.send_command("Take food")
         if self.utils.is_grouping() == True:
             self.agent.state = AgentState.GROUPING
             self.agent.comportment.act_grouping()
@@ -87,6 +106,13 @@ class RoleTask:
             self.agent.comportment.act_farmer()
     
     def act_protector(self):
+        if self.utils.verify_food() == True:
+            if self.agent.state != AgentState.GROUPING and self.agent.state != AgentState.ELEVATION:
+                self.agent.state = AgentState.FARMING
+                self.agent.comportment.act_farming('food')
+            else:
+                self.grouping._move_towards_sound(self.agent.k_queen)
+                self.command.send_command("Take food")
         if self.utils.is_grouping() == True:
             self.agent.state = AgentState.GROUPING
             self.agent.comportment.act_grouping()
