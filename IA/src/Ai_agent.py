@@ -137,7 +137,6 @@ class ZappyAgent:
             self.is_queen == True
             self.agent_id = 9999
         self.role = AgentRole.self.utils.which_role()
-        # TODO : implementer la notion d'election de guards et de protecter par la reine (decret royal) 
 
     def check_population(self, food, current_population):
         """Vérifie si les conditions sont réunies pour pondre un oeuf\n

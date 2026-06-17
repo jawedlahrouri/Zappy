@@ -77,4 +77,20 @@ class RoleTask:
         if self.utils.is_grouping() == True:
             self.agent.state = AgentState.GROUPING
             self.agent.comportment.act_grouping()
-        
+        elif self.utils.is_elevation() == True:
+            self.agent.state = AgentState.ELEVATION
+            self.agent.comportment.act_elevation()
+        else:
+            self.agent.state = AgentState.FARMING
+            self.agent.comportment.act_farmer()
+    
+    def act_protector(self):
+        if self.utils.is_grouping() == True:
+            self.agent.state = AgentState.GROUPING
+            self.agent.comportment.act_grouping()
+        elif self.utils.is_elevation() == True:
+            self.agent.state = AgentState.PUSHING
+            self.agent.comportment.act_pushing()
+        else:
+            self.agent.state = AgentState.FARMING
+            self.agent.comportment.act_farmer()

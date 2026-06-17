@@ -89,3 +89,7 @@ class utils:
     def is_grouping(self):
         messages = self.verify_id_message(9999)
         return self.verify_instruction("grouping", messages)
+    
+    def is_elevation(self):
+        messages = self.verify_id_message(9999)
+        return self.verify_instruction("elevation", messages)

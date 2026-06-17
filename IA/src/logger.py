@@ -32,7 +32,7 @@ class ZappyLogger:
         logger.addHandler(file_handler)
         cls._initialized = True
 
-    def get_logger(module_name: str):
+    def get_logger(module_name):
         """Récupère un logger spécifique à un module de l'agent Zappy.\n
         Params:
             -module_name (str): Le nom du module pour lequel on veut le logger.
