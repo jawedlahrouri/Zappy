@@ -6,7 +6,28 @@
 */
 
 #include "Core.hpp"
+#include <algorithm>
+#include <vector>
 #include <limits>
+
+static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss)
+{
+    std::vector<int> playerIds;
+
+    while (true) {
+        ss >> std::ws;
+        if (ss.eof())
+            break;
+        if (ss.peek() == '#')
+            ss.get();
+        int playerId = 0;
+
+        if (!(ss >> playerId))
+            break;
+        playerIds.push_back(playerId);
+    }
+    return playerIds;
+}
 
 Core::Core() : _appState(MENU), _isRunning(false)
 {
@@ -39,6 +60,8 @@ int Core::run(int ac, char** av)
             _appState = MENU;
         }
         if (_appState == GAME)
+            sendPendingTimeRequest();
+        if (_appState == GAME)
             sendPendingTileRequest();
 
         if (_network.isConnected()) {
@@ -65,9 +88,25 @@ void Core::setupMenuDefaults([[maybe_unused]] int ac, [[maybe_unused]] char** av
 {
     // const std::string port = (ac > 1) ? av[1] : "4242";
     // const std::string ip = (ac > 2) ? av[2] : "127.0.0.1";
+    std::string port = "4242";
+    std::string ip = "127.0.0.1";
 
-    const std::string port = "4242";
-    const std::string ip = "127.0.0.1";
+    for (int i = 1; i < ac; i++) {
+        std::string arg = av[i];
+
+        if ((arg == "-p" || arg == "--port") && i + 1 < ac) {
+            port = av[i + 1];
+            i++;
+        } else if ((arg == "-h" || arg == "--host" || arg == "--machine")
+            && i + 1 < ac) {
+            ip = av[i + 1];
+            i++;
+        } else if (i == 1) {
+            port = arg;
+        } else if (i == 2) {
+            ip = arg;
+        }
+    }
 
     _windowManager.setMenuConnectionInfo(ip, port);
 }
@@ -125,6 +164,18 @@ void Core::sendPendingTileRequest()
     _network.sendCommand(command);
 }
 
+void Core::sendPendingTimeRequest()
+{
+    std::optional<int> request = _windowManager.consumeTimeRequest();
+
+    if (!request.has_value())
+        return;
+
+    const std::string command = "sst " + std::to_string(*request) + "\n";
+
+    _network.sendCommand(command);
+}
+
 void Core::parseValue(std::stringstream& ss, int& value)
 {
     ss >> std::ws;
@@ -144,7 +195,13 @@ void Core::initCommands()
         _world.setMapSize(width, height);
     };
 
-    _commands["tna"] = [this](std::stringstream& ss) { std::string teamName; ss >> teamName; _windowManager.addMenuTeamName(teamName);};
+    _commands["tna"] = [this](std::stringstream& ss) {
+        std::string teamName;
+
+        ss >> teamName;
+        _windowManager.addMenuTeamName(teamName);
+        _world.addTeamName(teamName);
+    };
 
     _commands["pnw"] = [this](std::stringstream& ss) {
         Player p;
@@ -165,6 +222,63 @@ void Core::initCommands()
         parseValue(ss, y);
         parseValue(ss, orientation);
         _world.movePlayer(id, x, y, orientation);
+    };
+
+    _commands["sgt"] = [this](std::stringstream& ss) {
+        int freq = 0;
+
+        parseValue(ss, freq);
+        _windowManager.setServerFreq(freq);
+    };
+
+    _commands["plv"] = [this](std::stringstream& ss) {
+        int id = 0, level = 0;
+
+        parseValue(ss, id);
+        parseValue(ss, level);
+        _world.setPlayerLevel(id, level);
+    };
+
+    _commands["pin"] = [this](std::stringstream& ss) {
+        int id = 0, x = 0, y = 0;
+        int q0 = 0, q1 = 0, q2 = 0, q3 = 0, q4 = 0, q5 = 0, q6 = 0;
+
+        parseValue(ss, id);
+        parseValue(ss, x);
+        parseValue(ss, y);
+        parseValue(ss, q0);
+        parseValue(ss, q1);
+        parseValue(ss, q2);
+        parseValue(ss, q3);
+        parseValue(ss, q4);
+        parseValue(ss, q5);
+        parseValue(ss, q6);
+        _world.setPlayerInventory(id, x, y,
+            _world.resToResources(q0, q1, q2, q3, q4, q5, q6));
+    };
+
+    _commands["pic"] = [this](std::stringstream& ss) {
+        int x = 0, y = 0, level = 0;
+        std::vector<int> playerIds;
+        const int serverFreq = std::max(1, _windowManager.getServerFreq());
+        const int durationMs = 300000 / serverFreq;
+
+        parseValue(ss, x);
+        parseValue(ss, y);
+        parseValue(ss, level);
+        playerIds = parseTrailingPlayerIds(ss);
+        (void)level;
+        _world.startIncantation(x, y, playerIds, durationMs);
+    };
+
+    _commands["pie"] = [this](std::stringstream& ss) {
+        int x = 0, y = 0, result = 0;
+
+        parseValue(ss, x);
+        parseValue(ss, y);
+        parseValue(ss, result);
+        (void)result;
+        _world.stopIncantation(x, y);
     };
 
     _commands["bct"] = [this](std::stringstream& ss) {
@@ -223,6 +337,6 @@ void Core::parseCommand(const std::string& command)
     if (it != _commands.end()) {
         it->second(ss);
     } else {
-        std::cout << "[Graphic] No handler found for: " << cmdType << std::endl;
+        // std::cout << "[Graphic] No handler found for: " << cmdType << std::endl;
     }
 }

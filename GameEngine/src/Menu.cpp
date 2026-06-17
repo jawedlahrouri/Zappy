@@ -8,6 +8,19 @@
 #include "Menu.hpp"
 #include "TextureManager.hpp"
 
+static std::string getMenuTeamTexture(std::size_t index)
+{
+    if (index == 0)
+        return "bluePlayer";
+    if (index == 1)
+        return "playerFace";
+    if (index == 2)
+        return "greenPlayer";
+    if (index == 3)
+        return "pinkPlayer";
+    return "playerFace";
+}
+
 void Menu::draw(sf::RenderWindow& window, const sf::Font& font, bool fontLoaded, const std::string& ip, const std::string& port, int activeField, const std::string& status, const std::vector<std::string>& teams)
 {
     const sf::View previousView = window.getView();
@@ -107,11 +120,10 @@ void Menu::drawTeams(sf::RenderWindow& window, const sf::Font& font, const sf::V
         const bool leftColumn = (index % 2 == 0);
         float x = centerX + characterOffset;
         const float y = firstY + static_cast<float>(index / 2) * rowGap;
-        std::string textureName = "playerFace";
+        std::string textureName = getMenuTeamTexture(index);
 
         if (leftColumn) {
             x = centerX - characterOffset;
-            textureName = "bluePlayer";
         }
         drawTeamCharacter(window, font, textureName, teams[index], x, y, wantedHeight);
     }
