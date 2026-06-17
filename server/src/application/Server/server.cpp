@@ -204,6 +204,68 @@ void Server::processPollEvent(size_t i)
     }
 }
 
+int Server::calculateTimeout(const std::chrono::steady_clock::time_point& next_tick_time) const
+{
+    if (_clientManager.getClients().empty()) {
+        return -1;
+    }
+    auto now = std::chrono::steady_clock::now();
+    auto diff = next_tick_time - now;
+    if (diff > std::chrono::steady_clock::duration::zero()) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            diff + std::chrono::microseconds(999)).count();
+    }
+    return 0;
+}
+
+void Server::handlePollEvents(int timeout_ms)
+{
+    int poll_count = _poll->runPoll(timeout_ms);
+    if (poll_count == -1) {
+        throw ServerException(std::string("poll failed"));
+    }
+
+    size_t i = _poll->getSize();
+    while (i > 0) {
+        --i;
+        if (i < _poll->getSize()) {
+            processPollEvent(i);
+        }
+    }
+}
+
+void Server::synchronizeTickTime(bool& was_empty, std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration) const
+{
+    auto now = std::chrono::steady_clock::now();
+    bool is_empty = _clientManager.getClients().empty();
+
+    if (is_empty) {
+        was_empty = true;
+        next_tick_time = now + tick_duration;
+    } else if (was_empty) {
+        was_empty = false;
+        next_tick_time = now + tick_duration;
+    }
+}
+
+void Server::runGameTick(std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration)
+{
+    auto now = std::chrono::steady_clock::now();
+    if (now >= next_tick_time) {
+        if (_gameEngine && !_clientManager.getClients().empty()) {
+            _gameEngine->update(*this);
+            std::vector<int> clientsToRemove;
+            for (auto &[fd, client] : _clientManager.getClients()) {
+                client->update(client, *this, *_gameEngine, clientsToRemove);
+            }
+            for (int fd : clientsToRemove) {
+                removeClient(fd);
+            }
+        }
+        next_tick_time += tick_duration;
+    }
+}
+
 void Server::runPollLoop()
 {
     try {
@@ -213,60 +275,10 @@ void Server::runPollLoop()
         bool was_empty = true;
 
         while (true) {
-            auto now = std::chrono::steady_clock::now();
-            int timeout_ms = -1;
-
-            if (_clientManager.getClients().empty()) {
-                timeout_ms = -1;
-            } else {
-                auto diff = next_tick_time - now;
-                if (diff > std::chrono::steady_clock::duration::zero()) {
-                    timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        diff + std::chrono::microseconds(999)).count();
-                } else {
-                    timeout_ms = 0;
-                }
-            }
-
-            int poll_count = _poll->runPoll(timeout_ms);
-            if (poll_count == -1) {
-                throw ServerException(std::string("poll failed"));
-            }
-
-            size_t i = _poll->getSize();
-            while (i > 0) {
-                --i;
-                if (i < _poll->getSize()) {
-                    processPollEvent(i);
-                }
-            }
-
-            now = std::chrono::steady_clock::now();
-            bool is_empty = _clientManager.getClients().empty();
-
-            if (is_empty) {
-                was_empty = true;
-                next_tick_time = now + tick_duration;
-            } else {
-                if (was_empty) {
-                    was_empty = false;
-                    next_tick_time = now + tick_duration;
-                }
-            }
-
-            if (now >= next_tick_time) {
-                if (_gameEngine && !is_empty) {
-                    _gameEngine->update(*this);
-                    std::vector<int> clientsToRemove;
-                    for (auto &[fd, client] : _clientManager.getClients()) {
-                        client->update(client, *this, *_gameEngine, clientsToRemove);
-                    }
-                    for (int fd : clientsToRemove) {
-                        removeClient(fd);
-                    }
-                }
-                next_tick_time += tick_duration;
-            }
+            int timeout_ms = calculateTimeout(next_tick_time);
+            handlePollEvents(timeout_ms);
+            synchronizeTickTime(was_empty, next_tick_time, tick_duration);
+            runGameTick(next_tick_time, tick_duration);
         }
     } catch (const std::exception &e) {
         throw ServerException(std::string("runPollLoop: ") + e.what());

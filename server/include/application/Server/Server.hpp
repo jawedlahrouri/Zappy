@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <chrono>
 #include "ISocket.hpp"
 #include "shared/ILogger.hpp"
 #include "IPoll.hpp"
@@ -57,6 +58,11 @@ class Server : public INetworkProvider {
         bool handleWritable(size_t index);
         void cleanup();
         void removeClient(int clientSocket) override;
+
+        int calculateTimeout(const std::chrono::steady_clock::time_point& next_tick_time) const;
+        void handlePollEvents(int timeout_ms);
+        void synchronizeTickTime(bool& was_empty, std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration) const;
+        void runGameTick(std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration);
 
         ILogger& _logger;
         std::unique_ptr<ISocket> _masterSocket;
