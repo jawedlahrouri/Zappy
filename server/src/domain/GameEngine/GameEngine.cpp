@@ -99,9 +99,13 @@ void GameEngine::spawnResourcesCycle()
     std::uniform_int_distribution<> dis_y(0, _height - 1);
 
     for (int i = 0; i < RESOURCE_COUNT; i++) {
-        int amount_to_spawn = std::max(1, static_cast<int>(std::floor(_width * _height * _densities[i] * 0.1)));
-        for (int q = 0; q < amount_to_spawn; q++) {
-            _map.addResourceToTile(dis_x(gen), dis_y(gen), static_cast<ResourceType>(i), 1);
+        ResourceType type = static_cast<ResourceType>(i);
+        int target_quantity = std::max(1, static_cast<int>(std::floor(_width * _height * _densities[i] * 0.1)));
+        int current_quantity = _map.countResource(type);
+        int missing = target_quantity - current_quantity;
+
+        for (int q = 0; q < missing; q++) {
+            _map.addResourceToTile(dis_x(gen), dis_y(gen), type, 1);
         }
     }
 }
