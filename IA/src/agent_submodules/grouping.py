@@ -66,22 +66,12 @@ class Grouper:
             -vision (list): La vision actuelle de l'agent.
         Retourne:
             -bool: True si le regroupement est réussi, False sinon."""
-        
-    def act_follower(self, level, my_id, vision):
-        """Effectue les actions d'un agent suiveur en fonction du niveau, de l'ID et de la vision.\n
-        Params:
-            -level (int): Le niveau actuel de l'agent.
-            -my_id (int): L'ID unique de l'agent.
-            -vision (list): La vision actuelle de l'agent.
-        Retourne:
-            -bool: True si l'action est réussie, False sinon."""
 
-
-    def act_leader(self, level, my_id, vision):
-        """Effectue les actions d'un agent leader en fonction du niveau, de l'ID et de la vision.\n
-        Params:
-            -level (int): Le niveau actuel de l'agent.
-            -my_id (int): L'ID unique de l'agent.
-            -vision (list): La vision actuelle de l'agent.
-        Retourne:
-            -bool: True si l'action est réussie, False sinon."""
+        if self.current_k is not None:
+            self.role = 'FOLLOWER'
+        elif self.role is None:
+            self.role = 'LEADER'
+        if self.role == 'FOLLOWER':
+            return self.act_follower(level, my_id, vision)
+        elif self.role == 'LEADER':
+            return self.act_leader(level, my_id, vision)

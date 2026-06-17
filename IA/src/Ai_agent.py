@@ -52,6 +52,7 @@ class ZappyAgent:
         self.decret_royal = "" #decret royal envoyé par la reine
         self.message_stack = {}
         self.global_inventory = {} # Dictionnaire pour suivre les ressources globales de l'équipe, mis à jour via les messages radio.
+        self.direction = 0 # direction dans laquelle le robot regarde
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.

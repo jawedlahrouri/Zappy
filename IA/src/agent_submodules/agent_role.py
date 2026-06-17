@@ -3,6 +3,7 @@ from enum import Enum
 from src.logger import ZappyLogger
 from src.agent_submodules.agent_state import AgentState
 from src.utils import utils
+from src.agent_submodules.farm import Farmer
 
 logger = ZappyLogger.get_logger("AgentRole")
 
@@ -16,6 +17,7 @@ class RoleTask:
     def __init__(self, agent):
         self.agent = agent # Référence à l'agent principal pour accéder à ses modules et données.
         self.utils = utils
+        self.farm = Farmer
 
     def act_peasant(self):
         """
@@ -37,7 +39,7 @@ class RoleTask:
             self.agent.state = AgentState.FEEDER
             self.agent.comportment.act_feeder(k)
     
-    def act_queen(self): # TODO : terminer les fonction nescessaire a la verification avant de passer au state Grouping et Elevate
+    def act_queen(self):
         if len(self.agent.team_roster) <= self.agent.population_target:
             self.utils.fork()
         if self.agent.egg_laid >= 1:
@@ -45,10 +47,10 @@ class RoleTask:
             if nb_mature_egg >= 1:
                 self.utils.launch_clone()
             egg_laid -= nb_mature_egg
-        if self.utils.check_global_inventory() == True and self.utils.is_food_critical_for_action(3000, self.agent.inventory) == True: # c'est a dire que l'elevation peut etre effectuer
+        if self.farm.get_missing_stones_for_max_level().size() == 0 and self.utils.is_food_critical_for_action(3000, self.agent.inventory) == True:
             self.agent.role = AgentState.GROUPING
             self.agent.comportment.act_grouping()
-        if self.agent.role == AgentState.GROUPING: # ajouter la verification de pierre sur la case
+        if self.agent.role == AgentState.GROUPING:
             self.agent.role = AgentState.ELEVATION
             self.agent.comportement.act_elevation()
         if self.agent.decret_royal_append == False:
