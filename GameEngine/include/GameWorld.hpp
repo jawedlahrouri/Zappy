@@ -76,6 +76,7 @@
         void addEgg(int id, int parentId, int x, int y);
         void hatchEgg(int id);
         void removeEgg(int id);
+        void adjustTileResource(int x, int y, int resourceIndex, int delta);
 
         int getWidth() const;
         int getHeight() const;
