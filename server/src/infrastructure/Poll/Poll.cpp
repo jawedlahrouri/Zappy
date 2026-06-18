@@ -5,43 +5,59 @@
 ** Poll.cpp
 */
 
-#include "ServerException.hpp"
 #include "Poll.hpp"
-#include "Sys_Poll.hpp"
+#include "ServerException.hpp"
 #include <algorithm>
 
-static short eventToSys(NetworkEvent event) {
+namespace {
+    enum PollFlag : short {
+        PollIn        = 1,
+        PollOut       = 4,
+        PollErr       = 8,
+        PollHup       = 16,
+        PollNval      = 32,
+        PollErrorMask = PollErr | PollHup | PollNval
+    };
+}
+
+static short eventToShort(NetworkEvent event)
+{
     if (event == NetworkEvent::Input) {
-        return SysPoll::EventIn;
+        return PollIn;
     }
     if (event == NetworkEvent::Output) {
-        return SysPoll::EventOut;
+        return PollOut;
     }
     return 0;
 }
 
+Poll::Poll(const NetworkBackend::Symbols &symbols)
+    : _symbols(symbols)
+{
+}
+
 void Poll::addFd(int fd, NetworkEvent event)
 {
-    SysPoll::PollFd pfd{};
-    pfd.fd = fd;
-    pfd.events = eventToSys(event);
-    pfd.revents = 0;
-    _pollfds.push_back(pfd);
+    PollEntry entry{};
+    entry.fd      = fd;
+    entry.events  = eventToShort(event);
+    entry.revents = 0;
+    _pollfds.push_back(entry);
 }
 
 void Poll::removeFd(int fd)
 {
     _pollfds.erase(
         std::remove_if(_pollfds.begin(), _pollfds.end(),
-            [fd](const SysPoll::PollFd& pfd) { return pfd.fd == fd; }),
+            [fd](const PollEntry &e) { return e.fd == fd; }),
         _pollfds.end());
 }
 
 void Poll::addEvents(int fd, NetworkEvent event)
 {
-    for (auto &pfd : _pollfds) {
-        if (pfd.fd == fd) {
-            pfd.events |= eventToSys(event);
+    for (auto &entry : _pollfds) {
+        if (entry.fd == fd) {
+            entry.events |= eventToShort(event);
             break;
         }
     }
@@ -49,9 +65,9 @@ void Poll::addEvents(int fd, NetworkEvent event)
 
 void Poll::removeEvents(int fd, NetworkEvent event)
 {
-    for (auto &pfd : _pollfds) {
-        if (pfd.fd == fd) {
-            pfd.events &= ~eventToSys(event);
+    for (auto &entry : _pollfds) {
+        if (entry.fd == fd) {
+            entry.events &= static_cast<short>(~eventToShort(event));
             break;
         }
     }
@@ -59,12 +75,27 @@ void Poll::removeEvents(int fd, NetworkEvent event)
 
 int Poll::runPoll(int timeout)
 {
-    for (auto &pfd : _pollfds) {
-        pfd.revents = 0;
+    const unsigned int count = static_cast<unsigned int>(_pollfds.size());
+    std::vector<int>   fds(count);
+    std::vector<short> events(count);
+    std::vector<short> revents(count, 0);
+
+    for (unsigned int i = 0; i < count; ++i) {
+        fds[i]    = _pollfds[i].fd;
+        events[i] = _pollfds[i].events;
     }
-    int ret = SysPoll::poll(_pollfds, timeout);
-    if (ret == -1 && SysPoll::isInterrupted()) {
-        return 0;
+
+    int ret = _symbols.poll(fds.data(), events.data(), revents.data(), count, timeout);
+
+    if (ret == -1) {
+        if (_symbols.isInterrupted()) {
+            return 0;
+        }
+        throw ServerException(std::string("Poll failed: ") + _symbols.pollGetLastError());
+    }
+
+    for (unsigned int i = 0; i < count; ++i) {
+        _pollfds[i].revents = revents[i];
     }
     return ret;
 }
@@ -74,7 +105,7 @@ bool Poll::isReadable(size_t index) const
     if (index >= _pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & SysPoll::EventIn) != 0;
+    return (_pollfds[index].revents & PollIn) != 0;
 }
 
 bool Poll::isWritable(size_t index) const
@@ -82,7 +113,7 @@ bool Poll::isWritable(size_t index) const
     if (index >= _pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & SysPoll::EventOut) != 0;
+    return (_pollfds[index].revents & PollOut) != 0;
 }
 
 bool Poll::isError(size_t index) const
@@ -90,7 +121,7 @@ bool Poll::isError(size_t index) const
     if (index >= _pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup | SysPoll::EventNval)) != 0;
+    return (_pollfds[index].revents & PollErrorMask) != 0;
 }
 
 int Poll::getFd(size_t index) const

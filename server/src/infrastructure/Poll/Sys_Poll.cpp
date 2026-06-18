@@ -5,6 +5,8 @@
 ** Sys_Poll.cpp
 */
 
+#ifndef _WIN32
+
 #include "Sys_Poll.hpp"
 #include <poll.h>
 #include <cerrno>
@@ -23,3 +25,5 @@ namespace SysPoll {
         return std::strerror(errno);
     }
 }
+
+#endif

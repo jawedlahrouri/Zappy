@@ -9,11 +9,12 @@
 #define SOCKET_HPP_
 
 #include "ISocket.hpp"
+#include "INetworkLoader.hpp"
 
 class Socket : public ISocket {
     public:
-        Socket();
-        explicit Socket(int fd);
+        explicit Socket(const NetworkBackend::Symbols &symbols);
+        explicit Socket(int fd, const NetworkBackend::Symbols &symbols);
         ~Socket() override = default;
 
         void createSocket(int port, int backlog) override;
@@ -30,6 +31,7 @@ class Socket : public ISocket {
         int getClientSocket() const override;
 
     private:
+        const NetworkBackend::Symbols &_symbols;
         int _socket;
         int _port;
         int _backlog;

@@ -5,6 +5,8 @@
 ** Sys_Socket.cpp
 */
 
+#ifndef _WIN32
+
 #include "Sys_Socket.hpp"
 #include <sys/socket.h>
 #include <unistd.h>
@@ -84,3 +86,5 @@ namespace SysSocket {
         return (errno == EAGAIN || errno == EWOULDBLOCK);
     }
 }
+
+#endif
