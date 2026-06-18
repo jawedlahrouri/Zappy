@@ -40,6 +40,13 @@ class StateComportment:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour farming."""
         
         from src.agent_submodules.agent_role import AgentRole
+        
+        if item == 'food':
+            success = self.agent.pathfinder.search_and_take_items(['food'], self.agent.vision)
+            if not success:
+                self.agent.pathfinder.explore(self.agent.level)
+            return AgentState.FARMING
+
         if self.agent.role == AgentRole.PEASANT or self.agent.role == AgentRole.GUARD:
             success = self.agent.pathfinder.search_and_take_items([item], self.agent.vision)
             if not success:
@@ -75,19 +82,29 @@ class StateComportment:
                 success = self.agent.cmd.send_command("Incantation")
                 if success:
                     self.agent.level += 1
+                    self.agent.state = AgentState.BEGINNER
+                else:
+                    logger.warning("Incantation a échoué (ko reçu). La case est mauvaise, fuite...")
+                    for stone_name, amount in required_stones.items():
+                        for _ in range(amount):
+                            self.agent.cmd.send_command(f"Take {stone_name}")
+                    self.agent.cmd.send_command("Forward")
+                    self.agent.state = AgentState.BEGINNER
             elif self.agent.grouper.role == 'FOLLOWER':
                 success = self.agent.cmd.wait_for_incantation_follower()
                 if success:
                     self.agent.level += 1
+                self.agent.state = AgentState.BEGINNER
             self.agent.grouper.role = None
         elif self.agent.role == AgentRole.QUEEN or self.agent.role == AgentRole.GUARD:
             # Phase Bus : la Reine pose les pierres, les Gardes attendent
             if self.agent.role == AgentRole.QUEEN:
-                # La Reine pose les pierres nécessaires pour le niveau courant
-                required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
-                for stone_name, amount in required_stones.items():
-                    for _ in range(amount):
-                        self.agent.cmd.send_command(f"Set {stone_name}")
+                # La Reine pose toutes ses pierres (les gardes posent les leurs aussi)
+                for stone_name, amount in list(self.agent.inventory.items()):
+                    if stone_name != 'food' and amount > 0:
+                        for _ in range(amount):
+                            self.agent.cmd.send_command(f"Set {stone_name}")
+                        self.agent.inventory[stone_name] = 0
                 success = self.agent.cmd.send_command("Incantation")
                 if success:
                     self.agent.level += 1
@@ -96,10 +113,11 @@ class StateComportment:
                         return self.act_elevating()  # Chaîner les incantations
             elif self.agent.role == AgentRole.GUARD:
                 # Les gardes déposent toutes leurs pierres et attendent
-                for stone_name, amount in self.agent.inventory.items():
-                    if stone_name != 'food':
+                for stone_name, amount in list(self.agent.inventory.items()):
+                    if stone_name != 'food' and amount > 0:
                         for _ in range(amount):
                             self.agent.cmd.send_command(f"Set {stone_name}")
+                        self.agent.inventory[stone_name] = 0
                 success = self.agent.cmd.wait_for_incantation_follower()
                 if success:
                     self.agent.level += 1

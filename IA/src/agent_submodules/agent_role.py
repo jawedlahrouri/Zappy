@@ -114,41 +114,61 @@ class RoleTask:
 
             logger.info(f"Reine : Check Décret Royal -> Gardes dispo (lvl >= 3): {len(guard_id)}/5, Protecteurs dispo: {len(protector_id)}/4 (Roster size: {len(ids_tries)})")
 
-            if len(guard_id) >= 5 and len(protector_id) >= 4:
+            if len(guard_id) >= 5:
                 self.agent.decret_royal_append = True
                 ids_str = "-".join(str(x) for x in guard_id + protector_id)
                 self.agent.decret_royal = self.agent.comms.encode(f"{self.agent.agent_id}-{ids_str}", "royalsummon")
                 logger.info(f"Reine : Décret Royal émis ! Gardes: {guard_id}, Protecteurs: {protector_id}")
         
-        # Diffuser le décret royal si pas en grouping/elevation
-        if self.agent.decret_royal_append and self.agent.state != AgentState.GROUPING and self.agent.state != AgentState.ELEVATION:
+        # Toujours diffuser le décret royal (même en GROUPING) pour que les agents gardent leurs rôles
+        if self.agent.decret_royal_append and self.agent.state != AgentState.ELEVATION:
             self.agent.cmd.send_command(f"Broadcast {self.agent.decret_royal}")
 
-        # Vérifier si les ressources globales sont suffisantes pour le Bus
-        missing = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
-        if len(missing) == 0 and self.agent.utils.is_food_critical_for_action(3000, self.agent.inventory):
-            self.agent.state = AgentState.GROUPING
-            self.agent.comportment.act_grouping()
+        # Si on est en ELEVATION, on continue l'élévation
+        if self.agent.state == AgentState.ELEVATION:
+            self.agent.comportment.act_elevating()
             return
 
-        # Vérifier si assez de joueurs pour lancer l'élévation
-        if self.agent.state == AgentState.GROUPING and len(self.agent.vision) > 0:
-            if self.agent.vision[0].count('player') >= 6:
+        # Si on est en GROUPING, vérifier si 6 joueurs sont réunis pour l'élévation
+        if self.agent.state == AgentState.GROUPING:
+            if len(self.agent.vision) > 0 and self.agent.vision[0].count('player') >= 6:
+                logger.info(f"Reine : 6 joueurs réunis ! Lancement de l'élévation !")
                 self.agent.state = AgentState.ELEVATION
                 self.agent.comportment.act_elevating()
                 return
+            # Pas encore 6 joueurs : broadcaster directement le message "grouping"
+            # (au lieu de passer par process_grouping qui ne marche pas pour la reine)
+            grouping_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "grouping")
+            self.agent.cmd.send_command(f"Broadcast {grouping_msg}")
+            logger.info(f"Reine : En attente de regroupement. Joueurs sur ma case : {self.agent.vision[0].count('player') if len(self.agent.vision) > 0 else 0}/6")
+            return
+
+        # Vérifier si les ressources globales sont suffisantes pour le Bus
+        missing = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
+        if len(missing) == 0:
+            if self.agent.utils.is_food_critical_for_action(3000, self.agent.inventory):
+                # Assez de pierres ET assez de food → passer en GROUPING
+                logger.info(f"Reine : Ressources suffisantes ! Passage en mode GROUPING.")
+                self.agent.state = AgentState.GROUPING
+                grouping_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "grouping")
+                self.agent.cmd.send_command(f"Broadcast {grouping_msg}")
+                return
+            else:
+                # Assez de pierres mais pas assez de food → farmer de la food
+                self.agent.state = AgentState.FARMING
+                self.agent.comportment.act_farming('food')
+                return
 
         # Par défaut : farmer les pierres manquantes
-        if self.agent.state != AgentState.GROUPING and self.agent.state != AgentState.ELEVATION:
-            self.agent.state = AgentState.FARMING
-            missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
-            if missing_stones:
-                self.agent.comportment.act_farming(missing_stones[0])
-            elif self.agent.inventory.get('food', 0) < 50:
-                self.agent.comportment.act_farming('food')
-            else:
-                self.agent.state = AgentState.WAIT
-                self.agent.comportment.act_wait()
+        self.agent.state = AgentState.FARMING
+        missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
+        if missing_stones:
+            self.agent.comportment.act_farming(missing_stones[0])
+        elif self.agent.inventory.get('food', 0) < 50:
+            self.agent.comportment.act_farming('food')
+        else:
+            self.agent.state = AgentState.WAIT
+            self.agent.comportment.act_wait()
 
     def act_guard(self):
         # Priorité 1 : vérifier la nourriture

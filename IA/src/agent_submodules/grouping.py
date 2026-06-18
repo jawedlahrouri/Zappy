@@ -71,14 +71,25 @@ class Grouper:
             -vision (list): La vision actuelle de l'agent.
         Retourne:
             -bool: True si le regroupement est réussi, False sinon."""
-
         call_k, grouping_type = self.analyze_messages(level, my_id)
-        if grouping_type == 'LEADER':
-            return self.act_leader(level, my_id, vision)
-        elif grouping_type == 'FOLLOWER':
-            return self.act_follower(level, my_id, vision)
-        elif grouping_type == 'ROYAL_GROUPING':
+        
+        # Gestion du Décret Royal (prioritaire)
+        if grouping_type == 'ROYAL_GROUPING':
             return self.act_royal_grouping(level, my_id, vision, call_k)
+            
+        # Mise à jour du rôle selon les messages reçus
+        if grouping_type in ['LEADER', 'FOLLOWER']:
+            self.role = grouping_type
+        # Si on n'a toujours pas de rôle, on devient LEADER par défaut (comme dans l'ancienne version)
+        elif self.role is None:
+            self.role = 'LEADER'
+
+        # Agir selon le rôle mémorisé
+        if self.role == 'LEADER':
+            return self.act_leader(level, my_id, vision)
+        elif self.role == 'FOLLOWER':
+            return self.act_follower(level, my_id, vision)
+            
         return False
 
     def act_grouping_protector(self):

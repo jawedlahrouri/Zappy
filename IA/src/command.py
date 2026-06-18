@@ -21,8 +21,7 @@ class ZappyCommand:
         logger.info(f"l'agent attend les messages d'incantation.")
         
         # Envoie une commande bidon pour ne pas bloquer infiniment.
-        # Si l'incantation du leader réussit, le serveur envoie "Elevation underway" AVANT la réponse à Inventory.
-        # Si l'incantation échoue ou n'est jamais lancée, on recevra la réponse d'Inventory ("[ food ... ]").
+        timeout_counter = 0
         self.network.send_command("Inventory\n")
         
         while True:
@@ -36,9 +35,11 @@ class ZappyCommand:
                     return True
                 return False
             elif response.startswith("["): 
-                # On a reçu l'inventaire : l'incantation n'a pas eu lieu.
-                logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
-                return False
+                timeout_counter += 1
+                if timeout_counter > 150: # Timeout de sécurité augmenté pour les hauts niveaux (11 pierres * 7 TU = 77 TU + marge)
+                    logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
+                    return False
+                self.network.send_command("Inventory\n")
             elif response == "ko":
                 return False
 
