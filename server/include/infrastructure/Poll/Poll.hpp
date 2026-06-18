@@ -9,11 +9,12 @@
 #define POLL_HPP_
 
 #include "IPoll.hpp"
-#include "Sys_Poll.hpp"
+#include "INetworkLoader.hpp"
+#include <vector>
 
 class Poll : public IPoll {
     public:
-        Poll() = default;
+        explicit Poll(const NetworkBackend::Symbols &symbols);
         ~Poll() override = default;
 
         void addFd(int fd, NetworkEvent event) override;
@@ -26,11 +27,18 @@ class Poll : public IPoll {
         bool isWritable(size_t index) const override;
         bool isError(size_t index) const override;
 
-        int getFd(size_t index) const override;
+        int getFd(size_t index) const override;\
         size_t getSize() const override;
 
     private:
-        std::vector<SysPoll::PollFd> _pollfds;
+        struct PollEntry {
+            int fd;
+            short events;
+            short revents;
+        };
+
+        const NetworkBackend::Symbols &_symbols;
+        std::vector<PollEntry> _pollfds;
 };
 
 #endif /* !POLL_HPP_ */

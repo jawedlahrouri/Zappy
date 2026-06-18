@@ -48,7 +48,7 @@ std::string NetworkLoader::defaultLibraryPath()
 #ifdef _WIN32
     return "zappy_network_win.dll";
 #else
-    return "./zappy_network_linux.so";
+    return "./libzappy_network_linux.so";
 #endif
 }
 

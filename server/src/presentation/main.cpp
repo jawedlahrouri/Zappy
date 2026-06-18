@@ -10,6 +10,7 @@
 #include "ServerException.hpp"
 #include "Socket.hpp"
 #include "Poll.hpp"
+#include "NetworkLoader.hpp"
 #include "application/Server/Server.hpp"
 #include "shared/ConsoleLogger.hpp"
 
@@ -78,8 +79,13 @@ int main (int argc, char** argv) {
     try {
     ConsoleLogger logger;
     ServerConfig config;
-    auto masterSocket = std::make_unique<Socket>();
-    auto poll = std::make_unique<Poll>();
+
+    NetworkLoader networkLoader;
+    networkLoader.load(NetworkLoader::defaultLibraryPath());
+    const NetworkBackend::Symbols &symbols = networkLoader.getSymbols();
+
+    auto masterSocket = std::make_unique<Socket>(symbols);
+    auto poll = std::make_unique<Poll>(symbols);
     Server server(logger, std::move(masterSocket), std::move(poll));
     
     if (argc == 2 && std::string(argv[1]) == "--help") {
