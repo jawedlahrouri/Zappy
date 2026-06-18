@@ -6,7 +6,9 @@
 */
 
 #include "Socket.hpp"
+#include "Sys_Socket.hpp"
 #include "ServerException.hpp"
+
 #include <vector>
 
 Socket::Socket(const NetworkBackend::Symbols &symbols)
