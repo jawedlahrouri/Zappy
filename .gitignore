@@ -40,3 +40,4 @@ server_strace.*
 *.dll
 *.exe
 vcpkg.json
+zappy_gui.AppImage

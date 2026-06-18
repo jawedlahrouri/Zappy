@@ -4,14 +4,26 @@
 # Configuration des variables du jeu
 # ==========================================
 PORT=4242
-WIDTH=25
+WIDTH=10
 HEIGHT=10
 TEAM1="TeamA"
 TEAM2="TeamB"
-TEAM3="TeamC"
 CLIENTS_NB=3
 FREQ=100
 MACHINE="127.0.0.1"
+
+DEBUG_MODE=0
+while getopts "d" opt; do
+  case ${opt} in
+    d )
+      DEBUG_MODE=1
+      ;;
+    \? )
+      echo "Usage: ./lunch.sh [-d]"
+      exit 1
+      ;;
+  esac
+done
 
 # ==========================================
 # Fonction de nettoyage (Clean exit)
@@ -34,7 +46,7 @@ trap cleanup SIGINT
 # ==========================================
 echo "[+] Lancement du zappy_server..."
 # Options du serveur basées sur le sujet
-./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 $TEAM3 -c $CLIENTS_NB -f $FREQ &
+./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 -c $CLIENTS_NB -f $FREQ &
 SERVER_PID=$!
 
 # Petite pause pour laisser le temps au serveur d'ouvrir ses sockets réseau
@@ -44,14 +56,12 @@ sleep 1
 # 3. Lancement des IA
 # ==========================================
 echo "[+] Lancement des clients IA..."
-# Lancement de 2 drones pour la TeamA et 1 pour la TeamB.
-# TeamA sera bleue et TeamB sera rouge dans le GUI.
+# Lancement de 2 drones pour la TeamA et 1 pour la TeamB
 # On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
 ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
 ./zappy_ai -p $PORT -n $TEAM2 -h $MACHINE > /dev/null 2>&1 &
-./zappy_ai -p $PORT -n $TEAM3 -h $MACHINE > /dev/null 2>&1 &
 
-echo "[+] Les IA sont lancées : $TEAM1 en bleu, $TEAM2 en rouge."
+echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."
 
 sleep 3
@@ -61,7 +71,12 @@ sleep 3
 # ==========================================
 echo "[+] Lancement du zappy_gui..."
 # Le GUI a besoin du port et de l'hôte
-./zappy_gui -p $PORT -h $MACHINE
+if [ $DEBUG_MODE -eq 1 ]; then
+    echo "[!] Mode DEBUG: Lancement de zappy_gui.AppImage"
+    env WAYLAND_DISPLAY="" ./zappy_gui.AppImage -p $PORT -h $MACHINE &
+else
+    env WAYLAND_DISPLAY="" ./zappy_gui -p $PORT -h $MACHINE &
+fi
 
 # On attend que le processus du serveur se termine (bloque le script ici)
 wait $SERVER_PID
