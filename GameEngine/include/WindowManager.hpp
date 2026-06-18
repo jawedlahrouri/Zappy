@@ -8,41 +8,43 @@
 #ifndef WINDOWMANAGER_HPP_
 #define WINDOWMANAGER_HPP_
 
+#include "GameWorld.hpp"
+#include "IGraphic.hpp"
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
-#include "GameWorld.hpp"
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-class WindowManager {
+class WindowManager : public IGraphic {
 public:
     WindowManager(unsigned int width = 1920, unsigned int height = 1080, const std::string& title = "Zappy GUI");
-    ~WindowManager();
+    ~WindowManager() override;
 
-    bool isOpen() const;
+    bool isOpen() const override;
 
-    bool handleMenuEvents();
-    bool handleGameEvents(const GameWorld& world);
-    std::optional<std::pair<int, int>> consumeTileRequest();
-    std::optional<int> consumeTimeRequest();
+    bool handleMenuEvents() override;
+    bool handleGameEvents(const GameWorld& world) override;
+    std::optional<std::pair<int, int>> consumeTileRequest() override;
+    std::optional<int> consumeTimeRequest() override;
 
-    void clear();
-    void display();
+    void clear() override;
+    void display() override;
 
-    void drawMenu();
-    void drawWorld(const GameWorld& world);
-    const std::string& getMenuIp() const;
-    const std::string& getMenuPort() const;
-    void setMenuConnectionInfo(const std::string& ip, const std::string& port);
-    void setMenuStatus(const std::string& status);
-    void resetMenuTeamNames();
-    void addMenuTeamName(const std::string& teamName);
-    bool consumeMenuConnectionEdited();
-    void setServerFreq(int freq);
-    int getServerFreq() const;
-    bool isTimePaused() const;
+    void drawMenu() override;
+    void drawWorld(const GameWorld& world) override;
+    const std::string& getMenuIp() const override;
+    const std::string& getMenuPort() const override;
+    void setMenuConnectionInfo(const std::string& ip,
+        const std::string& port) override;
+    void setMenuStatus(const std::string& status) override;
+    void resetMenuTeamNames() override;
+    void addMenuTeamName(const std::string& teamName) override;
+    bool consumeMenuConnectionEdited() override;
+    void setServerFreq(int freq) override;
+    int getServerFreq() const override;
+    bool isTimePaused() const override;
 
     private:
         static constexpr float ZOOM_STEP = 1.1f;
