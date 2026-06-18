@@ -99,6 +99,18 @@ void Map::removeResourceFromTile(int x, int y, ResourceType type, int quantity)
     }
 }
 
+int Map::countResource(ResourceType type) const
+{
+    int total = 0;
+
+    for (int y = 0; y < _height; y++) {
+        for (int x = 0; x < _width; x++) {
+            total += _grid[y][x].resources[type];
+        }
+    }
+    return total;
+}
+
 const std::unordered_set<int>& Map::getDirtyTiles() const
 {
     return _dirtyTiles;

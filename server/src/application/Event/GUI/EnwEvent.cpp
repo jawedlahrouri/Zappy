@@ -39,7 +39,11 @@ void EventVisitor::visit(EnwEvent *event) {
                             std::to_string(event->getPlayerId()) + " " +
                             std::to_string(event->getX()) + " " +
                             std::to_string(event->getY()) + "\n";
-        _network.sendToGuis(payload);
+        if (_targetFd != -1) {
+            _network.sendResponse(_targetFd, payload);
+        } else {
+            _network.sendToGuis(payload);
+        }
     } catch (const std::exception &e) {
         throw ServerException(std::string("EventVisitor::visit(EnwEvent): ") + e.what());
     }

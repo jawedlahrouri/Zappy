@@ -46,8 +46,9 @@ void AiVisitor::visit(IncantationCommand *element) {
 
         auto& engine = _network.getGameEngine();
         auto players = engine->getPlayersOnTileForIncantation(x, y, level, _network);
+        int requiredPlayers = engine->getRequiredPlayersForIncantation(level);
 
-        if (players.size() > 0 && engine->checkIncantationRequirements(x, y, level)) {
+        if (players.size() >= static_cast<size_t>(requiredPlayers) && engine->checkIncantationRequirements(x, y, level)) {
             engine->consumeIncantationResources(x, y, level);
             for (auto& p : players) {
                 p->setLevel(level + 1);

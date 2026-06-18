@@ -17,7 +17,7 @@
 
 class Login {
     public:
-        static void login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network);
+        static bool login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network);
         static void login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network);
 };
 

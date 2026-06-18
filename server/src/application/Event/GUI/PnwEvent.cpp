@@ -28,7 +28,11 @@ void EventVisitor::visit(PnwEvent *event) {
                             std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
                             std::to_string(static_cast<int>(ai->getOrientation())) + " " + 
                             std::to_string(ai->getLevel()) + " " + ai->getTeamName();
-        _network.sendToGuis(payload);
+        if (_targetFd != -1) {
+            _network.sendResponse(_targetFd, payload);
+        } else {
+            _network.sendToGuis(payload);
+        }
     } catch (const std::exception &e) {
         throw ServerException(std::string("EventVisitor::visit(PnwEvent): ") + e.what());
     }

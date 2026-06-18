@@ -59,6 +59,7 @@ class Map {
 
         void addResourceToTile(int x, int y, ResourceType type, int quantity);
         void removeResourceFromTile(int x, int y, ResourceType type, int quantity);
+        int countResource(ResourceType type) const;
         
         const std::unordered_set<int>& getDirtyTiles() const;
         void clearDirtyTiles();

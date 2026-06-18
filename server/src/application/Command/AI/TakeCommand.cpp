@@ -11,6 +11,9 @@
 #include "application/Server/Server.hpp"
 #include "ServerException.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PgtEvent.hpp"
+#include "application/Event/GUI/PinEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 #include <iostream>
 
 void TakeCommand::Accept(IAiVisitor *visitor) {
@@ -78,6 +81,17 @@ void AiVisitor::visit([[maybe_unused]] TakeCommand *element) {
         inventory[resource_name]++;
         
         _network.sendResponse(element->getClient()->getId(), "ok\n");
+
+        PgtEvent pgtEvent(element->getClient()->getId(), resType);
+        EventVisitor eventVisitor(_network);
+        pgtEvent.Accept(&eventVisitor);
+
+        auto ai = element->getClient();
+        auto& inv = ai->getInventory();
+        PinEvent pinEvent(ai->getId(), ai->getX(), ai->getY(),
+                        inv.at("food"), inv.at("linemate"), inv.at("deraumere"),
+                        inv.at("sibur"), inv.at("mendiane"), inv.at("phiras"), inv.at("thystame"));
+        pinEvent.Accept(&eventVisitor);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

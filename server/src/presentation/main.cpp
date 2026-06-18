@@ -10,6 +10,7 @@
 #include "ServerException.hpp"
 #include "Socket.hpp"
 #include "Poll.hpp"
+#include "NetworkLoader.hpp"
 #include "application/Server/Server.hpp"
 #include "shared/ConsoleLogger.hpp"
 
@@ -19,7 +20,7 @@ struct ServerConfig {
     int height = 0;
     std::vector<std::string> teamNames;
     int clientsNb = 0;
-    int freq = 0;
+    int freq = 100;
 }; 
 
 static void print_help() {
@@ -58,8 +59,8 @@ ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
             throw ServerException("Argument non reconnu : " + std::string(argv[i]));
         }
     }
-    if (config.port <= 0 || config.width <= 0 || config.height <= 0 || 
-        config.clientsNb <= 0 || config.teamNames.empty()) {
+    if (config.port <= 0 || config.width <= 0 || config.height <= 0 ||
+        config.clientsNb <= 0 || config.teamNames.empty() || config.freq <= 0) {
         print_help();
         throw ServerException("Parametres obligatoires manquants ou invalides.");
     }
@@ -78,8 +79,13 @@ int main (int argc, char** argv) {
     try {
     ConsoleLogger logger;
     ServerConfig config;
-    auto masterSocket = std::make_unique<Socket>();
-    auto poll = std::make_unique<Poll>();
+
+    NetworkLoader networkLoader;
+    networkLoader.load(NetworkLoader::defaultLibraryPath());
+    const NetworkBackend::Symbols &symbols = networkLoader.getSymbols();
+
+    auto masterSocket = std::make_unique<Socket>(symbols);
+    auto poll = std::make_unique<Poll>(symbols);
     Server server(logger, std::move(masterSocket), std::move(poll));
     
     if (argc == 2 && std::string(argv[1]) == "--help") {

@@ -34,4 +34,10 @@ compile_commands.json
 subject/*
 .agents/
 build/
+*.log
+server_strace.*
+*.so
+*.dll
+*.exe
+vcpkg.json
 zappy_gui.AppImage

@@ -54,7 +54,7 @@ class Client {
 
     private:
         CircularBuffer _readBuffer;
-        CircularBuffer _writeBuffer;
+        std::string _writeBuffer;
 };
 
 #endif /* !CLIENT_HPP_ */
