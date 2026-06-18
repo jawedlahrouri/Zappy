@@ -15,7 +15,10 @@
 #include <cmath>
 #include <algorithm>
 #include "shared/ILogger.hpp"
-
+#include "application/Event/GUI/BctEvent.hpp"
+#include "application/Event/GUI/PfkEvent.hpp"
+#include "application/Event/GUI/PicEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 Map& GameEngine::getMap()
 {
     return _map;
@@ -66,15 +69,10 @@ void GameEngine::update(INetworkProvider& network)
                 for (int y = 0; y < _height; y++) {
                     for (int x = 0; x < _width; x++) {
                         const Tile &t = _map.getTile(x, y);
-                        std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
-                                            std::to_string(t.resources[FOOD]) + " " +
-                                            std::to_string(t.resources[LINEMATE]) + " " +
-                                            std::to_string(t.resources[DERAUMERE]) + " " +
-                                            std::to_string(t.resources[SIBUR]) + " " +
-                                            std::to_string(t.resources[MENDIANE]) + " " +
-                                            std::to_string(t.resources[PHIRAS]) + " " +
-                                            std::to_string(t.resources[THYSTAME]);
-                        network.sendToGuis(bct_msg);
+                        BctEvent bctEvent(x, y, t.resources[FOOD], t.resources[LINEMATE], t.resources[DERAUMERE],
+                                        t.resources[SIBUR], t.resources[MENDIANE], t.resources[PHIRAS], t.resources[THYSTAME]);
+                        EventVisitor visitor(network);
+                        bctEvent.Accept(&visitor);
                     }
                 }
             }
@@ -167,7 +165,9 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
             }
         }
         if (next_cmd == "Fork") {
-            network.sendToGuis("pfk " + std::to_string(ai->getId()) + "\n");
+            PfkEvent pfkEvent(ai->getId());
+            EventVisitor visitor(network);
+            pfkEvent.Accept(&visitor);
         }
 
         ai->setActionTicksLeft(network.getCommandDuration(next_cmd));
@@ -279,15 +279,16 @@ bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider&
         return false;
     }
 
-    std::string pic_msg = "pic " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(level);
+    std::vector<int> playerIds;
     for (const auto& p : players) {
         p->setActionTicksLeft(300);
         network.sendResponse(p->getId(), "Elevation underway\n");
-        pic_msg += " " + std::to_string(p->getId());
+        playerIds.push_back(p->getId());
     }
-    pic_msg += "\n";
     
-    network.sendToGuis(pic_msg);
+    PicEvent picEvent(x, y, level, playerIds);
+    EventVisitor visitor(network);
+    picEvent.Accept(&visitor);
     return true;
 }
 

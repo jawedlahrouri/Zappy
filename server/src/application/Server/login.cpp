@@ -10,7 +10,14 @@
 #include "application/Server/login.hpp"
 #include "GameEngine.hpp"
 #include "application/Event/GUI/EventVisitor.hpp"
+#include "application/Event/GUI/EnwEvent.hpp"
 #include "application/Event/GUI/PnwEvent.hpp"
+#include "application/Event/GUI/EboEvent.hpp"
+#include "application/Command/GUI/BctCommand.hpp"
+#include "application/Command/GUI/MszCommand.hpp"
+#include "application/Command/GUI/SgtCommand.hpp"
+#include "application/Command/GUI/TnaCommand.hpp"
+#include "application/Command/GUI/GuiVisitor.hpp"
 #include "AI.hpp"
 #include "GUI.hpp"
 #include "domain/Map/Map.hpp"
@@ -46,7 +53,10 @@ static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetw
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(1, 4);
         ai->setOrientation(dis(gen));
-        network.sendToGuis("ebo " + std::to_string(egg->getId()) + "\n");
+        
+        EboEvent eboEvent(egg->getId());
+        EventVisitor eventVisitor(network);
+        eboEvent.Accept(&eventVisitor);
     } else {
         ai->setX(0);
         ai->setY(0);
@@ -112,33 +122,34 @@ void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
 {
     try {
         int fd = gui->getId();
+        GuiVisitor guiVisitor(network);
+        EventVisitor eventVisitor(network);
+        eventVisitor.setTargetClient(fd);
 
-        if (network.getGameEngine()) {
-            network.sendResponse(fd, "msz " + std::to_string(network.getGameEngine()->getWidth()) + " " + std::to_string(network.getGameEngine()->getHeight()));
-        } else {
-            network.sendResponse(fd, "msz 0 0");
-        }
-        network.sendResponse(fd, "sgt " + std::to_string(network.getFreq()));
-        for (const auto &team : network.getTeamNames()) {
-            network.sendResponse(fd, "tna " + team);
-        }
+        MszCommand mszCmd;
+        mszCmd.setClient(gui);
+        mszCmd.Accept(&guiVisitor);
+
+        SgtCommand sgtCmd;
+        sgtCmd.setClient(gui);
+        sgtCmd.Accept(&guiVisitor);
+
+        TnaCommand tnaCmd;
+        tnaCmd.setClient(gui);
+        tnaCmd.Accept(&guiVisitor);
 
         if (network.getGameEngine()) {
             auto& map = network.getGameEngine()->getMap();
             int width = map.getWidth();
             int height = map.getHeight();
+            
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
-                    const Tile& tile = map.getTile(x, y);
-                    std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
-                                          std::to_string(tile.resources[FOOD]) + " " +
-                                          std::to_string(tile.resources[LINEMATE]) + " " +
-                                          std::to_string(tile.resources[DERAUMERE]) + " " +
-                                          std::to_string(tile.resources[SIBUR]) + " " +
-                                          std::to_string(tile.resources[MENDIANE]) + " " +
-                                          std::to_string(tile.resources[PHIRAS]) + " " +
-                                          std::to_string(tile.resources[THYSTAME]);
-                    network.sendResponse(fd, bct_msg);
+                    BctCommand bctCmd;
+                    bctCmd.setX(x);
+                    bctCmd.setY(y);
+                    bctCmd.setClient(gui);
+                    bctCmd.Accept(&guiVisitor);
                 }
             }
 
@@ -146,10 +157,8 @@ void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
                 for (int x = 0; x < width; ++x) {
                     const Tile& tile = map.getTile(x, y);
                     for (const auto& egg : tile.getEggs()) {
-                        std::string enw_msg = "enw " + std::to_string(egg->getId()) + " " +
-                                              std::to_string(egg->getOwnerId()) + " " +
-                                              std::to_string(x) + " " + std::to_string(y);
-                        network.sendResponse(fd, enw_msg);
+                        EnwEvent enwEvent(egg->getId(), egg->getOwnerId(), x, y);
+                        enwEvent.Accept(&eventVisitor);
                     }
                 }
             }
@@ -159,11 +168,8 @@ void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
             if (client->getType() == ClientType::AI) {
                 auto ai = std::dynamic_pointer_cast<AI>(client);
                 if (ai) {
-                    std::string pnw_msg = "pnw " + std::to_string(ai->getId()) + " " +
-                                        std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
-                                        std::to_string(ai->getOrientation()) + " " +
-                                        std::to_string(ai->getLevel()) + " " + ai->getTeamName();
-                    network.sendResponse(fd, pnw_msg);
+                    PnwEvent pnwEvent(ai);
+                    pnwEvent.Accept(&eventVisitor);
                 }
             }
         }

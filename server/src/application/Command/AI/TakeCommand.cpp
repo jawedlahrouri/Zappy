@@ -11,6 +11,9 @@
 #include "application/Server/Server.hpp"
 #include "ServerException.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PgtEvent.hpp"
+#include "application/Event/GUI/PinEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 #include <iostream>
 
 void TakeCommand::Accept(IAiVisitor *visitor) {
@@ -79,22 +82,16 @@ void AiVisitor::visit([[maybe_unused]] TakeCommand *element) {
         
         _network.sendResponse(element->getClient()->getId(), "ok\n");
 
-        std::string pgt_msg = "pgt " + std::to_string(element->getClient()->getId()) + " " + std::to_string(resType) + "\n";
-        _network.sendToGuis(pgt_msg);
+        PgtEvent pgtEvent(element->getClient()->getId(), resType);
+        EventVisitor eventVisitor(_network);
+        pgtEvent.Accept(&eventVisitor);
 
         auto ai = element->getClient();
         auto& inv = ai->getInventory();
-        std::string pin_msg = "pin " + std::to_string(ai->getId()) + " " +
-                            std::to_string(ai->getX()) + " " +
-                            std::to_string(ai->getY()) + " " +
-                            std::to_string(inv.at("food")) + " " +
-                            std::to_string(inv.at("linemate")) + " " +
-                            std::to_string(inv.at("deraumere")) + " " +
-                            std::to_string(inv.at("sibur")) + " " +
-                            std::to_string(inv.at("mendiane")) + " " +
-                            std::to_string(inv.at("phiras")) + " " +
-                            std::to_string(inv.at("thystame")) + "\n";
-        _network.sendToGuis(pin_msg);
+        PinEvent pinEvent(ai->getId(), ai->getX(), ai->getY(),
+                        inv.at("food"), inv.at("linemate"), inv.at("deraumere"),
+                        inv.at("sibur"), inv.at("mendiane"), inv.at("phiras"), inv.at("thystame"));
+        pinEvent.Accept(&eventVisitor);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

@@ -11,7 +11,8 @@
 #include "application/Server/Server.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
 #include "application/Event/GUI/PexEvent.hpp"
-
+#include "application/Event/GUI/EdiEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 #include "ServerException.hpp"
 #include <iostream>
 
@@ -70,7 +71,11 @@ static bool destroy_egg(std::shared_ptr<AI> client, INetworkProvider &network) {
     bool destroyed = false;
     for (auto &egg : eggs) {
         network.getGameEngine()->getMap().removeEgg(egg->getId());
-        network.sendToGuis("edi " + std::to_string(egg->getId()) + "\n");
+        
+        EdiEvent ediEvent(egg->getId());
+        EventVisitor eventVisitor(network);
+        ediEvent.Accept(&eventVisitor);
+        
         destroyed = true;
     }
     return destroyed;
