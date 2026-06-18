@@ -95,6 +95,13 @@ void Socket::setNonBlocking(bool nonBlocking)
     }
 }
 
+void Socket::setTcpNoDelay(bool noDelay)
+{
+    if (SysSocket::setTcpNoDelay(_socket, noDelay) == -1) {
+        throw ServerException(std::string("set tcp no delay failed: ") + SysSocket::getLastError());
+    }
+}
+
 void Socket::closeSocket()
 {
     if (_clientSocket != -1) {

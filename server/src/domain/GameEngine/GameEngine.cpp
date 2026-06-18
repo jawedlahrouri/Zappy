@@ -66,14 +66,14 @@ void GameEngine::update(INetworkProvider& network)
             }
 
             if (hasGui) {
-                for (int y = 0; y < _height; y++) {
-                    for (int x = 0; x < _width; x++) {
-                        const Tile &t = _map.getTile(x, y);
-                        BctEvent bctEvent(x, y, t.resources[FOOD], t.resources[LINEMATE], t.resources[DERAUMERE],
-                                        t.resources[SIBUR], t.resources[MENDIANE], t.resources[PHIRAS], t.resources[THYSTAME]);
-                        EventVisitor visitor(network);
-                        bctEvent.Accept(&visitor);
-                    }
+                for (int key : _map.getDirtyTiles()) {
+                    int x = key % _width;
+                    int y = key / _width;
+                    const Tile &t = _map.getTile(x, y);
+                    BctEvent bctEvent(x, y, t.resources[FOOD], t.resources[LINEMATE], t.resources[DERAUMERE],
+                                    t.resources[SIBUR], t.resources[MENDIANE], t.resources[PHIRAS], t.resources[THYSTAME]);
+                    EventVisitor visitor(network);
+                    bctEvent.Accept(&visitor);
                 }
             }
 

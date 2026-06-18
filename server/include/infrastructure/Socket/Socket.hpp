@@ -24,6 +24,7 @@ class Socket : public ISocket {
         size_t sendData(const std::string &data) override;
         std::string recvData(size_t maxSize) override;
         void setNonBlocking(bool nonBlocking) override;
+        void setTcpNoDelay(bool noDelay) override;
 
         int getSocket() const override;
         int getClientSocket() const override;

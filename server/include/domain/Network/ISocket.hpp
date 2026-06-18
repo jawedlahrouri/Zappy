@@ -22,6 +22,7 @@ class ISocket {
         virtual size_t sendData(const std::string &data) = 0;
         virtual std::string recvData(size_t maxSize) = 0;
         virtual void setNonBlocking(bool nonBlocking) = 0;
+        virtual void setTcpNoDelay(bool noDelay) = 0;
         virtual void closeSocket() = 0;
         virtual int getSocket() const = 0;
         virtual int getClientSocket() const = 0;

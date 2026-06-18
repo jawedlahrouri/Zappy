@@ -251,7 +251,7 @@ void Server::synchronizeTickTime(bool& was_empty, std::chrono::steady_clock::tim
 void Server::runGameTick(std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration)
 {
     auto now = std::chrono::steady_clock::now();
-    if (now >= next_tick_time) {
+    while (now >= next_tick_time) {
         if (_gameEngine && !_clientManager.getClients().empty()) {
             _gameEngine->update(*this);
             std::vector<int> clientsToRemove;
@@ -263,6 +263,7 @@ void Server::runGameTick(std::chrono::steady_clock::time_point& next_tick_time, 
             }
         }
         next_tick_time += tick_duration;
+        now = std::chrono::steady_clock::now();
     }
 }
 
@@ -270,11 +271,11 @@ void Server::runPollLoop()
 {
     try {
         _logger.info("Waiting for connections...");
-        std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / _freq);
-        auto next_tick_time = std::chrono::steady_clock::now() + tick_duration;
+        auto next_tick_time = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / _freq);
         bool was_empty = true;
 
         while (true) {
+            std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / _freq);
             int timeout_ms = calculateTimeout(next_tick_time);
             handlePollEvents(timeout_ms);
             synchronizeTickTime(was_empty, next_tick_time, tick_duration);

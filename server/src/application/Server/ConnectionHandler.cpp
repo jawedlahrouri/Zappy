@@ -27,6 +27,7 @@ void ConnectionHandler::acceptClient(ISocket& masterSocket, IPoll& poll, ClientM
         
         if (fd != -1) {
             client_socket->setNonBlocking(true);
+            client_socket->setTcpNoDelay(true);
             poll.addFd(fd, NetworkEvent::Input);
             clientManager.addClient(fd, std::make_shared<Client>(std::move(client_socket), fd));
             logger.info("New client connected on socket " + std::to_string(fd));
