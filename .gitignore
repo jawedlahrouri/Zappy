@@ -36,3 +36,5 @@ subject/*
 build/
 *.log
 server_strace.*
+*.so
+*.dll
