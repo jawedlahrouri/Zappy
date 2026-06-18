@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace {
-    static thread_local char s_errorBuf[256];
+    static char s_errorBuf[256];
 }
 
 extern "C" {

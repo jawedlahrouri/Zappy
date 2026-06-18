@@ -68,8 +68,8 @@ __declspec(dllexport) int net_bindInet(int sockfd, int port)
     addr.sin_port        = htons(static_cast<u_short>(port));
     addr.sin_addr.s_addr = INADDR_ANY;
     return ::bind(static_cast<SOCKET>(sockfd),
-                  reinterpret_cast<struct sockaddr *>(&addr),
-                  sizeof(addr));
+                reinterpret_cast<struct sockaddr *>(&addr),
+                sizeof(addr));
 }
 
 __declspec(dllexport) int net_acceptInet(int sockfd)
@@ -78,7 +78,7 @@ __declspec(dllexport) int net_acceptInet(int sockfd)
     int addrLen = sizeof(addr);
     SOCKET result = ::accept(static_cast<SOCKET>(sockfd),
                              reinterpret_cast<struct sockaddr *>(&addr),
-                             &addrLen);
+                            &addrLen);
     if (result == INVALID_SOCKET) {
         return -1;
     }
@@ -92,7 +92,7 @@ __declspec(dllexport) int net_listen(int sockfd, int backlog)
 
 __declspec(dllexport) long net_send(int sockfd, const void *buf, std::size_t len)
 {
-    /* MSG_NOSIGNAL does not exist on Windows; flag 0 is the equivalent */
+    /* MSG_NOSIGNAL does not exist on Windows flag 0 is the equivalent */
     int result = ::send(static_cast<SOCKET>(sockfd),
                         static_cast<const char *>(buf),
                         static_cast<int>(len),

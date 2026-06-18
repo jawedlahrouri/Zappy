@@ -81,7 +81,6 @@ int net_poll(int *fds, short *events, short *revents, unsigned int count, int ti
 
 __declspec(dllexport) int net_isInterrupted()
 {
-    /* WSAEINTR is the WinSock2 equivalent of EINTR */
     return (WSAGetLastError() == WSAEINTR) ? 1 : 0;
 }
 
