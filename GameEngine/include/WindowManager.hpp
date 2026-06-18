@@ -8,6 +8,7 @@
 #ifndef WINDOWMANAGER_HPP_
 #define WINDOWMANAGER_HPP_
 
+#include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include "GameWorld.hpp"
 #include <optional>
@@ -59,6 +60,9 @@ public:
         void create2DWindow(unsigned int width, unsigned int height);
         void loadTextures();
         void loadFont();
+        void loadMenuMusic();
+        void playMenuMusic();
+        void stopMenuMusic();
         void updateView(unsigned int width, unsigned int height);
         void zoomView(float factor);
         void resetZoom();
@@ -79,6 +83,7 @@ public:
         void clearSelection();
 
         sf::RenderWindow _window;
+        sf::Music _menuMusic;
         sf::View _worldView;
         sf::Font _font;
         sf::Vector2f _viewCenter;
@@ -93,6 +98,7 @@ public:
         unsigned int _height;
         std::string _title;
         bool _fontLoaded;
+        bool _menuMusicLoaded;
         sf::Texture _tileTexture;
         sf::Texture _linemateTexture;
         std::string _menuIp;
