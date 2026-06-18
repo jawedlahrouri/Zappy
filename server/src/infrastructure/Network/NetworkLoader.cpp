@@ -13,7 +13,7 @@
     #include <windows.h>
     #define OPEN_LIB(path)      static_cast<void *>(LoadLibraryA(path.c_str()))
     #define CLOSE_LIB(handle)   FreeLibrary(static_cast<HMODULE>(handle))
-    #define GET_SYM(h, name)    static_cast<void *>(GetProcAddress(static_cast<HMODULE>(h), name))
+    #define GET_SYM(h, name)    reinterpret_cast<void *>(GetProcAddress(static_cast<HMODULE>(h), name))
     static std::string getPlatformError()
     {
         DWORD code = GetLastError();

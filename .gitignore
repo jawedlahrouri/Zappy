@@ -38,3 +38,5 @@ build/
 server_strace.*
 *.so
 *.dll
+*.exe
+vcpkg.json

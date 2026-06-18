@@ -12,8 +12,10 @@
 
 #include <winsock2.h>
 #include <cstring>
+#include <string>
+#include <cstdio>
 
-#pragma comment(lib, "ws2_32.lib")
+// #pragma comment(lib, "ws2_32.lib")
 
 namespace {
     static thread_local char s_errorBuf[256];
@@ -40,14 +42,39 @@ int net_poll(int *fds, short *events, short *revents, unsigned int count, int ti
 
     for (unsigned int i = 0; i < count; ++i) {
         pfdBuf[i].fd      = static_cast<SOCKET>(fds[i]);
-        pfdBuf[i].events  = events[i];
+        
+        short winEvents = 0;
+        if (events[i] & 1) { // POSIX PollIn
+            winEvents |= POLLIN;
+        }
+        if (events[i] & 4) { // POSIX PollOut
+            winEvents |= POLLOUT;
+        }
+        
+        pfdBuf[i].events  = winEvents;
         pfdBuf[i].revents = 0;
     }
 
     int ret = ::WSAPoll(pfdBuf, static_cast<ULONG>(count), timeout);
 
     for (unsigned int i = 0; i < count; ++i) {
-        revents[i] = pfdBuf[i].revents;
+        short posixRevents = 0;
+        if (pfdBuf[i].revents & POLLIN) {
+            posixRevents |= 1;
+        }
+        if (pfdBuf[i].revents & POLLOUT) {
+            posixRevents |= 4;
+        }
+        if (pfdBuf[i].revents & POLLERR) {
+            posixRevents |= 8;
+        }
+        if (pfdBuf[i].revents & POLLHUP) {
+            posixRevents |= 16;
+        }
+        if (pfdBuf[i].revents & POLLNVAL) {
+            posixRevents |= 32;
+        }
+        revents[i] = posixRevents;
     }
     return ret;
 }

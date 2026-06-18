@@ -19,8 +19,9 @@
 #include <ws2tcpip.h>
 #include <cstring>
 #include <cstddef>
+#include <string>
 
-#pragma comment(lib, "ws2_32.lib")
+// #pragma comment(lib, "ws2_32.lib")
 
 /*
 ** WsaGuard — RAII wrapper that calls WSAStartup on construction

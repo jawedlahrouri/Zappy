@@ -87,8 +87,11 @@ int Poll::runPoll(int timeout)
 
     int ret = _symbols.poll(fds.data(), events.data(), revents.data(), count, timeout);
 
-    if (ret == -1 && _symbols.isInterrupted()) {
-        return 0;
+    if (ret == -1) {
+        if (_symbols.isInterrupted()) {
+            return 0;
+        }
+        throw ServerException(std::string("Poll failed: ") + _symbols.pollGetLastError());
     }
 
     for (unsigned int i = 0; i < count; ++i) {
