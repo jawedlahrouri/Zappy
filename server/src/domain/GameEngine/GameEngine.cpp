@@ -107,7 +107,7 @@ void GameEngine::spawnResourcesCycle()
 
     for (int i = 0; i < RESOURCE_COUNT; i++) {
         ResourceType type = static_cast<ResourceType>(i);
-        int target_quantity = std::max(1, static_cast<int>(std::floor(_width * _height * _densities[i] * 0.1)));
+        int target_quantity = std::max(1, static_cast<int>(std::floor(_width * _height * _densities[i])));
         int current_quantity = _map.countResource(type);
         int missing = target_quantity - current_quantity;
 
