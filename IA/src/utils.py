@@ -1,32 +1,19 @@
 #!/usr/bin/python3
 
-import random
-import sys
 import subprocess
-from enum import Enum
-from IA.src.agent_submodules.agent_role import AgentRole
-from src.command import ZappyCommand
-from src.agent_submodules.pathfinding import Pathfinder
-from src.agent_submodules.farm import Farmer
-from src.agent_submodules.grouping import Grouper
-from src.agent_submodules.stealth_comms import StealthComms
-from src.logger import ZappyLogger
-from src.Ai_agent import ZappyAgent
+from src.agent_submodules.agent_role import AgentRole
 from src.agent_submodules.agent_state import AgentState
+from src.logger import ZappyLogger
 
 logger = ZappyLogger.get_logger("AgentCore")
 
 class utils:
-    def __init__(self, command_interface: ZappyCommand, team_name: str):
+    def __init__(self, command_interface, team_name: str, agent):
         self.cmd = command_interface # Interface de commande pour interagir avec le serveur.
-        self.pathfinder = Pathfinder(self.cmd) # Module de pathfinding pour se déplacer efficacement.
-        self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
-        self.comms = StealthComms() # Module de cryptage des message pour sécuriser la communication entre nos agents.
-        self.grouper = Grouper(self.cmd, self.comms) # Module de groupage contenant la logique de regroupement de notre agent.
         self.team_name = team_name # Le nom de l'équipe, utilisé pour le lancement de clones et la communication.
-        self.agent = ZappyAgent() # agent de zappy
+        self.agent = agent # Référence à l'agent principal.
 
-    def  launch_clone(self):
+    def launch_clone(self):
         """Lance un nouveau clone de l'agent en arrière-plan en utilisant subprocess pour exécuter une nouvelle instance du client Zappy.\n
         Params:
             aucun paramètre.
@@ -38,10 +25,11 @@ class utils:
         subprocess.Popen(["./zappy_ai", "-p", port, "-h", machine, "-n", self.team_name])
 
     def is_food_critical_for_action(self, estimated_tu_cost, inventory):
-        """Vérifie si la nourriture actuelle est insuffisante pour effectuer une action risquée\n
+        """Vérifie si la nourriture actuelle est suffisante pour effectuer une action risquée\n
         Params:
             -estimated_tu_cost (int): Le coût en TU estimé de l'action risquée que l'on veut faire.
-        Retourne True si la nourriture est insuffisante, False sinon."""
+            -inventory (dict): L'inventaire de l'agent.
+        Retourne True si la nourriture est suffisante, False sinon."""
 
         food = inventory.get('food', 0)
         current_tu = food * 126
@@ -50,6 +38,8 @@ class utils:
         return False
 
     def fork(self):
+        """Pond un oeuf via la commande Fork.\n
+        Retourne True si réussi, False sinon."""
         success = self.agent.cmd.send_command("Fork")
         if success:
             logger.info("Reine : Un oeuf a été pondu. En attente de l'éclosion (600 TU)...")
@@ -57,64 +47,75 @@ class utils:
             return True
         return False
             
-    def verify_command(self, command, commands):  # message_stack = {id : [(k, (command, [params])), (k, (command, [params]))], ... }
-        for tupple in commands:
-            if tupple[1][0] == command:
-                return tupple[1][1]
-            else:
-                continue
+    def verify_command(self, command, commands):
+        """Cherche une commande dans la liste de messages et retourne ses params.
+        commands est une liste de dicts : [{k: (command, [params])}, ...]
+        Retourne les params si trouvé, None sinon."""
+        for msg_dict in commands:
+            for k, (cmd, params) in msg_dict.items():
+                if cmd == command:
+                    return params
         return None
 
-    def verify_instruction(self, command, commands):  # message_stack = {id : [(k, (command, [params])), (k, (command, [params]))], ... }
-        for tupple in commands:
-            if tupple[1][0] == command:
-                return True
-            else:
-                continue
+    def verify_instruction(self, command, commands):
+        """Vérifie si une commande existe dans la liste de messages.
+        Retourne True si trouvé, False sinon."""
+        for msg_dict in commands:
+            for k, (cmd, params) in msg_dict.items():
+                if cmd == command:
+                    return True
         return False
     
     def verify_id_message(self, id):
-        return self.agent.message_stack[id]
+        """Retourne les messages d'un agent spécifique, ou None si absent."""
+        return self.agent.message_stack.get(id, None)
     
     def which_role(self):
-        messages = self.verify_id_message(9999)
-        params = self.verify_command("royalsummon", messages)
-        if self.is_queen == True:
+        """Détermine le rôle de l'agent en fonction du décret royal de la reine.
+        Retourne le rôle approprié (AgentRole)."""
+        if self.agent.is_queen:
             return AgentRole.QUEEN
-        for e in params:
-            if self.agent.agent_id == e and e <= 5:
+        messages = self.verify_id_message(9999)
+        if messages is None:
+            return self.agent.role  # Pas de message de la reine, on garde le rôle actuel.
+        params = self.verify_command("royalsummon", messages)
+        if params is None:
+            return self.agent.role
+        # params contient les IDs des guards (indices 0-4) et protectors (indices 5-8)
+        agent_id_str = str(self.agent.agent_id)
+        for i, e in enumerate(params):
+            if agent_id_str == e and i < 5:
                 return AgentRole.GUARD
-            if self.agent.agent_id == e and e > 5:
+            if agent_id_str == e and i >= 5:
                 return AgentRole.PROTECTOR
         return AgentRole.PEASANT
     
     def is_grouping(self):
+        """Vérifie si la reine a envoyé un ordre de grouping."""
         messages = self.verify_id_message(9999)
+        if messages is None:
+            return False
         return self.verify_instruction("grouping", messages)
     
     def is_elevation(self):
+        """Vérifie si la reine a envoyé un ordre d'élévation."""
         messages = self.verify_id_message(9999)
-        self.agent.k_queen = messages[0]
-        return self.verify_instruction("elevation", messages)
+        if messages is None:
+            return False
+        # Stocker le k de la reine pour savoir dans quelle direction aller
+        for msg_dict in messages:
+            for k, (cmd, params) in msg_dict.items():
+                if cmd == "elevation":
+                    self.agent.k_queen = k
+                    return True
+        return False
 
     def verify_food(self):
-        """Cette fonction vas servir a verifier le seuil de faim des bots
-        Params : Aucun param
-        Retourne : True si il doit en reramasser et a l'inverse False si non
-        """
-        food_level = self.agent.inventorry["food"]
+        """Vérifie si l'agent doit ramasser de la nourriture.
+        Retourne True si il doit en ramasser, False sinon."""
+        food_level = self.agent.inventory.get("food", 0)
         if self.agent.state == AgentState.GROUPING:
-            if (food_level <= 25):
-                return True
-            else:
-                return False
+            return food_level <= 25
         if self.agent.state == AgentState.ELEVATION:
-            if (food_level <= 15):
-                return True
-            else:
-                return False
-        else:
-            if (food_level <= 6):
-                return True
-            else:
-                return False
+            return food_level <= 15
+        return food_level <= 6

@@ -3,7 +3,6 @@
 import select
 from src.server_link import ZappyNetwork
 from src.logger import ZappyLogger
-from src.utils import utils
 
 logger = ZappyLogger.get_logger("ZappyCommand")
 
@@ -12,8 +11,6 @@ class ZappyCommand:
         self.network = network # L'instance de connexion réseau pour envoyer les commandes et recevoir les réponses.
         self.broadcast_queue = [] # Queue pour stocker les messages de diffusion reçus du serveur, à traiter par l'agent.
         self.system_queue = [] # Queue pour stocker les messages système (comme les réponses aux commandes) reçus du serveur, à traiter par l'agent.
-        self.on_success_callback = None
-        self.utils = utils
 
     def wait_for_incantation_follower(self):
         """Attends les messages d'incantation pour un follower, en gérant les réponses inattendues.\n
@@ -173,8 +170,4 @@ class ZappyCommand:
         }
         if cmd_name in parsers:
             return parsers[cmd_name](response)
-        is_ok = response == "ok"
-        if is_ok and self.on_success_callback:
-            self.utils.update_direction(cmd_name)
-            self.on_success_callback(cmd_name)
-        return is_ok
+        return response == "ok"
