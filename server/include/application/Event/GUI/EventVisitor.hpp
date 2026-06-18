@@ -13,7 +13,7 @@
 
 class EventVisitor : public IEventVisitor {
 public:
-    EventVisitor(INetworkProvider &network) : _network(network) {}
+    EventVisitor(INetworkProvider &network);
     ~EventVisitor() override = default;
 
     void visit(PdiEvent *event) override;
@@ -23,9 +23,21 @@ public:
     void visit(EnwEvent *event) override;
     void visit(PexEvent *event) override;
     void visit(PieEvent *event) override;
+    void visit(BctEvent *event) override;
+    void visit(PbcEvent *event) override;
+    void visit(PicEvent *event) override;
+    void visit(PfkEvent *event) override;
+    void visit(PpoEvent *event) override;
+    void visit(PgtEvent *event) override;
+    void visit(PinEvent *event) override;
+    void visit(EdiEvent *event) override;
+    void visit(EboEvent *event) override;
+
+    void setTargetClient(int fd);
 
 private:
     INetworkProvider &_network;
+    int _targetFd = -1;
 };
 
 #endif /* !EVENTVISITOR_HPP_ */

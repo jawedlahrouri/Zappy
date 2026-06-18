@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <cerrno>
@@ -68,6 +69,11 @@ namespace SysSocket {
             flags &= ~O_NONBLOCK;
         }
         return ::fcntl(sockfd, F_SETFL, flags);
+    }
+
+    int setTcpNoDelay(int sockfd, bool no_delay) {
+        int opt = no_delay ? 1 : 0;
+        return ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
     }
 
     std::string getLastError() {

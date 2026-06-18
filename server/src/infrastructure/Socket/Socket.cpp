@@ -52,6 +52,9 @@ std::unique_ptr<ISocket> Socket::acceptConnection()
 {
     int fd = SysSocket::acceptInet(_socket);
     if (fd == -1) {
+        if (SysSocket::wouldBlock()) {
+            return nullptr;
+        }
         throw ServerException(std::string("Socket acceptance failed: ") + SysSocket::getLastError());
     }
     return std::make_unique<Socket>(fd);
@@ -89,6 +92,13 @@ void Socket::setNonBlocking(bool nonBlocking)
 {
     if (SysSocket::setNonBlocking(_socket, nonBlocking) == -1) {
         throw ServerException(std::string("set non blocking failed: ") + SysSocket::getLastError());
+    }
+}
+
+void Socket::setTcpNoDelay(bool noDelay)
+{
+    if (SysSocket::setTcpNoDelay(_socket, noDelay) == -1) {
+        throw ServerException(std::string("set tcp no delay failed: ") + SysSocket::getLastError());
     }
 }
 

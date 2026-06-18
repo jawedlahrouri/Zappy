@@ -8,15 +8,17 @@
 #include "ServerException.hpp"
 #include "GameEngine.hpp"
 #include "INetworkProvider.hpp"
-#include "AiCommandParser.hpp"
-#include "ai_execute_cmds.hpp"
 #include "AI.hpp"
+#include "Client.hpp"
 #include <iostream>
 #include <random>
 #include <cmath>
 #include <algorithm>
 #include "shared/ILogger.hpp"
-
+#include "application/Event/GUI/BctEvent.hpp"
+#include "application/Event/GUI/PfkEvent.hpp"
+#include "application/Event/GUI/PicEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 Map& GameEngine::getMap()
 {
     return _map;
@@ -54,20 +56,25 @@ void GameEngine::update(INetworkProvider& network)
 
         if (_resourceSpawnTicks >= 20) {
             spawnResourcesCycle();
+            
+            bool hasGui = false;
+            for (const auto &[fd, client] : network.getClients()) {
+                if (client && client->getType() == ClientType::GUI) {
+                    hasGui = true;
+                    break;
+                }
+            }
 
-            for (int key : _map.getDirtyTiles()) {
-                int x = key % _width;
-                int y = key / _width;
-                const Tile& t = _map.getTile(x, y);
-                std::string bct_msg = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
-                                      std::to_string(t.resources[FOOD]) + " " +
-                                      std::to_string(t.resources[LINEMATE]) + " " +
-                                      std::to_string(t.resources[DERAUMERE]) + " " +
-                                      std::to_string(t.resources[SIBUR]) + " " +
-                                      std::to_string(t.resources[MENDIANE]) + " " +
-                                      std::to_string(t.resources[PHIRAS]) + " " +
-                                      std::to_string(t.resources[THYSTAME]);
-                network.sendToGuis(bct_msg);
+            if (hasGui) {
+                for (int key : _map.getDirtyTiles()) {
+                    int x = key % _width;
+                    int y = key / _width;
+                    const Tile &t = _map.getTile(x, y);
+                    BctEvent bctEvent(x, y, t.resources[FOOD], t.resources[LINEMATE], t.resources[DERAUMERE],
+                                    t.resources[SIBUR], t.resources[MENDIANE], t.resources[PHIRAS], t.resources[THYSTAME]);
+                    EventVisitor visitor(network);
+                    bctEvent.Accept(&visitor);
+                }
             }
 
             _map.clearDirtyTiles();
@@ -157,8 +164,13 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
                 return;
             }
         }
+        if (next_cmd == "Fork") {
+            PfkEvent pfkEvent(ai->getId());
+            EventVisitor visitor(network);
+            pfkEvent.Accept(&visitor);
+        }
 
-        ai->setActionTicksLeft(getCommandDuration(next_cmd));
+        ai->setActionTicksLeft(network.getCommandDuration(next_cmd));
         if (ai->getActionTicksLeft() == 0) {
             executeAiAction(ai, network);
             ai->setActionTicksLeft(-1);
@@ -172,37 +184,17 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
 void GameEngine::executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& network)
 {
     try {
-    AiCommandParser parser;
-
     if (ai->getCommandQueue().empty())
         return;
     std::string command = ai->getCommandQueue().front();
     ai->getCommandQueue().pop();
 
-    std::string action = command.substr(0, command.find(' '));
-    auto it = ai_cmds.find(action);
-    if (it != ai_cmds.end()) {
-        auto func = it->second.func;
-        (parser.*func)(ai, command, network);
-    }
+    network.executeCommand(ai, command);
     } catch (const std::exception &e) {
         throw ServerException(std::string("GameEngine::executeAiAction: ") + e.what());
     }
 }
 
-int GameEngine::getCommandDuration(const std::string& command)
-{
-    try {
-    std::string action = command.substr(0, command.find(' '));
-    auto it = ai_cmds.find(action);
-    if (it != ai_cmds.end()) {
-        return it->second.duration;
-    }
-    return 0;
-    } catch (const std::exception &e) {
-        throw ServerException(std::string("GameEngine::getCommandDuration: ") + e.what());
-    }
-}
 
 
 
@@ -240,7 +232,7 @@ bool GameEngine::checkIncantationRequirements(int x, int y, int level) const
 
     const Tile& t = _map.getTile(x, y);
     for (int i = 1; i < RESOURCE_COUNT; ++i) {
-        if (t.resources[i] != req.resources[i]) {
+        if (t.resources[i] < req.resources[i]) {
             return false;
         }
     }
@@ -258,8 +250,6 @@ void GameEngine::consumeIncantationResources(int x, int y, int level)
     }
 }
 
-#include "application/Event/GUI/SegEvent.hpp"
-
 void GameEngine::checkVictory(const std::string& teamName, INetworkProvider& network) const
 {
     int count = 0;
@@ -271,7 +261,7 @@ void GameEngine::checkVictory(const std::string& teamName, INetworkProvider& net
     }
     
     if (count >= 6) {
-        network.sendEvent(SegEvent(teamName));
+        network.notifyVictory(teamName);
     }
 }
 
@@ -284,19 +274,21 @@ bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider&
     auto players = getPlayersOnTileForIncantation(x, y, level, network);
     auto reqIt = _incantationReqs.find(level);
     
-    if (reqIt == _incantationReqs.end() || players.size() != static_cast<size_t>(reqIt->second.players) || !checkIncantationRequirements(x, y, level)) {
+    if (reqIt == _incantationReqs.end() || players.size() < static_cast<size_t>(reqIt->second.players) || !checkIncantationRequirements(x, y, level)) {
         network.sendResponse(ai->getId(), "ko\n");
         return false;
     }
 
-    std::string pic_msg = "pic " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(level);
+    std::vector<int> playerIds;
     for (const auto& p : players) {
+        p->setActionTicksLeft(300);
         network.sendResponse(p->getId(), "Elevation underway\n");
-        pic_msg += " " + std::to_string(p->getId());
+        playerIds.push_back(p->getId());
     }
-    pic_msg += "\n";
     
-    network.sendToGuis(pic_msg);
+    PicEvent picEvent(x, y, level, playerIds);
+    EventVisitor visitor(network);
+    picEvent.Accept(&visitor);
     return true;
 }
 
@@ -353,4 +345,13 @@ void GameEngine::generateInitialEggs(const std::vector<std::string>& teamNames, 
     } catch (const std::exception &e) {
         throw ServerException(std::string("GameEngine::generateInitialEggs: ") + e.what());
     }
+}
+
+int GameEngine::getRequiredPlayersForIncantation(int level) const
+{
+    auto reqIt = _incantationReqs.find(level);
+    if (reqIt != _incantationReqs.end()) {
+        return reqIt->second.players;
+    }
+    return 0;
 }

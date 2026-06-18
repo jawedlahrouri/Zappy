@@ -8,6 +8,7 @@
 #include "ServerException.hpp"
 #include "Poll.hpp"
 #include "Sys_Poll.hpp"
+#include <algorithm>
 
 static short eventToSys(NetworkEvent event) {
     if (event == NetworkEvent::Input) {
@@ -30,12 +31,10 @@ void Poll::addFd(int fd, NetworkEvent event)
 
 void Poll::removeFd(int fd)
 {
-    for (auto it = _pollfds.begin(); it != _pollfds.end(); ++it) {
-        if (it->fd == fd) {
-            _pollfds.erase(it);
-            break;
-        }
-    }
+    _pollfds.erase(
+        std::remove_if(_pollfds.begin(), _pollfds.end(),
+            [fd](const SysPoll::PollFd& pfd) { return pfd.fd == fd; }),
+        _pollfds.end());
 }
 
 void Poll::addEvents(int fd, NetworkEvent event)
@@ -91,7 +90,7 @@ bool Poll::isError(size_t index) const
     if (index >= _pollfds.size()) {
         return false;
     }
-    return (_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup)) != 0;
+    return (_pollfds[index].revents & (SysPoll::EventErr | SysPoll::EventHup | SysPoll::EventNval)) != 0;
 }
 
 int Poll::getFd(size_t index) const

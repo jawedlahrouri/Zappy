@@ -23,6 +23,7 @@ namespace SysSocket {
     
     int setReuseAddr(int sockfd, bool reuse);
     int setNonBlocking(int sockfd, bool non_blocking);
+    int setTcpNoDelay(int sockfd, bool no_delay);
 
     std::string getLastError();
     bool wouldBlock();

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <chrono>
 #include "ISocket.hpp"
 #include "shared/ILogger.hpp"
 #include "IPoll.hpp"
@@ -18,6 +19,8 @@
 #include "INetworkProvider.hpp"
 #include "application/Server/ClientManager.hpp"
 #include "application/Server/ConnectionHandler.hpp"
+#include "application/Server/IClientDataHandler.hpp"
+#include <unordered_map>
 
 class GameEngine;
 
@@ -35,6 +38,7 @@ class Server : public INetworkProvider {
         const std::unique_ptr<GameEngine>& getGameEngine() const override;
         ILogger& getLogger() const override;
 
+        ClientManager& getClientManager();
         void setFreq(int freq);
 
         // INetworkProvider Implementation
@@ -44,14 +48,22 @@ class Server : public INetworkProvider {
         void sendEvent(const class IEventElement& event) override;
         const std::unordered_map<int, std::shared_ptr<class Client>>& getClients() const override;
         void addPollEvent(int fd, NetworkEvent event) override;
+        void executeCommand(std::shared_ptr<class AI> ai, const std::string& command) override;
+        void notifyVictory(const std::string& teamName) override;
+        int getCommandDuration(const std::string& command) const override;
 
     private:
         void runPollLoop();
-        void processPollEvent(size_t& i);
+        void processPollEvent(size_t i);
         bool handleClientData(size_t pollIndex);
         bool handleWritable(size_t index);
         void cleanup();
-        void removeClient(int clientSocket);
+        void removeClient(int clientSocket) override;
+
+        int calculateTimeout(const std::chrono::steady_clock::time_point& next_tick_time) const;
+        void handlePollEvents(int timeout_ms);
+        void synchronizeTickTime(bool& was_empty, std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration) const;
+        void runGameTick(std::chrono::steady_clock::time_point& next_tick_time, const std::chrono::microseconds& tick_duration);
 
         ILogger& _logger;
         std::unique_ptr<ISocket> _masterSocket;
@@ -63,6 +75,8 @@ class Server : public INetworkProvider {
         int _clientsNb = 0;
         std::vector<std::string> _teamNames;
         int _freq = 0;
+
+        std::unordered_map<ClientType, std::unique_ptr<IClientDataHandler>> _dataHandlers;
 };
 
 #endif /* !SERVER_HPP_ */

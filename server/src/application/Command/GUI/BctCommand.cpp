@@ -95,13 +95,13 @@ void GuiVisitor::visit(BctCommand *element) {
 
         const Tile& tile = engine->getMap().getTile(x, y);
         std::string response = "bct " + std::to_string(x) + " " + std::to_string(y) + " " +
-                               std::to_string(tile.resources[FOOD]) + " " +
-                               std::to_string(tile.resources[LINEMATE]) + " " +
-                               std::to_string(tile.resources[DERAUMERE]) + " " +
-                               std::to_string(tile.resources[SIBUR]) + " " +
-                               std::to_string(tile.resources[MENDIANE]) + " " +
-                               std::to_string(tile.resources[PHIRAS]) + " " +
-                               std::to_string(tile.resources[THYSTAME]);
+                            std::to_string(tile.resources[FOOD]) + " " +
+                            std::to_string(tile.resources[LINEMATE]) + " " +
+                            std::to_string(tile.resources[DERAUMERE]) + " " +
+                            std::to_string(tile.resources[SIBUR]) + " " +
+                            std::to_string(tile.resources[MENDIANE]) + " " +
+                            std::to_string(tile.resources[PHIRAS]) + " " +
+                            std::to_string(tile.resources[THYSTAME]);
         _network.sendResponse(element->getClient()->getId(), response);
     } catch (const std::exception &e) {
         throw ServerException(std::string("GuiVisitor::visit(BctCommand): ") + e.what());

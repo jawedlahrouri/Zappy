@@ -34,6 +34,10 @@ class INetworkProvider {
         virtual void sendResponse(int clientId, const std::string& message) = 0;
         virtual void sendToGuis(const std::string& message) = 0;
         virtual void broadcastEvent(const std::string& message, int excludeClientId = -1) = 0;
+        virtual void executeCommand(std::shared_ptr<class AI> ai, const std::string& command) = 0;
+        virtual void notifyVictory(const std::string& teamName) = 0;
+        virtual int getCommandDuration(const std::string& command) const = 0;
+        virtual void removeClient(int clientId) = 0;
 };
 
 #endif /* !INETWORK_PROVIDER_HPP_ */

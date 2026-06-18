@@ -34,3 +34,5 @@ compile_commands.json
 subject/*
 .agents/
 build/
+*.log
+server_strace.*

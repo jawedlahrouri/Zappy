@@ -19,7 +19,7 @@ struct ServerConfig {
     int height = 0;
     std::vector<std::string> teamNames;
     int clientsNb = 0;
-    int freq = 0;
+    int freq = 100;
 }; 
 
 static void print_help() {
@@ -58,8 +58,8 @@ ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
             throw ServerException("Argument non reconnu : " + std::string(argv[i]));
         }
     }
-    if (config.port <= 0 || config.width <= 0 || config.height <= 0 || 
-        config.clientsNb <= 0 || config.teamNames.empty()) {
+    if (config.port <= 0 || config.width <= 0 || config.height <= 0 ||
+        config.clientsNb <= 0 || config.teamNames.empty() || config.freq <= 0) {
         print_help();
         throw ServerException("Parametres obligatoires manquants ou invalides.");
     }

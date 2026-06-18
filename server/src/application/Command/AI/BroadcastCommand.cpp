@@ -10,6 +10,8 @@
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PbcEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 #include "ServerException.hpp"
 #include <iostream>
 
@@ -97,6 +99,10 @@ void AiVisitor::visit(BroadcastCommand *element) {
             _network.sendResponse(other.second->getId(), messages);
         }
         _network.sendResponse(element->getClient()->getId(), "ok\n");
+        
+        PbcEvent pbcEvent(element->getClient()->getId(), element->getMessage());
+        EventVisitor eventVisitor(_network);
+        pbcEvent.Accept(&eventVisitor);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

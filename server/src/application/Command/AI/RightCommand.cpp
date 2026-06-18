@@ -9,7 +9,8 @@
 #include "application/Command/AI/AiVisitor.hpp"
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
-
+#include "application/Event/GUI/PpoEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 #include "ServerException.hpp"
 #include <iostream>
 
@@ -50,11 +51,9 @@ void AiVisitor::visit(RightCommand *element) {
             
         _network.sendResponse(client->getId(), "ok\n");
         
-        std::string ppo_msg = "ppo " + std::to_string(client->getId()) + " " +
-                            std::to_string(client->getX()) + " " +
-                            std::to_string(client->getY()) + " " +
-                            std::to_string(client->getOrientation()) + "\n";
-        _network.sendToGuis(ppo_msg);
+        PpoEvent ppoEvent(client->getId(), client->getX(), client->getY(), client->getOrientation());
+        EventVisitor eventVisitor(_network);
+        ppoEvent.Accept(&eventVisitor);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

@@ -10,6 +10,9 @@
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
 #include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PdrEvent.hpp"
+#include "application/Event/GUI/PinEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
 #include "ServerException.hpp"
 #include <iostream>
 
@@ -77,6 +80,17 @@ void AiVisitor::visit([[maybe_unused]] SetCommand *element) {
         _network.getGameEngine()->getMap().addResourceToTile(element->getClient()->getX(), element->getClient()->getY(), resType, 1);
         
         _network.sendResponse(element->getClient()->getId(), "ok\n");
+
+        PdrEvent pdrEvent(element->getClient()->getId(), resType);
+        EventVisitor eventVisitor(_network);
+        pdrEvent.Accept(&eventVisitor);
+
+        auto ai = element->getClient();
+        auto& inv = ai->getInventory();
+        PinEvent pinEvent(ai->getId(), ai->getX(), ai->getY(),
+                        inv.at("food"), inv.at("linemate"), inv.at("deraumere"),
+                        inv.at("sibur"), inv.at("mendiane"), inv.at("phiras"), inv.at("thystame"));
+        pinEvent.Accept(&eventVisitor);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }
