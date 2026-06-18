@@ -12,6 +12,24 @@
 
 #include "ServerException.hpp"
 #include <iostream>
+#include <unordered_map>
+#include "domain/GameEngine/GameEngine.hpp"
+#include "application/Event/GUI/PpoEvent.hpp"
+#include "application/Event/GUI/EventVisitor.hpp"
+
+static void borderWrap(std::shared_ptr<AI> client, int width, int height) {
+    int x = client->getX();
+    int y = client->getY();
+
+    if (x < 0)
+        client->setX(width - 1);
+    else if (x >= width)
+        client->setX(0);
+    else if (y < 0)
+        client->setY(height - 1);
+    else if (y >= height)
+        client->setY(0);
+}
 
 void ForwardCommand::Accept(IAiVisitor *visitor) {
     try {
@@ -25,6 +43,7 @@ void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client,
 {
     try {
         ForwardCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,6 +53,29 @@ void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client,
 
 void AiVisitor::visit([[maybe_unused]] ForwardCommand *element) {
     try {
+        auto client = element->getClient();
+        int old_x = client->getX();
+        int old_y = client->getY();
+        int orientation = client->getOrientation();
+        
+        if (orientation == 1) // NORTH
+            client->setY(old_y - 1);
+        else if (orientation == 2) // EAST
+            client->setX(old_x + 1);
+        else if (orientation == 3) // SOUTH
+            client->setY(old_y + 1);
+        else if (orientation == 4) // WEST
+            client->setX(old_x - 1);
+            
+        borderWrap(client, _network.getGameEngine()->getWidth(), _network.getGameEngine()->getHeight());
+        
+        _network.getGameEngine()->getMap().moveAi(client->getId(), old_x, old_y, client->getX(), client->getY());
+        
+        _network.sendResponse(client->getId(), "ok\n");
+        
+        PpoEvent ppoEvent(client->getId(), client->getX(), client->getY(), client->getOrientation());
+        EventVisitor eventVisitor(_network);
+        ppoEvent.Accept(&eventVisitor);
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

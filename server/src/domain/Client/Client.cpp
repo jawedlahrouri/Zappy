@@ -24,17 +24,17 @@ bool Client::extractLine(std::string& line)
 
 void Client::appendToWriteBuffer(const std::string& data)
 {
-    _writeBuffer.append(data);
+    _writeBuffer += data;
 }
 
 std::string Client::getWriteBuffer() const
 {
-    return _writeBuffer.peek_all();
+    return _writeBuffer;
 }
 
 bool Client::hasWriteData() const
 {
-    return !_writeBuffer.is_empty();
+    return !_writeBuffer.empty();
 }
 
 void Client::clearWriteBuffer()
@@ -44,5 +44,9 @@ void Client::clearWriteBuffer()
 
 void Client::removeFromWriteBuffer(size_t len)
 {
-    _writeBuffer.pop(len);
+    if (len >= _writeBuffer.size()) {
+        _writeBuffer.clear();
+    } else {
+        _writeBuffer.erase(0, len);
+    }
 }

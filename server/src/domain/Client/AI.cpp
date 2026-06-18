@@ -14,6 +14,12 @@ AI::AI(std::unique_ptr<ISocket> clientSocket, int playerId)
 {
     setType(ClientType::AI);
     _inventory["food"] = 10;
+    _inventory["linemate"] = 0;
+    _inventory["deraumere"] = 0;
+    _inventory["sibur"] = 0;
+    _inventory["mendiane"] = 0;
+    _inventory["phiras"] = 0;
+    _inventory["thystame"] = 0;
 }
 
 void AI::update(std::shared_ptr<Client> self, INetworkProvider& network, GameEngine& engine, std::vector<int>& clientsToRemove)

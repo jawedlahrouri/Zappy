@@ -8,7 +8,7 @@
 #ifndef IEVENTELEMENT_HPP_
 #define IEVENTELEMENT_HPP_
 
-class IEventVisitor;
+#include "IEventVisitor.hpp"
 
 class IEventElement {
 public:

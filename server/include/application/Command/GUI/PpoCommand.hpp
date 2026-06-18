@@ -8,24 +8,18 @@
 #ifndef PPOCOMMAND_HPP_
 #define PPOCOMMAND_HPP_
 
-#include "application/Command/GUI/IGuiCommandElement.hpp"
+#include "application/Command/GUI/BaseGuiCommand.hpp"
 #include <memory>
-class GUI;
 
-class IGuiVisitor;
-
-class PpoCommand : public IGuiCommandElement {
+class PpoCommand : public BaseGuiCommand {
 public:
     void Accept(IGuiVisitor *visitor) override;
-    void setClient(std::shared_ptr<GUI> client) { _client = client; }
-    std::shared_ptr<GUI> getClient() const { return _client; }
 
-    void setPlayerId(int id) { _playerId = id; }
-    int getPlayerId() const { return _playerId; }
+    void setPlayerId(int id);
+    int getPlayerId() const;
 
 private:
-    std::shared_ptr<GUI> _client;
-    int _playerId = -1;
+    int _playerId = 0;
 };
 
 #endif /* !PPOCOMMAND_HPP_ */

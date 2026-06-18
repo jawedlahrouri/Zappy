@@ -19,6 +19,8 @@ class AiCommandParser {
         AiCommandParser() = default;
         ~AiCommandParser() = default;
 
+        void executeCommand(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network);
+
         void parse_forward(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network);
         void parse_right(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network);
         void parse_left(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network);

@@ -81,12 +81,10 @@ void CircularBuffer::append(const std::string& data)
         resize(new_capacity);
     }
 
-    // Only copy what fits (if a single packet is larger than capacity, we truncate it)
-    size_t to_write = std::min(data.size(), _capacity);
-    size_t data_offset = data.size() - to_write;
+    size_t to_write = std::min(data.size(), available_space());
 
     for (size_t i = 0; i < to_write; ++i) {
-        _buffer[_head] = data[data_offset + i];
+        _buffer[_head] = data[i];
         _head = (_head + 1) % _capacity;
     }
 

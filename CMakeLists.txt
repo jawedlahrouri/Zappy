@@ -12,7 +12,31 @@ add_compile_options(-Wall -Wextra -Werror)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # ----------------------------------------------------------------======
-# 1. CIBLE : zappy_server
+# 1. CIBLE : zappy_network_<os> (backend réseau dynamique)
+# ----------------------------------------------------------------======
+if(UNIX)
+    add_library(zappy_network_linux SHARED
+        network_backends/linux/Sys_Socket_Linux.cpp
+        network_backends/linux/Sys_Poll_Linux.cpp
+    )
+    set_target_properties(zappy_network_linux PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    set(NETWORK_BACKEND_TARGET zappy_network_linux)
+elseif(WIN32)
+    add_library(zappy_network_win SHARED
+        network_backends/windows/Sys_Socket_Win.cpp
+        network_backends/windows/Sys_Poll_Win.cpp
+    )
+    set_target_properties(zappy_network_win PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    target_link_libraries(zappy_network_win PRIVATE ws2_32)
+    set(NETWORK_BACKEND_TARGET zappy_network_win)
+endif()
+
+# ----------------------------------------------------------------======
+# 2. CIBLE : zappy_server
 # ----------------------------------------------------------------======
 file(GLOB_RECURSE SERVER_SOURCES "server/*.cpp")
 
@@ -26,6 +50,7 @@ target_include_directories(zappy_server PRIVATE
     server/include/domain/Client
     server/include/domain/GameEngine
     server/include/domain/Network
+    server/include/infrastructure/Network
     server/include/infrastructure/Poll
     server/include/infrastructure/Socket
     server/include/presentation/Parsing
@@ -33,8 +58,18 @@ target_include_directories(zappy_server PRIVATE
     GameEngine/include
 )
 
+# Lier avec dl (Linux) pour dlopen, ou ws2_32 (Windows) pour LoadLibrary
+if(UNIX)
+    target_link_libraries(zappy_server PRIVATE dl)
+elseif(WIN32)
+    target_link_libraries(zappy_server PRIVATE ws2_32)
+endif()
+
+# Le serveur doit être construit après le backend réseau
+add_dependencies(zappy_server ${NETWORK_BACKEND_TARGET})
+
 # ----------------------------------------------------------------======
-# 2. CIBLE : zappy_gui
+# 3. CIBLE : zappy_gui
 # ----------------------------------------------------------------======
 file(GLOB_RECURSE GUI_SOURCES "GameEngine/src/*.cpp")
 

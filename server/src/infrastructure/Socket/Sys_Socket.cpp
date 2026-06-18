@@ -5,11 +5,14 @@
 ** Sys_Socket.cpp
 */
 
+#ifndef _WIN32
+
 #include "Sys_Socket.hpp"
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <cerrno>
@@ -70,6 +73,11 @@ namespace SysSocket {
         return ::fcntl(sockfd, F_SETFL, flags);
     }
 
+    int setTcpNoDelay(int sockfd, bool no_delay) {
+        int opt = no_delay ? 1 : 0;
+        return ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
+    }
+
     std::string getLastError() {
         return std::strerror(errno);
     }
@@ -78,3 +86,5 @@ namespace SysSocket {
         return (errno == EAGAIN || errno == EWOULDBLOCK);
     }
 }
+
+#endif

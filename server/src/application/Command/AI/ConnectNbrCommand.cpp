@@ -11,6 +11,7 @@
 #include "application/Server/Server.hpp"
 
 #include "ServerException.hpp"
+#include "GameEngine.hpp"
 #include <iostream>
 
 void ConnectNbrCommand::Accept(IAiVisitor *visitor) {
@@ -25,6 +26,7 @@ void AiCommandParser::parse_connect_nbr([[maybe_unused]] std::shared_ptr<AI> cli
 {
     try {
         ConnectNbrCommand cmd;
+        cmd.setClient(client);
         AiVisitor visitor(network);
         cmd.Accept(&visitor);
     } catch (const std::exception &e) {
@@ -34,6 +36,23 @@ void AiCommandParser::parse_connect_nbr([[maybe_unused]] std::shared_ptr<AI> cli
 
 void AiVisitor::visit([[maybe_unused]] ConnectNbrCommand *element) {
     try {
+        auto client = element->getClient();
+        int slots = 0;
+        
+        if (_network.getGameEngine()) {
+            auto& map = _network.getGameEngine()->getMap();
+            for (int y = 0; y < map.getHeight(); ++y) {
+                for (int x = 0; x < map.getWidth(); ++x) {
+                    for (const auto &e : map.getTile(x, y).getEggs()) {
+                        if (e->teamName == client->getTeamName()) {
+                            slots++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        _network.sendResponse(client->getId(), std::to_string(slots) + "\n");
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());
     }

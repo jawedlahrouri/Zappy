@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import socket
-import time
 from src.logger import ZappyLogger
 
 logger = ZappyLogger.get_logger("server_link")
