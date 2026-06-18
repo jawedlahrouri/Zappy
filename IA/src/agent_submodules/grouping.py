@@ -42,7 +42,9 @@ class Grouper:
         Retourne:
             -tuple (k, type) ou (None, None) si rien de pertinent."""
         
-        for sender_id, messages in self.agent.message_stack.items():
+        sorted_senders = sorted(self.agent.message_stack.keys(), reverse=True)
+        for sender_id in sorted_senders:
+            messages = self.agent.message_stack[sender_id]
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
                     if sender_id == 9999 and command == "grouping":
@@ -126,7 +128,7 @@ class Grouper:
 
         if self.agent.role == AgentRole.QUEEN:
             logger.info(f"Reine : J'ai lancé un appel de regroupement royal. Tous les alliés doivent se rassembler.")
-            self.cmd.send_command("Broadcast " + self.comms.encode(f"{my_id}-lv{level}", "grouping"))
+            self.cmd.send_command("Broadcast " + self.comms.encode(f"{my_id}-{level}", "grouping"))
             return False
         elif self.agent.role == AgentRole.GUARD:
             if call_k == 0:
@@ -207,6 +209,6 @@ class Grouper:
             self.agent.state = AgentState.ELEVATION
             return True
         logger.info(f"agent : Attente alliés. Broadcast...")
-        secret_msg = self.comms.encode(f"lv{level}-{my_id}", "needmate")
+        secret_msg = self.comms.encode(f"{my_id}-{level}", "needmate")
         self.cmd.send_command(f"Broadcast {secret_msg}")
         return False

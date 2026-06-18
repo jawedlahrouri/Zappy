@@ -14,6 +14,7 @@ class AgentState(Enum): # Enum pour représenter les différents états de compo
     FOLLOWER = 7
     FEEDER = 8
     PUSHING = 9
+    WAIT = 10
 
 class StateComportment:
     def __init__(self, agent):
@@ -141,11 +142,16 @@ class StateComportment:
                     if success:
                         self.agent.level += 1
                         logger.info(f"Beginner : Incantation réussie ! Niveau actuel : {self.agent.level}")
+                        # Broadcaster un ping immédiat pour mettre à jour le roster des alliés
+                        ping_content = f"{self.agent.agent_id}-{self.agent.level}-{self.agent.inventory.get('food', 0)}-{self.agent.inventory.get('linemate', 0)}-{self.agent.inventory.get('deraumere', 0)}-{self.agent.inventory.get('sibur', 0)}-{self.agent.inventory.get('mendiane', 0)}-{self.agent.inventory.get('phiras', 0)}-{self.agent.inventory.get('thystame', 0)}"
+                        secret_ping = self.agent.comms.encode(ping_content, "ping")
+                        self.agent.cmd.send_command(f"Broadcast {secret_ping}")
                 else:
                     # Niveau 2+, besoin d'un partenaire → broadcaster needmate et entrer en grouping
                     self.agent.state = AgentState.GROUPING
                     # Broadcaster un needmate pour trouver un partenaire
-                    secret_msg = self.agent.comms.encode(f"lv{self.agent.level}-{self.agent.agent_id}", "needmate")
+                    # Format: {sender_id}-{level}_needmate (sender_id en premier pour le parsing)
+                    secret_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "needmate")
                     self.agent.cmd.send_command(f"Broadcast {secret_msg}")
                     logger.info(f"Beginner lvl{self.agent.level} : Recherche d'un partenaire pour incantation (needmate broadcasté)")
                     # Vérifier si un allié a déjà répondu
@@ -180,3 +186,13 @@ class StateComportment:
             for _ in range(food_a_jeter):
                 self.agent.cmd.send_command("Set food")
         return AgentState.FEEDER
+
+    def act_wait(self):
+        """Etat d'attente en cas de feeder qui a trop de bouffe
+        """
+        if self.agent.utils.is_grouping():
+            self.agent.state = AgentState.GROUPING
+        else:
+            # Send a command to the server so we wait 1 cycle instead of infinite spam
+            self.agent.cmd.send_command("Inventory")
+            return AgentState.WAIT

@@ -19,18 +19,28 @@ class ZappyCommand:
         Retourne True si l'incantation réussit, False en cas d'échec."""
 
         logger.info(f"l'agent attend les messages d'incantation.")
-        first_response = None
+        
+        # Envoie une commande bidon pour ne pas bloquer infiniment.
+        # Si l'incantation du leader réussit, le serveur envoie "Elevation underway" AVANT la réponse à Inventory.
+        # Si l'incantation échoue ou n'est jamais lancée, on recevra la réponse d'Inventory ("[ food ... ]").
+        self.network.send_command("Inventory\n")
         
         while True:
-            first_response = self._wait_for_response(expect_incantation=True)
-            if first_response in ["Elevation underway", "ko"]:
-                break
-        if first_response == "Elevation underway":
-            second_response = self._wait_for_response(expect_incantation=True)
-            logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
-            if second_response and second_response.startswith("Current level"):
-                return True
-        return False
+            response = self._wait_for_response(expect_incantation=True)
+            if response == "Elevation underway":
+                second_response = self._wait_for_response(expect_incantation=True)
+                logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
+                if second_response and second_response.startswith("Current level"):
+                    # On consomme la réponse de l'Inventory qui arrivera après l'incantation
+                    self._wait_for_response() 
+                    return True
+                return False
+            elif response.startswith("["): 
+                # On a reçu l'inventaire : l'incantation n'a pas eu lieu.
+                logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
+                return False
+            elif response == "ko":
+                return False
 
     def _wait_for_response(self, expect_incantation=False):
         """Attends une réponse du serveur, en filtrant les messages de diffusion et en gérant les cas d'incantation.\n

@@ -23,6 +23,16 @@ class RoleTask:
         FARMING : qui vas agir sur une ressource en particulier
         FEEDER : vas apporter de la nouriture dans une direction precise (k)
         """
+        # Gestion de la population par les peasants (beginners)
+        if self.agent.level < 3:
+            beginner_ids = [aid for aid, info in self.agent.team_roster.items() if info.get("level", 1) < 3 and aid != 9999] + [self.agent.agent_id]
+            if self.agent.agent_id == max(beginner_ids):
+                current_team_size = len(self.agent.team_roster) + 1
+                needed = self.agent.population_target - current_team_size - self.agent.eggs_laid
+                if needed > 0 and self.agent.state not in (AgentState.GROUPING, AgentState.ELEVATION):
+                    if self.agent.inventory.get('food', 0) > 3:
+                        self.agent.utils.fork()
+
         # Priorité 1 : vérifier si on a besoin de manger
         if self.agent.utils.verify_food():
             self.agent.state = AgentState.FARMING
@@ -39,10 +49,17 @@ class RoleTask:
                 self.agent.comportment.act_beginner()
             else:
                 self.agent.state = AgentState.FARMING
-                self.agent.comportment.act_farming('food')
+                missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
+                if missing_stones:
+                    self.agent.comportment.act_farming(missing_stones[0])
+                elif self.agent.inventory.get('food', 0) < 50:
+                    self.agent.comportment.act_farming('food')
+                else:
+                    self.agent.state = AgentState.WAIT
+                    self.agent.comportment.act_wait()
         elif self.agent.state == AgentState.GROUPING:
             # En grouping pré-level-3 : broadcaster needmate et chercher un partenaire
-            secret_msg = self.agent.comms.encode(f"lv{self.agent.level}-{self.agent.agent_id}", "needmate")
+            secret_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "needmate")
             self.agent.cmd.send_command(f"Broadcast {secret_msg}")
             self.agent.grouper.process_grouping(self.agent.level, self.agent.agent_id, self.agent.vision)
             # Vérifier si le grouping a abouti (on est LEADER/FOLLOWER et assez de joueurs)
@@ -54,7 +71,18 @@ class RoleTask:
         elif self.agent.state == AgentState.ELEVATION:
             self.agent.comportment.act_elevating()
         elif self.agent.state == AgentState.FARMING:
-            self.agent.comportment.act_farming('food')
+            missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
+            if missing_stones:
+                self.agent.comportment.act_farming(missing_stones[0])
+            elif self.agent.inventory.get('food', 0) < 50:
+                self.agent.comportment.act_farming('food')
+            else:
+                self.agent.state = AgentState.WAIT
+                self.agent.comportment.act_wait()
+        elif self.agent.state == AgentState.FEEDER:
+            self.agent.comportment.act_feeder()
+        elif self.agent.state == AgentState.WAIT:
+            self.agent.comportment.act_wait()
     
     def act_queen(self):
         # Priorité 1 : vérifier la nourriture
@@ -65,17 +93,6 @@ class RoleTask:
                 return
             else:
                 self.agent.cmd.send_command("Take food")
-
-        # Gestion de la population : pondre des oeufs si besoin
-        if len(self.agent.team_roster) <= self.agent.population_target and self.agent.state != AgentState.GROUPING and self.agent.state != AgentState.ELEVATION:
-            self.agent.utils.fork()
-
-        # Vérifier les oeufs éclos et lancer des clones
-        if self.agent.eggs_laid >= 1:
-            nb_mature_egg = self.agent.cmd.send_command('Connect_nbr')
-            if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
-                self.agent.utils.launch_clone()
-                self.agent.eggs_laid -= nb_mature_egg
 
         # Décret Royal : assigner les rôles si pas encore fait
         if not self.agent.decret_royal_append:
@@ -95,7 +112,8 @@ class RoleTask:
                     ids_restants.append(agent_id)
             protector_id = ids_restants[:4]
 
-            # On ne peut émettre le décret que si on a assez de gardes et protecteurs
+            logger.info(f"Reine : Check Décret Royal -> Gardes dispo (lvl >= 3): {len(guard_id)}/5, Protecteurs dispo: {len(protector_id)}/4 (Roster size: {len(ids_tries)})")
+
             if len(guard_id) >= 5 and len(protector_id) >= 4:
                 self.agent.decret_royal_append = True
                 ids_str = "-".join(str(x) for x in guard_id + protector_id)
@@ -126,8 +144,11 @@ class RoleTask:
             missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
             if missing_stones:
                 self.agent.comportment.act_farming(missing_stones[0])
-            else:
+            elif self.agent.inventory.get('food', 0) < 50:
                 self.agent.comportment.act_farming('food')
+            else:
+                self.agent.state = AgentState.WAIT
+                self.agent.comportment.act_wait()
 
     def act_guard(self):
         # Priorité 1 : vérifier la nourriture
@@ -151,8 +172,11 @@ class RoleTask:
             missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
             if missing_stones:
                 self.agent.comportment.act_farming(missing_stones[0])
-            else:
+            elif self.agent.inventory.get('food', 0) < 50:
                 self.agent.comportment.act_farming('food')
+            else:
+                self.agent.state = AgentState.WAIT
+                self.agent.comportment.act_wait()
     
     def act_protector(self):
         # Priorité 1 : vérifier la nourriture
@@ -177,5 +201,8 @@ class RoleTask:
             missing_stones = self.agent.farmer.get_missing_stones_for_max_level(3, self.agent.global_inventory)
             if missing_stones:
                 self.agent.comportment.act_farming(missing_stones[0])
-            else:
+            elif self.agent.inventory.get('food', 0) < 50:
                 self.agent.comportment.act_farming('food')
+            else:
+                self.agent.state = AgentState.WAIT
+                self.agent.comportment.act_wait()

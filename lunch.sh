@@ -24,7 +24,7 @@ while getopts "d" opt; do
       ;;
   esac
 done
-
+rm logs/TeamA_logs.txt
 # ==========================================
 # Fonction de nettoyage (Clean exit)
 # ==========================================
@@ -46,7 +46,7 @@ trap cleanup SIGINT
 # ==========================================
 echo "[+] Lancement du zappy_server..."
 # Options du serveur basées sur le sujet
-./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 -c $CLIENTS_NB -f $FREQ &
+./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 -c $CLIENTS_NB -f $FREQ &
 SERVER_PID=$!
 
 # Petite pause pour laisser le temps au serveur d'ouvrir ses sockets réseau
@@ -59,7 +59,6 @@ echo "[+] Lancement des clients IA..."
 # Lancement de 2 drones pour la TeamA et 1 pour la TeamB
 # On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
 ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
-./zappy_ai -p $PORT -n $TEAM2 -h $MACHINE > /dev/null 2>&1 &
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."

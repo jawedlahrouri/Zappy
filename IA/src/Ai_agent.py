@@ -39,7 +39,7 @@ class ZappyAgent:
         self.food_minimum = 6 # Seuil de nourriture en dessous duquel l'agent passe en mode survie pour éviter de mourir de faim.
         self.food_safe = 15 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité.
         self.team_roster = {} # Dictionnaire pour suivre les alliés connus et leur dernière activité.
-        self.population_target = 10 # Nombre d'agents que nous voulons idéalement dans l'équipe.
+        self.population_target = 15 # Nombre d'agents que nous voulons idéalement dans l'équipe.
         self.is_queen_elected = False # Flag pour savoir si la reine a été élue.
         self.is_queen = False # Flag pour savoir si cet agent est la reine.
         self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
@@ -175,6 +175,15 @@ class ZappyAgent:
         if self.is_queen:
             return
 
+        # Vérifier si un autre agent a déjà été élu reine via un broadcast evaqueen
+        for agent_id, messages in self.message_stack.items():
+            for msg_dict in messages:
+                for k, (command, params_list) in msg_dict.items():
+                    if command == "evaqueen":
+                        self.is_queen_elected = True
+                        logger.info(f"Reine détectée via evaqueen de l'agent {agent_id}")
+                        break
+
         # Tentative d'auto-élection en reine si conditions remplies
         if self.level >= 3 and not self.is_queen_elected:
             # On s'ajoute au roster pour pouvoir comparer
@@ -208,6 +217,12 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais fais agir l'agent selon son rôle (queen, guard, protector, peasant)."""
 
+        if self.eggs_laid >= 1:
+            nb_mature_egg = self.cmd.send_command('Connect_nbr')
+            if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
+                self.utils.launch_clone()
+                self.eggs_laid = max(0, self.eggs_laid - 1)
+
         match self.role:
             case AgentRole.QUEEN:
                 self.task.act_queen()
@@ -226,6 +241,7 @@ class ZappyAgent:
 
         if self.client_num > 0:
             self.utils.launch_clone()
+            self.client_num = 0
         while self.is_alive:
             self.update_internal_state()
             if not self.is_alive:
