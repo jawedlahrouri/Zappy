@@ -59,6 +59,14 @@ void NetworkLoader::load(const std::string &libraryPath)
     }
     _handle = OPEN_LIB(libraryPath);
     if (_handle == nullptr) {
+#ifdef _WIN32
+        std::string fallbackPath = "lib" + libraryPath;
+        _handle = OPEN_LIB(fallbackPath);
+        if (_handle != nullptr) {
+            loadAllSymbols();
+            return;
+        }
+#endif
         throw ServerException("NetworkLoader: failed to load '" + libraryPath + "': " + getPlatformError());
     }
     loadAllSymbols();
