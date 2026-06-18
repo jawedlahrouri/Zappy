@@ -49,9 +49,9 @@ target_include_directories(zappy_gui PRIVATE
     server/include/shared
 )
 
-find_package(SFML 2.5 COMPONENTS graphics window system network REQUIRED)
+find_package(SFML 2.5 COMPONENTS graphics window system network audio REQUIRED)
 # Utilisation des cibles CMake officielles de SFML
-target_link_libraries(zappy_gui PRIVATE sfml-graphics sfml-window sfml-system sfml-network)
+target_link_libraries(zappy_gui PRIVATE sfml-graphics sfml-window sfml-system sfml-network sfml-audio)
 
 # ----------------------------------------------------------------======
 # 3. CIBLE : zappy_ai (Déploiement du script Python)

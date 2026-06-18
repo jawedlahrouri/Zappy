@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <iostream>
 #include <limits>
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
@@ -28,6 +29,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _height(height),
     _title(title),
     _fontLoaded(false),
+    _menuMusicLoaded(false),
     _menuIp("127.0.0.1"),
     _menuPort("4242"),
     _menuStatus(""),
@@ -43,6 +45,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     create2DWindow(width, height);
     loadTextures();
     loadFont();
+    loadMenuMusic();
 }
 
 void WindowManager::loadTextures()
@@ -138,8 +141,38 @@ void WindowManager::loadFont()
     std::cerr << "[WindowManager] Police introuvable: panneau d'information 2D sans texte." << std::endl;
 }
 
+void WindowManager::loadMenuMusic()
+{
+    const std::string musicPath = "GameEngine/assets/sprites/Chicago_Bulls_intro.mp3";
+
+    if (!_menuMusic.openFromFile(musicPath)) {
+        std::cerr << "[WindowManager] Musique de menu introuvable: "
+            << musicPath << std::endl;
+        return;
+    }
+    _menuMusic.setLoop(true);
+    _menuMusicLoaded = true;
+}
+
+void WindowManager::playMenuMusic()
+{
+    if (!_menuMusicLoaded)
+        return;
+    if (_menuMusic.getStatus() != sf::Music::Playing)
+        _menuMusic.play();
+}
+
+void WindowManager::stopMenuMusic()
+{
+    if (!_menuMusicLoaded)
+        return;
+    if (_menuMusic.getStatus() != sf::Music::Stopped)
+        _menuMusic.stop();
+}
+
 WindowManager::~WindowManager()
 {
+    stopMenuMusic();
     if (_window.isOpen())
         _window.close();
 }
@@ -664,12 +697,14 @@ void WindowManager::display()
 
 void WindowManager::drawMenu()
 {
+    playMenuMusic();
     Menu::draw(_window, _font, _fontLoaded, _menuIp, _menuPort,
         _activeMenuField, _menuStatus, _menuTeamNames);
 }
 
 void WindowManager::drawWorld(const GameWorld& world)
 {
+    stopMenuMusic();
     WorldRenderer::draw(_window, _worldView, world, _selectedTile,
         _selectedPlayerId, _font, _fontLoaded, _showGrid, _serverFreq,
         _timePaused, _showInfoPanel, _openedTeamInventory);

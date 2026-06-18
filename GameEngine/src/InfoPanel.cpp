@@ -95,8 +95,7 @@ void InfoPanelRenderer::drawGlobalInfoPanel(sf::RenderWindow& window, const Game
     drawInfoLine(window, text, "jersey: " + std::to_string(mapResources.mendiane) + "  trophy: " + std::to_string(mapResources.phiras), 10, 14, panelX, panelY);
     drawInfoLine(window, text, "card: " + std::to_string(mapResources.thystame), 11, 14, panelX, panelY);
     drawInfoLine(window, text, "shared team inventories", 13, 16, panelX, panelY);
-    const int row = drawTeamSharedInventories(window, text, teamCounts,
-        teamResources, openedTeamInventory, 14, panelX, panelY);
+    const int row = drawTeamSharedInventories(window, text, teamCounts, teamResources, openedTeamInventory, 14, panelX, panelY);
 
     drawInfoLine(window, text, "I: hide/show infos", row + 1, 13, panelX, panelY);
     window.setView(previousView);
@@ -116,19 +115,15 @@ int InfoPanelRenderer::drawTeamSharedInventories(sf::RenderWindow& window, sf::T
             hiddenTeams++;
             continue;
         }
-        drawInfoLine(window, text, std::string(opened ? "- " : "+ ") +
-            pair.first + ": " + std::to_string(pair.second) + " players",
-            row, 14, panelX, panelY);
+        drawInfoLine(window, text, std::string(opened ? "- " : "+ ") + pair.first + ": " + std::to_string(pair.second) + " players", row, 14, panelX, panelY);
         row++;
         if (opened) {
-            drawTeamInventoryDetails(window, text, resources, row, panelX,
-                panelY);
+            drawTeamInventoryDetails(window, text, resources, row, panelX, panelY);
             row += 3;
         }
     }
     if (hiddenTeams > 0 && row <= MAX_GLOBAL_INFO_ROW) {
-        drawInfoLine(window, text, "... " + std::to_string(hiddenTeams) +
-            " more teams", row, 13, panelX, panelY);
+        drawInfoLine(window, text, "... " + std::to_string(hiddenTeams) + " more teams", row, 13, panelX, panelY);
         row++;
     }
     return row;
@@ -150,18 +145,14 @@ std::optional<std::string> InfoPanelRenderer::getTeamInventoryAt(const GameWorld
     std::map<std::string, int> teamCounts;
     int row = 14;
 
-    if (mx < panelX || mx > panelX + GLOBAL_PANEL_WIDTH ||
-        my < panelY || my > panelY + GLOBAL_PANEL_HEIGHT)
+    if (mx < panelX || mx > panelX + GLOBAL_PANEL_WIDTH || my < panelY || my > panelY + GLOBAL_PANEL_HEIGHT)
         return std::nullopt;
     for (const auto& pair : world.getPlayers())
         teamCounts[pair.second.teamName]++;
     for (const auto& pair : teamCounts) {
-        const bool opened = openedTeamInventory.has_value() &&
-            *openedTeamInventory == pair.first;
+        const bool opened = openedTeamInventory.has_value() && *openedTeamInventory == pair.first;
         const int neededRows = opened ? 4 : 1;
-        const sf::FloatRect teamLine(panelX + 12.0f,
-            panelY + 16.0f + static_cast<float>(row) * 22.0f,
-            GLOBAL_PANEL_WIDTH - 24.0f, 22.0f);
+        const sf::FloatRect teamLine(panelX + 12.0f, panelY + 16.0f + static_cast<float>(row) * 22.0f, GLOBAL_PANEL_WIDTH - 24.0f, 22.0f);
 
         if (row + neededRows > MAX_GLOBAL_INFO_ROW)
             return std::nullopt;
