@@ -9,7 +9,8 @@
 class Players {
 public:
     static void draw(sf::RenderWindow& target, const GameWorld& world,
-        float offsetX, float offsetY, const std::optional<int>& selectedPlayerId);
+        float offsetX, float offsetY, const std::optional<int>& selectedPlayerId,
+        bool showBroadcasts);
     static bool pickPlayer(const GameWorld& world, const sf::Vector2f& worldPos,
         float offsetX, float offsetY, int& selectedPlayerId);
     static void drawPanel(sf::RenderWindow& window, const GameWorld& world,

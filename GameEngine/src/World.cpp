@@ -11,7 +11,7 @@
 #include "Players.hpp"
 #include "TextureManager.hpp"
 
-void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, int serverFreq, bool timePaused, bool showInfoPanel, const std::optional<std::string>& openedTeamInventory)
+void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, bool showBroadcasts, int serverFreq, bool timePaused, bool showInfoPanel, const std::optional<std::string>& openedTeamInventory)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
@@ -45,7 +45,7 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, co
 
         drawSelectedTile(window, x, y, posX, posY, selectedTile);
     }
-    Players::draw(window, world, offsetX, offsetY, selectedPlayerId);
+    Players::draw(window, world, offsetX, offsetY, selectedPlayerId, showBroadcasts);
     drawEggs(window, world, offsetX, offsetY);
     if (showInfoPanel)
         InfoPanelRenderer::drawGlobalInfoPanel(window, world, font, fontLoaded,

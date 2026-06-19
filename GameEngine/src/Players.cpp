@@ -220,11 +220,13 @@ void Players::drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,
 }
 
 void Players::draw(sf::RenderWindow& target, const GameWorld& world,
-    float offsetX, float offsetY, const std::optional<int>& selectedPlayerId)
+    float offsetX, float offsetY, const std::optional<int>& selectedPlayerId,
+    bool showBroadcasts)
 {
     const auto& players = world.getPlayers();
 
-    drawBroadcasts(target, world, offsetX, offsetY);
+    if (showBroadcasts)
+        drawBroadcasts(target, world, offsetX, offsetY);
     for (const auto& pair : players) {
         const Player& player = pair.second;
         const std::optional<DeathState> death =
@@ -344,12 +346,12 @@ void Players::drawTextInPanel(const sf::Font& font, sf::RenderWindow& window,  c
     drawInfoLine(window, text, "orientation: " + intToOrientation(player.orientation), 4, 17, panelX, panelY);
     drawInfoLine(window, text, "inventory", 6, 18, panelX, panelY);
     drawInfoLine(window, text, "food: " + std::to_string(player.inventory.food), 7, 16, panelX, panelY);
-    drawInfoLine(window, text, "linemate: " + std::to_string(player.inventory.linemate), 8, 16, panelX, panelY);
-    drawInfoLine(window, text, "deraumere: " + std::to_string(player.inventory.deraumere), 9, 16, panelX, panelY);
-    drawInfoLine(window, text, "sibur: " + std::to_string(player.inventory.sibur), 10, 16, panelX, panelY);
-    drawInfoLine(window, text, "mendiane: " + std::to_string(player.inventory.mendiane), 11, 16, panelX, panelY);
-    drawInfoLine(window, text, "phiras: " + std::to_string(player.inventory.phiras), 12, 16, panelX, panelY);
-    drawInfoLine(window, text, "thystame: " + std::to_string(player.inventory.thystame), 13, 16, panelX, panelY);
+    drawInfoLine(window, text, "brick: " + std::to_string(player.inventory.linemate), 8, 16, panelX, panelY);
+    drawInfoLine(window, text, "shoe: " + std::to_string(player.inventory.deraumere), 9, 16, panelX, panelY);
+    drawInfoLine(window, text, "balloon: " + std::to_string(player.inventory.sibur), 10, 16, panelX, panelY);
+    drawInfoLine(window, text, "jersey: " + std::to_string(player.inventory.mendiane), 11, 16, panelX, panelY);
+    drawInfoLine(window, text, "trophy: " + std::to_string(player.inventory.phiras), 12, 16, panelX, panelY);
+    drawInfoLine(window, text, "card: " + std::to_string(player.inventory.thystame), 13, 16, panelX, panelY);
 }
 
 void Players::drawPanel(sf::RenderWindow& window, const GameWorld& world,

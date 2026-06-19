@@ -109,6 +109,7 @@ public:
         std::vector<std::string> _menuTeamNames;
         bool _menuConnectionEdited;
         bool _showGrid;
+        bool _showBroadcasts;
         bool _showInfoPanel;
         int _serverFreq;
         int _resumeServerFreq;

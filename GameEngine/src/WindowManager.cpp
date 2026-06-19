@@ -36,6 +36,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _menuTeamNames(),
     _menuConnectionEdited(false),
     _showGrid(false),
+    _showBroadcasts(true),
     _showInfoPanel(true),
     _serverFreq(100),
     _resumeServerFreq(100),
@@ -630,6 +631,8 @@ bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& wor
             resetZoom();
         } else if (event.key.code == sf::Keyboard::G) {
             _showGrid = !_showGrid;
+        } else if (event.key.code == sf::Keyboard::B) {
+            _showBroadcasts = !_showBroadcasts;
         } else if (event.key.code == sf::Keyboard::I) {
             _showInfoPanel = !_showInfoPanel;
         }
@@ -721,6 +724,6 @@ void WindowManager::drawWorld(const GameWorld& world)
 {
     stopMenuMusic();
     WorldRenderer::draw(_window, _worldView, world, _selectedTile,
-        _selectedPlayerId, _font, _fontLoaded, _showGrid, _serverFreq,
-        _timePaused, _showInfoPanel, _openedTeamInventory);
+        _selectedPlayerId, _font, _fontLoaded, _showGrid, _showBroadcasts,
+        _serverFreq, _timePaused, _showInfoPanel, _openedTeamInventory);
 }
