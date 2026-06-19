@@ -143,6 +143,31 @@ std::string Players::getIncantationTextureKey(const IncantationState& incantatio
     return key.str();
 }
 
+std::string Players::getDeathTextureKey(const DeathState& death)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsedMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - death.startTime).count();
+    const int durationMs = std::max(1, death.durationMs);
+    const int frameDurationMs = std::max(1, durationMs / DEATH_FRAME_COUNT);
+    const int frameIndex = std::clamp(
+        static_cast<int>(elapsedMs / frameDurationMs), 0,
+        DEATH_FRAME_COUNT - 1);
+    std::ostringstream key;
+
+    if (death.teamColor == 1)
+        key << "blueDeath";
+    else if (death.teamColor == 3)
+        key << "greenDeath";
+    else if (death.teamColor == 4)
+        key << "pinkDeath";
+    else
+        key << "redDeath";
+    key << frameIndex;
+    return key.str();
+}
+
 static bool shouldShowSelectedSprite()
 {
     static const sf::Clock clock;
@@ -202,6 +227,8 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
     drawBroadcasts(target, world, offsetX, offsetY);
     for (const auto& pair : players) {
         const Player& player = pair.second;
+        const std::optional<DeathState> death =
+            world.getPlayerDeath(player.id);
         const std::optional<IncantationState> incantation =
             world.getPlayerIncantation(player.id);
         const bool selected = selectedPlayerId.has_value() &&
@@ -213,7 +240,9 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const TextureManager& tm = TextureManager::getInstance();
         std::string texKey;
 
-        if (incantation.has_value())
+        if (death.has_value())
+            texKey = getDeathTextureKey(*death);
+        else if (incantation.has_value())
             texKey = getIncantationTextureKey(*incantation, player.teamColor);
         else if (selected && shouldShowSelectedSprite())
             texKey = getSelectedPlayerTextureKey(player);
@@ -223,9 +252,12 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const sf::Vector2u texSize = tm.getTexture(texKey).getSize();
 
         if (texSize.x > 0 && texSize.y > 0) {
-            const float desired = incantation.has_value()
-                ? WorldRenderer::TILE_SIZE * INCANTATION_SIZE_RATIO
-                : WorldRenderer::TILE_SIZE * PLAYER_SIZE_RATIO;
+            float desired = WorldRenderer::TILE_SIZE * PLAYER_SIZE_RATIO;
+
+            if (death.has_value())
+                desired = WorldRenderer::TILE_SIZE * DEATH_SIZE_RATIO;
+            else if (incantation.has_value())
+                desired = WorldRenderer::TILE_SIZE * INCANTATION_SIZE_RATIO;
             const float scaleX = desired / static_cast<float>(texSize.x);
             const float scaleY = desired / static_cast<float>(texSize.y);
             sprite.setScale(scaleX, scaleY);

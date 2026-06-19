@@ -92,6 +92,18 @@ void WindowManager::loadTextures()
     loadSayenAnimation("green", "greensayen", "green");
     loadSayenAnimation("pink", "pinksayen", "pink");
 
+    const std::string deathColors[] = {"red", "blue", "green", "pink"};
+
+    for (const std::string& color : deathColors) {
+        for (int frame = 0; frame < 7; frame++) {
+            const std::string key = color + "Death" + std::to_string(frame);
+            const std::string file = color + "_death_" +
+                std::to_string(frame) + ".png";
+
+            tm.loadTexture(key, file);
+        }
+    }
+
     tm.loadTexture("bluePlayer", "blue_character.png");
     tm.loadTexture("blueBack", "blue_back.png");
     tm.loadTexture("blueRight", "blue_right.png");

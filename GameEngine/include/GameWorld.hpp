@@ -66,6 +66,13 @@
         std::chrono::steady_clock::time_point startTime;
     };
 
+    struct DeathState {
+        int playerId = 0;
+        int teamColor = 2;
+        int durationMs = 0;
+        std::chrono::steady_clock::time_point startTime;
+    };
+
     class GameWorld {
     public:
         GameWorld();
@@ -82,6 +89,8 @@
         void startIncantation(int x, int y, const std::vector<int>& playerIds, int durationMs);
         void stopIncantation(int x, int y);
         void triggerBroadcast(int playerId, int durationMs);
+        void triggerPlayerDeath(int playerId, int durationMs);
+        void updateAnimations();
         void removePlayer(int id);
         void addEgg(int id, int parentId, int x, int y);
         void hatchEgg(int id);
@@ -93,6 +102,7 @@
         const std::map<int, Player>& getPlayers() const;
         const std::map<int, Egg>& getEggs() const;
         std::optional<IncantationState> getPlayerIncantation(int id) const;
+        std::optional<DeathState> getPlayerDeath(int id) const;
         const std::vector<BroadcastState>& getBroadcasts() const;
 
     private:
@@ -106,6 +116,7 @@
         std::map<int, Egg> _eggs;
         std::map<int, IncantationState> _incantingPlayers;
         std::map<std::pair<int, int>, std::vector<int>> _incantationTiles;
+        std::map<int, DeathState> _dyingPlayers;
         mutable std::vector<BroadcastState> _broadcasts;
     };
 

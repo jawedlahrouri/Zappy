@@ -18,7 +18,9 @@ public:
 private:
     static constexpr float PLAYER_SIZE_RATIO = 0.5f;
     static constexpr float INCANTATION_SIZE_RATIO = 0.7f;
+    static constexpr float DEATH_SIZE_RATIO = 0.75f;
     static constexpr int SAYEN_FRAME_COUNT = 17;
+    static constexpr int DEATH_FRAME_COUNT = 7;
 
     static constexpr float PANEL_WIDTH = 330.0f;
     static constexpr float PANEL_HEIGHT = 380.0f;
@@ -30,6 +32,7 @@ private:
     static std::string getSelectedPlayerTextureKey(const Player& player);
     static std::string getIncantationTextureKey(const IncantationState& incantation,
         int teamColor);
+    static std::string getDeathTextureKey(const DeathState& death);
     static sf::Color getBroadcastColor(int teamColor, sf::Uint8 alpha);
     static void drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,
         float offsetX, float offsetY);
