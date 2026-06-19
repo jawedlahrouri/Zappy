@@ -4,10 +4,11 @@
 # Configuration des variables du jeu
 # ==========================================
 PORT=4242
-WIDTH=10
+WIDTH=25
 HEIGHT=10
 TEAM1="TeamA"
 TEAM2="TeamB"
+TEAM3="TeamC"
 CLIENTS_NB=3
 FREQ=100
 MACHINE="127.0.0.1"
@@ -46,7 +47,7 @@ trap cleanup SIGINT
 # ==========================================
 echo "[+] Lancement du zappy_server..."
 # Options du serveur basées sur le sujet
-./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 -c $CLIENTS_NB -f $FREQ &
+./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 $TEAM3 -c $CLIENTS_NB -f $FREQ &
 SERVER_PID=$!
 
 # Petite pause pour laisser le temps au serveur d'ouvrir ses sockets réseau

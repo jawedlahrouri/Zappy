@@ -159,9 +159,46 @@ void GameWorld::triggerBroadcast(int playerId, int durationMs)
 
     if (player == _players.end())
         return;
+    if (_dyingPlayers.find(playerId) != _dyingPlayers.end())
+        return;
     pruneBroadcasts();
     _broadcasts.push_back({playerId, player->second.x, player->second.y,
         player->second.teamColor, durationMs, std::chrono::steady_clock::now()});
+}
+
+void GameWorld::triggerPlayerDeath(int playerId, int durationMs)
+{
+    auto player = _players.find(playerId);
+
+    if (player == _players.end())
+        return;
+    _incantingPlayers.erase(playerId);
+    _broadcasts.erase(std::remove_if(_broadcasts.begin(), _broadcasts.end(),
+        [playerId](const BroadcastState& broadcast) {
+            return broadcast.playerId == playerId;
+        }), _broadcasts.end());
+    _dyingPlayers[playerId] = {playerId, player->second.teamColor, durationMs,
+        std::chrono::steady_clock::now()};
+}
+
+void GameWorld::updateAnimations()
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    pruneBroadcasts();
+    for (auto it = _dyingPlayers.begin(); it != _dyingPlayers.end(); ) {
+        const auto endTime = it->second.startTime +
+            std::chrono::milliseconds(std::max(1, it->second.durationMs));
+
+        if (now >= endTime) {
+            const int playerId = it->first;
+
+            it = _dyingPlayers.erase(it);
+            removePlayer(playerId);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void GameWorld::addEgg(int id, int parentId, int x, int y)
@@ -185,6 +222,7 @@ const std::map<int, Egg>&  GameWorld::getEggs() const
 void GameWorld::removePlayer(int id)
 {
     _incantingPlayers.erase(id);
+    _dyingPlayers.erase(id);
     _broadcasts.erase(std::remove_if(_broadcasts.begin(), _broadcasts.end(),
         [id](const BroadcastState& broadcast) {
             return broadcast.playerId == id;
@@ -230,6 +268,15 @@ std::optional<IncantationState> GameWorld::getPlayerIncantation(int id) const
         std::chrono::milliseconds(it->second.durationMs);
 
     if (now >= endTime)
+        return std::nullopt;
+    return it->second;
+}
+
+std::optional<DeathState> GameWorld::getPlayerDeath(int id) const
+{
+    const auto it = _dyingPlayers.find(id);
+
+    if (it == _dyingPlayers.end())
         return std::nullopt;
     return it->second;
 }

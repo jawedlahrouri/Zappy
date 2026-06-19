@@ -5,11 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Werror)
+find_package(SFML 2.5 COMPONENTS graphics window system network audio REQUIRED)
 
 # ----------------------------------------------------------------======
 # ASTUCE EPITECH : Force les exécutables C++ à poper à la racine du repo
 # ----------------------------------------------------------------======
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # ----------------------------------------------------------------======
 # 1. CIBLE : zappy_network_<os> (backend réseau dynamique)
@@ -69,24 +71,58 @@ endif()
 add_dependencies(zappy_server ${NETWORK_BACKEND_TARGET})
 
 # ----------------------------------------------------------------======
-# 3. CIBLE : zappy_gui
+# 3. CIBLE : zappy_gui + bibliothèques graphiques
 # ----------------------------------------------------------------======
-file(GLOB_RECURSE GUI_SOURCES "GameEngine/src/*.cpp")
-
-add_executable(zappy_gui ${GUI_SOURCES})
-target_include_directories(zappy_gui PRIVATE 
-    GameEngine/include 
-    server/include
-    server/include/application
-    server/include/domain
-    server/include/infrastructure
-    server/include/presentation
-    server/include/shared
+set(GAME_ENGINE_CORE_SOURCES
+    GameEngine/src/main.cpp
+    GameEngine/src/Core.cpp
+    GameEngine/src/GameWorld.cpp
+    GameEngine/src/NetworkManager.cpp
 )
 
-find_package(SFML 2.5 COMPONENTS graphics window system network audio REQUIRED)
-# Utilisation des cibles CMake officielles de SFML
-target_link_libraries(zappy_gui PRIVATE sfml-graphics sfml-window sfml-system sfml-network sfml-audio)
+add_executable(zappy_gui ${GAME_ENGINE_CORE_SOURCES})
+target_include_directories(zappy_gui PRIVATE GameEngine/include)
+target_link_libraries(zappy_gui PRIVATE
+    sfml-network
+    sfml-system
+    ${CMAKE_DL_LIBS}
+)
+
+set(GRAPHIC_2D_SOURCES
+    GameEngine/src/WindowManager.cpp
+    GameEngine/src/TextureManager.cpp
+    GameEngine/src/InfoPanel.cpp
+    GameEngine/src/Menu.cpp
+    GameEngine/src/Players.cpp
+    GameEngine/src/World.cpp
+    GameEngine/src/GraphicalUtils.cpp
+    GameEngine/src/GameWorld.cpp
+    GameEngine/graphics/2d/Graphic2D.cpp
+)
+
+add_library(zappy_graphic_2d SHARED ${GRAPHIC_2D_SOURCES})
+target_include_directories(zappy_graphic_2d PRIVATE GameEngine/include)
+target_link_libraries(zappy_graphic_2d PRIVATE
+    sfml-graphics
+    sfml-window
+    sfml-system
+    sfml-audio
+)
+
+set(GRAPHIC_3D_SOURCES
+    GameEngine/src/GameWorld.cpp
+    GameEngine/graphics/3d/Graphic3D.cpp
+)
+
+add_library(zappy_graphic_3d SHARED ${GRAPHIC_3D_SOURCES})
+target_include_directories(zappy_graphic_3d PRIVATE GameEngine/include)
+target_link_libraries(zappy_graphic_3d PRIVATE
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+add_dependencies(zappy_gui zappy_graphic_2d)
 
 # ----------------------------------------------------------------======
 # 3. CIBLE : zappy_ai (Déploiement du script Python)

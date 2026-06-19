@@ -7,8 +7,6 @@
 
 #include "Core.hpp"
 #include <algorithm>
-#include <array>
-#include <filesystem>
 #include <vector>
 #include <limits>
 
@@ -79,6 +77,7 @@ int Core::run(int ac, char** av)
                 parseCommand(command);
             }
         }
+        _world.updateAnimations();
  
         graphics().clear();
 
@@ -95,11 +94,7 @@ int Core::run(int ac, char** av)
 
 std::string Core::getGraphicLibraryPath(int ac, char** av) const
 {
-    const std::array<std::string, 3> defaultPaths = {
-        "./libzappy_graphic_2d.so",
-        "./GameEngine/libzappy_graphic_2d.so",
-        "GameEngine/libzappy_graphic_2d.so"
-    };
+    const std::string defaultPath = "./libzappy_graphic_2d.so";
 
     for (int i = 1; i < ac; i++) {
         const std::string arg = av[i];
@@ -111,11 +106,7 @@ std::string Core::getGraphicLibraryPath(int ac, char** av) const
         if (arg.rfind("--graphic-lib=", 0) == 0)
             return arg.substr(std::string("--graphic-lib=").size());
     }
-    for (const std::string& path : defaultPaths) {
-        if (std::filesystem::exists(path))
-            return path;
-    }
-    return defaultPaths[1];
+    return defaultPath;
 }
 
 bool Core::loadGraphicLibrary(const std::string& path)
@@ -348,6 +339,14 @@ void Core::initCommands()
 
         parseValue(ss, id);
         _world.triggerBroadcast(id, durationMs);
+    };
+
+    _commands["pdi"] = [this](std::stringstream& ss) {
+        int id = 0;
+        const int durationMs = 700;
+
+        parseValue(ss, id);
+        _world.triggerPlayerDeath(id, durationMs);
     };
 
     _commands["bct"] = [this](std::stringstream& ss) {
