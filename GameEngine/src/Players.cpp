@@ -143,11 +143,55 @@ static bool shouldShowSelectedSprite()
     return ((clock.getElapsedTime().asMilliseconds() / BLINK_PERIOD_MS) % 2) == 0;
 }
 
+sf::Color Players::getBroadcastColor(int teamColor, sf::Uint8 alpha)
+{
+    if (teamColor == 1)
+        return sf::Color(75, 165, 255, alpha);
+    if (teamColor == 3)
+        return sf::Color(75, 235, 145, alpha);
+    if (teamColor == 4)
+        return sf::Color(255, 105, 195, alpha);
+    return sf::Color(255, 95, 95, alpha);
+}
+
+void Players::drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,
+    float offsetX, float offsetY)
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    for (const BroadcastState& broadcast : world.getBroadcasts()) {
+        const float duration = static_cast<float>(std::max(1,
+            broadcast.durationMs));
+        const float elapsed = static_cast<float>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - broadcast.startTime).count());
+        const float progress = std::clamp(elapsed / duration, 0.0f, 1.0f);
+        const float minRadius = WorldRenderer::TILE_SIZE * 0.08f;
+        const float maxRadius = WorldRenderer::TILE_SIZE * 1.15f;
+        const float radius = minRadius + (maxRadius - minRadius) * progress;
+        const sf::Uint8 alpha = static_cast<sf::Uint8>(
+            std::clamp(220.0f * (1.0f - progress), 0.0f, 220.0f));
+        sf::CircleShape circle(radius);
+
+        circle.setOrigin(radius, radius);
+        circle.setPosition(
+            static_cast<float>(broadcast.x) * WorldRenderer::TILE_SIZE +
+                offsetX + (WorldRenderer::TILE_SIZE / 2.0f),
+            static_cast<float>(broadcast.y) * WorldRenderer::TILE_SIZE +
+                offsetY + (WorldRenderer::TILE_SIZE / 2.0f));
+        circle.setFillColor(sf::Color::Transparent);
+        circle.setOutlineColor(getBroadcastColor(broadcast.teamColor, alpha));
+        circle.setOutlineThickness(2.0f + 3.0f * (1.0f - progress));
+        target.draw(circle);
+    }
+}
+
 void Players::draw(sf::RenderWindow& target, const GameWorld& world,
     float offsetX, float offsetY, const std::optional<int>& selectedPlayerId)
 {
     const auto& players = world.getPlayers();
 
+    drawBroadcasts(target, world, offsetX, offsetY);
     for (const auto& pair : players) {
         const Player& player = pair.second;
         const std::optional<IncantationState> incantation =

@@ -57,6 +57,15 @@
         std::chrono::steady_clock::time_point startTime;
     };
 
+    struct BroadcastState {
+        int playerId = 0;
+        int x = 0;
+        int y = 0;
+        int teamColor = 2;
+        int durationMs = 0;
+        std::chrono::steady_clock::time_point startTime;
+    };
+
     class GameWorld {
     public:
         GameWorld();
@@ -72,6 +81,7 @@
         void setPlayerInventory(int id, int x, int y, const Resources& inventory);
         void startIncantation(int x, int y, const std::vector<int>& playerIds, int durationMs);
         void stopIncantation(int x, int y);
+        void triggerBroadcast(int playerId, int durationMs);
         void removePlayer(int id);
         void addEgg(int id, int parentId, int x, int y);
         void hatchEgg(int id);
@@ -83,9 +93,11 @@
         const std::map<int, Player>& getPlayers() const;
         const std::map<int, Egg>& getEggs() const;
         std::optional<IncantationState> getPlayerIncantation(int id) const;
+        const std::vector<BroadcastState>& getBroadcasts() const;
 
     private:
         int getTeamColor(const std::string& teamName);
+        void pruneBroadcasts() const;
         int _width = 0;
         int _height = 0;
         std::vector<std::string> _teamNames;
@@ -94,6 +106,7 @@
         std::map<int, Egg> _eggs;
         std::map<int, IncantationState> _incantingPlayers;
         std::map<std::pair<int, int>, std::vector<int>> _incantationTiles;
+        mutable std::vector<BroadcastState> _broadcasts;
     };
 
 #endif /* !GAMEWORLD_HPP_ */

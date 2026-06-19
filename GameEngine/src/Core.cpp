@@ -342,6 +342,14 @@ void Core::initCommands()
         _world.stopIncantation(x, y);
     };
 
+    _commands["pbc"] = [this](std::stringstream& ss) {
+        int id = 0;
+        const int durationMs = 850;
+
+        parseValue(ss, id);
+        _world.triggerBroadcast(id, durationMs);
+    };
+
     _commands["bct"] = [this](std::stringstream& ss) {
         int x = 0, y = 0, q0 = 0, q1 = 0, q2 = 0, q3 = 0, q4 = 0, q5 = 0, q6 = 0;
         parseValue(ss, x);
