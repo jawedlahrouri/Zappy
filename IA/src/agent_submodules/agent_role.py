@@ -65,7 +65,7 @@ class RoleTask:
             # Vérifier si le grouping a abouti (on est LEADER/FOLLOWER et assez de joueurs)
             if self.agent.grouper.role == 'LEADER' and len(self.agent.vision) > 0:
                 needed = self.agent.grouper.player_reqs.get(self.agent.level, 1)
-                if self.agent.vision[0].count('player') >= needed:
+                if self.agent.vision[0].count('player') == needed:
                     self.agent.state = AgentState.ELEVATION
                     self.agent.comportment.act_elevating()
         elif self.agent.state == AgentState.ELEVATION:

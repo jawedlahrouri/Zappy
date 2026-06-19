@@ -186,7 +186,7 @@ class Grouper:
         if self.current_k == 0:
             players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
             needed = self.player_reqs.get(level, 1)
-            if players_on_tile >= needed:
+            if players_on_tile == needed:
                 logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Prêt pour le rituel en tant que FOLLOWER !")
                 self.role = 'FOLLOWER'
                 self.agent.state = AgentState.ELEVATION
@@ -214,11 +214,15 @@ class Grouper:
         players_on_tile = vision[0].count('player') if len(vision) > 0 else 0
         needed = self.player_reqs.get(level, 1)
         from src.agent_submodules.agent_state import AgentState
-        if players_on_tile >= needed:
+        if players_on_tile == needed:
             logger.info(f"agent : Équipe au complet ({players_on_tile}/{needed}). Prêt pour le rituel en tant que LEADER !")
             self.role = 'LEADER'
             self.agent.state = AgentState.ELEVATION
             return True
+        elif players_on_tile > needed:
+            logger.warning(f"Trop de joueurs sur la case ({players_on_tile}/{needed}). Éjection !")
+            self.cmd.send_command("Eject")
+            return False
         logger.info(f"agent : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"{my_id}-{level}", "needmate")
         self.cmd.send_command(f"Broadcast {secret_msg}")
