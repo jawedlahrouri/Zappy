@@ -122,7 +122,8 @@ std::string Players::getSelectedPlayerTextureKey(const Player& player)
     return "whiteRedFace";
 }
 
-std::string Players::getIncantationTextureKey(const IncantationState& incantation)
+std::string Players::getIncantationTextureKey(const IncantationState& incantation,
+    int teamColor)
 {
     const auto now = std::chrono::steady_clock::now();
     const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - incantation.startTime).count();
@@ -130,8 +131,15 @@ std::string Players::getIncantationTextureKey(const IncantationState& incantatio
     const int frameDurationMs = std::max(1, durationMs / SAYEN_FRAME_COUNT);
     const int frameIndex = static_cast<int>((elapsedMs / frameDurationMs) % SAYEN_FRAME_COUNT) + 1;
     std::ostringstream key;
+    std::string color = "red";
 
-    key << "sayen" << std::setw(2) << std::setfill('0') << frameIndex;
+    if (teamColor == 1)
+        color = "blue";
+    if (teamColor == 3)
+        color = "green";
+    if (teamColor == 4)
+        color = "pink";
+    key << color << "Sayen" << std::setw(2) << std::setfill('0') << frameIndex;
     return key.str();
 }
 
@@ -235,7 +243,7 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         if (death.has_value())
             texKey = getDeathTextureKey(*death);
         else if (incantation.has_value())
-            texKey = getIncantationTextureKey(*incantation);
+            texKey = getIncantationTextureKey(*incantation, player.teamColor);
         else if (selected && shouldShowSelectedSprite())
             texKey = getSelectedPlayerTextureKey(player);
         else
