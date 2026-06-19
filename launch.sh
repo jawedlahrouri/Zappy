@@ -4,7 +4,7 @@
 # Configuration des variables du jeu
 # ==========================================
 PORT=4242
-WIDTH=10
+WIDTH=25
 HEIGHT=10
 TEAM1="TeamA"
 TEAM2="TeamB"
@@ -27,7 +27,8 @@ done
 
 # ==========================================
 # Fonction de nettoyage (Clean exit)
-# ==========================================
+# ===========================cmake -S . -B build
+cmake --build build -j2===============
 # Se déclenche quand on fait un Ctrl+C
 cleanup() {
     echo -e "\n[+] Arrêt de tous les processus Zappy..."

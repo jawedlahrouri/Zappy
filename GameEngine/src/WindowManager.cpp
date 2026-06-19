@@ -51,6 +51,16 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
 void WindowManager::loadTextures()
 {
     TextureManager& tm = TextureManager::getInstance();
+    const auto loadSayenAnimation = [&tm](const std::string& color,
+        const std::string& folder, const std::string& suffix) {
+        for (int frame = 1; frame <= 17; frame++) {
+            const std::string frameNumber =
+                frame < 10 ? "0" + std::to_string(frame) : std::to_string(frame);
+
+            tm.loadTexture(color + "Sayen" + frameNumber,
+                folder + "/sayen" + frameNumber + suffix + ".png");
+        }
+    };
     
     tm.loadTexture("menuBackground", "background_menu.png");
     tm.loadTexture("spursBackground", "spurs_background.png");
@@ -77,23 +87,10 @@ void WindowManager::loadTextures()
     tm.loadTexture("whiteRedRight", "white_red_right.png");
     tm.loadTexture("whiteRedLeft", "white_red_left.png");
 
-    tm.loadTexture("sayen01", "sayen01.png");
-    tm.loadTexture("sayen02", "sayen02.png");
-    tm.loadTexture("sayen03", "sayen03.png");
-    tm.loadTexture("sayen04", "sayen04.png");
-    tm.loadTexture("sayen05", "sayen05.png");
-    tm.loadTexture("sayen06", "sayen06.png");
-    tm.loadTexture("sayen07", "sayen07.png");
-    tm.loadTexture("sayen08", "sayen08.png");
-    tm.loadTexture("sayen09", "sayen09.png");
-    tm.loadTexture("sayen10", "sayen10.png");
-    tm.loadTexture("sayen11", "sayen11.png");
-    tm.loadTexture("sayen12", "sayen12.png");
-    tm.loadTexture("sayen13", "sayen13.png");
-    tm.loadTexture("sayen14", "sayen14.png");
-    tm.loadTexture("sayen15", "sayen15.png");
-    tm.loadTexture("sayen16", "sayen16.png");
-    tm.loadTexture("sayen17", "sayen17.png");
+    loadSayenAnimation("red", "redsayen", "");
+    loadSayenAnimation("blue", "bluesayen", "blue");
+    loadSayenAnimation("green", "greensayen", "green");
+    loadSayenAnimation("pink", "pinksayen", "pink");
 
     tm.loadTexture("bluePlayer", "blue_character.png");
     tm.loadTexture("blueBack", "blue_back.png");
@@ -236,13 +233,13 @@ void WindowManager::update2DPan()
         return;
     if (!_window.hasFocus())
         return;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         movement.y -= panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
         movement.y += panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         movement.x -= panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
         movement.x += panStep;
     if (movement.x == 0.0f && movement.y == 0.0f)
         return;

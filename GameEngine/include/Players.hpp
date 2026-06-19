@@ -28,7 +28,8 @@ private:
     static std::string getPlayerTextureKey(const Player& player);
     static std::string getPlayerTextureKey(const Player& player, const int orientation);
     static std::string getSelectedPlayerTextureKey(const Player& player);
-    static std::string getIncantationTextureKey(const IncantationState& incantation);
+    static std::string getIncantationTextureKey(const IncantationState& incantation,
+        int teamColor);
     static sf::Color getBroadcastColor(int teamColor, sf::Uint8 alpha);
     static void drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,
         float offsetX, float offsetY);
