@@ -21,7 +21,6 @@ class RoleTask:
         FARMING : qui vas agir sur une ressource en particulier
         FEEDER : vas apporter de la nouriture dans une direction precise (k)
         """
-        # Gestion de la population par les peasants (beginners)
         if self.agent.level < 3:
             beginner_ids = [aid for aid, info in self.agent.team_roster.items() if info.get("level", 1) < 3 and aid != 9999] + [self.agent.agent_id]
             if self.agent.agent_id == max(beginner_ids):
@@ -30,15 +29,11 @@ class RoleTask:
                 if needed > 0 and self.agent.state not in (AgentState.GROUPING, AgentState.ELEVATION):
                     if self.agent.inventory.get('food', 0) > 3:
                         self.agent.utils.fork()
-
-        # Priorité 1 : vérifier si la reine demande un grouping
         food_level = self.agent.inventory.get('food', 0)
         if self.agent.level >= 3 and self.agent.utils.is_grouping() and food_level >= 25:
             self.agent.state = AgentState.GROUPING
             self.agent.comportment.act_grouping()
             return
-            
-        # Si on est en grouping (sur la reine ou en chemin), on continue
         if self.agent.state == AgentState.GROUPING:
             if food_level < 25:
                 logger.info(f"Peasant lvl{self.agent.level} : Pas assez de food, quitte le grouping pour farmer.")
@@ -50,10 +45,7 @@ class RoleTask:
         elif self.agent.state == AgentState.ELEVATION:
             self.agent.comportment.act_elevating()
             return
-
-        # Priorité 2 : Si niveau < 3, continuer la progression BEGINNER
         if self.agent.level < 3:
-            # Priorité bouffe pour beginner si besoin, sinon act_beginner gere
             if self.agent.utils.verify_food():
                 self.agent.state = AgentState.FARMING
                 self.agent.comportment.act_farming('food')
@@ -61,8 +53,6 @@ class RoleTask:
                 self.agent.state = AgentState.BEGINNER
                 self.agent.comportment.act_beginner()
             return
-
-        # Priorité 3 : Si niveau >= 3, farmer de la nourriture pour en avoir entre 25 et 30, puis attendre
         food_level = self.agent.inventory.get('food', 0)
         if food_level < 50:
             self.agent.state = AgentState.FARMING
@@ -73,33 +63,32 @@ class RoleTask:
 
     
     def act_queen(self):
-        # Si on est en ELEVATION, on continue l'élévation
+        """
+        Fonction en charge de l'action de la reine.
+        PARAMS:
+            -self: instance de l'agent
+        RETURNS:
+            -None
+        """
         if self.agent.state == AgentState.ELEVATION:
             self.agent.comportment.act_elevating()
             return
-
-        # Vérifier si l'inventaire personnel contient toutes les pierres pour le niveau 8
         missing = self.agent.farmer.get_missing_stones_for_max_level(self.agent.level, self.agent.inventory)
         if len(missing) == 0:
             current_food = self.agent.inventory.get('food', 0)
-            
             should_farm = False
             if self.agent.state != AgentState.GROUPING:
-                # Avant de lancer l'appel, il faut 30 de nourriture
                 if current_food < 50:
                     should_farm = True
             else:
-                # Pendant l'appel, on ne s'arrête que si on n'a plus assez pour assurer l'élévation (<= 20)
                 if current_food <= 20:
                     should_farm = True
             
             if should_farm:
-                # Elle farme de la nourriture en silence pour se préparer ou se sauver
                 self.agent.state = AgentState.FARMING
                 self.agent.comportment.act_farming('food')
                 return
             else:
-                # Elle a assez de nourriture, elle se fige et lance/maintient l'appel
                 self.agent.state = AgentState.GROUPING
                 grouping_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "grouping")
                 self.agent.cmd.send_command(f"Broadcast {grouping_msg}")
@@ -111,15 +100,10 @@ class RoleTask:
                 else:
                     logger.info(f"Reine : En attente de regroupement. Joueurs sur ma case : {self.agent.vision[0].count('player') if len(self.agent.vision) > 0 else 0}/6")
                 return
-
-        # Il manque des pierres, on n'a pas encore fini de farmer
-        # Priorité : vérifier la nourriture
         if self.agent.inventory.get('food', 0) <= 6:
             self.agent.state = AgentState.FARMING
             self.agent.comportment.act_farming('food')
             return
-
-        # Par défaut : farmer les pierres manquantes pour soi-même
         self.agent.state = AgentState.FARMING
         if missing:
             self.agent.comportment.act_farming(missing[0])

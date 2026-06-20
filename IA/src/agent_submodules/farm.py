@@ -56,8 +56,6 @@ class Farmer:
             needed_for_level = self.requirements.get(l, {})
             for stone, amount in needed_for_level.items():
                 total_needed[stone] = total_needed.get(stone, 0) + amount
-        
-        # On ajoute une plus grande marge pour la reine (5 pierres de chaque en plus, au cas où d'ejection)
         for stone in total_needed:
             total_needed[stone] += 5
         return total_needed

@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 from enum import Enum
 from src.logger import ZappyLogger
+from src.agent_submodules.agent_role import AgentRole
+
 
 logger = ZappyLogger.get_logger("AgentState")
 
@@ -20,24 +22,21 @@ class StateComportment:
         self.agent = agent # Référence à l'agent principal pour accéder à ses modules et données.
 
     def _clean_and_set_stones(self, required_stones):
-        """Nettoie la case et pose exactement les pierres requises pour l'incantation.
-        Prend TOUTES les pierres présentes sur la case pour s'assurer qu'il n'y a pas de parasites,
-        puis pose exactement ce qui est requis.
-        Retourne True si réussi."""
-        # Rafraîchir la vision pour voir la case actuelle
+        """Nettoie la case et pose exactement le nombre de pierre necessaire pour l'incantation
+        Params:
+            - required_stones (dict): Dictionnaire des pierres requises pour l'incantation.
+        Retourne:
+            - bool: True si l'incantation a été réussie, False sinon.
+        """
         vision = self.agent.cmd.send_command("Look")
         if vision:
             self.agent.vision = vision
         tile_contents = self.agent.vision[0] if self.agent.vision else []
-
-        # Prendre toutes les pierres (et nourriture) pour faire place nette
         all_items = ['food', 'linemate', 'deraumere', 'sibur', 'mendiane', 'phiras', 'thystame']
         for item in all_items:
             on_ground = tile_contents.count(item)
             for _ in range(on_ground):
                 self.agent.cmd.send_command(f"Take {item}")
-
-        # Poser exactement ce qu'il faut
         for stone_name, amount in required_stones.items():
             if amount == 0:
                 continue
@@ -64,8 +63,6 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour farming."""
         
-        from src.agent_submodules.agent_role import AgentRole
-        
         if item == 'food':
             success = self.agent.pathfinder.search_and_take_items(['food'], self.agent.vision)
             if not success:
@@ -83,7 +80,6 @@ class StateComportment:
                 if not success:
                     self.agent.pathfinder.explore(self.agent.level)
             else:
-                # Toutes les pierres sont collectées, on farme de la food en attendant
                 success = self.agent.pathfinder.search_and_take_items(['food'], self.agent.vision)
                 if not success:
                     self.agent.pathfinder.explore(self.agent.level)
@@ -99,9 +95,7 @@ class StateComportment:
         from src.agent_submodules.agent_role import AgentRole
 
         if self.agent.role == AgentRole.QUEEN or self.agent.grouper.role == 'ROYAL_FOLLOWER':
-            # Phase Bus : la Reine pose les pierres, les autres attendent
             if self.agent.role == AgentRole.QUEEN:
-                # La Reine nettoie la case et pose exactement les pierres requises
                 required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
                 if not self._clean_and_set_stones(required_stones):
                     logger.warning("Reine : Nettoyage de case échoué, incantation reportée.")
@@ -111,20 +105,18 @@ class StateComportment:
                     self.agent.level += 1
                     logger.info(f"Reine : Incantation réussie ! Niveau actuel : {self.agent.level}")
                     if self.agent.level < 8:
-                        return self.act_elevating()  # Chaîner les incantations
+                        return self.act_elevating()
                 else:
                     logger.warning("Reine : Incantation échouée (ko ou eject), retour au regroupement.")
                 return AgentState.GROUPING
             else:
-                # Les suiveurs (ROYAL_FOLLOWER) attendent
                 success = self.agent.cmd.wait_for_incantation_follower()
                 if success:
                     self.agent.level += 1
                     logger.info(f"{self.agent.role.name.capitalize()} : Incantation réussie ! Niveau actuel : {self.agent.level}")
                     if self.agent.level < 8:
-                        return self.act_elevating()  # Chaîner les incantations
+                        return self.act_elevating()
                 return AgentState.GROUPING
-
         else:
             if self.agent.level == 1 or self.agent.grouper.role == 'LEADER':
                 required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
@@ -160,7 +152,6 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour le regroupement."""
 
-        # Sécurité anti-famine : si food critique, abandonner le grouping (sauf si lvl>=3 pour la reine)
         if self.agent.inventory.get('food', 0) <= self.agent.food_minimum and self.agent.level < 3:
             logger.warning("Grouping abandonné : nourriture critique !")
             self.agent.grouper.role = None
@@ -183,7 +174,6 @@ class StateComportment:
         necessary_ressources = self.agent.farmer.get_missing_stones(self.agent.level, self.agent.inventory)
         if len(necessary_ressources) == 0:
             if self.agent.utils.is_food_critical_for_action(300, self.agent.inventory):
-                # Assez de food pour tenter l'incantation solo (niveau 1)
                 if self.agent.level == 1:
                     required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
                     if not self._clean_and_set_stones(required_stones):
@@ -194,24 +184,18 @@ class StateComportment:
                     if success:
                         self.agent.level += 1
                         logger.info(f"Beginner : Incantation réussie ! Niveau actuel : {self.agent.level}")
-                        # Broadcaster un ping immédiat pour mettre à jour le roster des alliés
                         ping_content = f"{self.agent.agent_id}-{self.agent.level}-{self.agent.inventory.get('food', 0)}-{self.agent.inventory.get('linemate', 0)}-{self.agent.inventory.get('deraumere', 0)}-{self.agent.inventory.get('sibur', 0)}-{self.agent.inventory.get('mendiane', 0)}-{self.agent.inventory.get('phiras', 0)}-{self.agent.inventory.get('thystame', 0)}"
                         secret_ping = self.agent.comms.encode(ping_content, "ping")
                         self.agent.cmd.send_command(f"Broadcast {secret_ping}")
                 else:
-                    # Niveau 2+, besoin d'un partenaire → broadcaster needmate et entrer en grouping
-                    # Cooldown : exiger food_safe avant de risquer un grouping (casse la boucle infinie)
                     if self.agent.inventory.get('food', 0) < self.agent.food_safe:
                         logger.info(f"Beginner lvl{self.agent.level} : Pas assez de food pour grouping, farming d'abord.")
                         self.agent.pathfinder.search_and_take_items(["food"], self.agent.vision)
                         return AgentState.BEGINNER
                     self.agent.state = AgentState.GROUPING
-                    # Broadcaster un needmate pour trouver un partenaire
-                    # Format: {sender_id}-{level}_needmate (sender_id en premier pour le parsing)
                     secret_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "needmate")
                     self.agent.cmd.send_command(f"Broadcast {secret_msg}")
                     logger.info(f"Beginner lvl{self.agent.level} : Recherche d'un partenaire pour incantation (needmate broadcasté)")
-                    # Vérifier si un allié a déjà répondu
                     self.agent.grouper.process_grouping(self.agent.level, self.agent.agent_id, self.agent.vision)
                     return AgentState.GROUPING
             else:
@@ -224,8 +208,12 @@ class StateComportment:
 
 
     def act_feeder(self):
-        """Jette la nourriture au sol jusqu'à ce qu'il n'en reste que 3 dans l'inventaire.
-        Retourne AgentState.FEEDER."""
+        """Jette de la nourriture au sol jusqu'à etre à sec
+        PARAMS:
+            -Aucun paramètre.
+        Retourne:
+            -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour survivre.
+        """
 
         food_count = self.agent.inventory.get("food", 0)
         food_a_jeter = food_count - 3
@@ -241,6 +229,5 @@ class StateComportment:
         if self.agent.utils.is_grouping():
             self.agent.state = AgentState.GROUPING
         else:
-            # Send a command to the server so we wait 1 cycle instead of infinite spam
             self.agent.cmd.send_command("Inventory")
             return AgentState.WAIT

@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 from src.logger import ZappyLogger
+from src.agent_submodules.agent_role import AgentRole
+from src.agent_submodules.agent_state import AgentState
 
 logger = ZappyLogger.get_logger("Grouper")
 
@@ -72,28 +74,20 @@ class Grouper:
             -vision (list): La vision actuelle de l'agent.
         Retourne:
             -bool: True si le regroupement est réussi, False sinon."""
+
         call_k, grouping_type = self.analyze_messages(level, my_id)
-        
-        # Gestion du Décret Royal (prioritaire)
         if grouping_type == 'ROYAL_GROUPING':
             return self.act_royal_grouping(level, my_id, vision, call_k)
-            
-        # Mise à jour du rôle selon les messages reçus
         if grouping_type in ['LEADER', 'FOLLOWER']:
             self.role = grouping_type
-        # Si on n'a toujours pas de rôle, on devient LEADER par défaut (comme dans l'ancienne version)
         elif self.role is None:
             self.role = 'LEADER'
-
-        # Agir selon le rôle mémorisé
         if self.role == 'LEADER':
             return self.act_leader(level, my_id, vision)
         elif self.role == 'FOLLOWER':
             return self.act_follower(level, my_id, vision)
             
         return False
-
-
 
     def act_royal_grouping(self, level, my_id, vision, call_k):
         """Effectue les actions de regroupement royal.\n
@@ -104,9 +98,6 @@ class Grouper:
             -call_k (int): La direction de l'appel de regroupement royal.
         Retourne:
             -bool: True si le regroupement est réussi, False sinon."""
-
-        from src.agent_submodules.agent_role import AgentRole
-        from src.agent_submodules.agent_state import AgentState
 
         if self.agent.role == AgentRole.QUEEN:
             logger.info(f"Reine : J'ai lancé un appel de regroupement royal. Tous les alliés doivent se rassembler.")

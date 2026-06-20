@@ -108,12 +108,10 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
-        # Mettre à jour le roster et le niveau des alliés depuis les pings
         for agent_id, messages in self.message_stack.items():
             if agent_id not in self.team_roster:
                 self.team_roster[agent_id] = {"last_seen": 0, "level": 1}
             self.team_roster[agent_id]["last_seen"] = 0
-            # Extraire le level depuis les pings
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
                     if command == "ping" and len(params_list) >= 1:
@@ -121,8 +119,6 @@ class ZappyAgent:
                             self.team_roster[agent_id]["level"] = int(params_list[0])
                         except (ValueError, IndexError):
                             pass
-
-        # Purger les agents morts (pas vus depuis 15 cycles)
         for agent_id in list(self.team_roster.keys()):
             if agent_id not in self.message_stack:
                 self.team_roster[agent_id]["last_seen"] += 1
@@ -137,7 +133,6 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
-        # Vérifier si un autre agent a déjà été élu reine via un broadcast evaqueen ou grouping
         for agent_id, messages in self.message_stack.items():
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
@@ -149,17 +144,11 @@ class ZappyAgent:
                                 self.is_queen = False
                                 self.role = AgentRole.PEASANT
                         break
-
-        # Si on est déjà la reine, ne pas changer
         if self.is_queen:
             return
-
-        # Tentative d'auto-élection en reine si conditions remplies
         if self.level >= 3 and not self.is_queen_elected:
-            # On s'ajoute aux éligibles et on cherche les autres agents de niveau >= 3
             eligible_ids = [self.agent_id]
             for a_id, data in self.team_roster.items():
-                # Extrait le niveau du roster s'il est connu (1 par défaut)
                 if data.get("level", 1) >= 3:
                     eligible_ids.append(a_id)
                     
@@ -167,21 +156,16 @@ class ZappyAgent:
                 self.role = AgentRole.QUEEN
                 self.is_queen = True
                 self.is_queen_elected = True
-                self.agent_id = 9999  # Remettre l'ID 9999 comme demandé
+                self.agent_id = 9999
                 queen_msg = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
                 secret_message = self.comms.encode(queen_msg, "evaqueen")
                 self.cmd.send_command(f"Broadcast {secret_message}")
                 logger.info(f"Agent élu REINE ! ID mis à: {self.agent_id}")
                 return
-
-        # Le rôle reste PEASANT par défaut, à moins qu'on ne soit la reine
         new_role = self.utils.which_role()
         if new_role != self.role:
             logger.info(f"Changement de rôle : {self.role} → {new_role}")
             self.role = new_role
-
-        # État par défaut pour les peasants sous niveau 3
-        # Ne pas écraser GROUPING/ELEVATION qui doivent persister entre les cycles
         if self.level < 3 and self.role == AgentRole.PEASANT:
             if self.state not in (AgentState.GROUPING, AgentState.ELEVATION):
                 self.state = AgentState.BEGINNER
@@ -197,7 +181,6 @@ class ZappyAgent:
             if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
                 self.utils.launch_clone()
                 self.eggs_laid = max(0, self.eggs_laid - 1)
-
         match self.role:
             case AgentRole.QUEEN:
                 self.task.act_queen()

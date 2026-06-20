@@ -19,8 +19,6 @@ class ZappyCommand:
         Retourne True si l'incantation réussit, False en cas d'échec."""
 
         logger.info(f"l'agent attend les messages d'incantation.")
-        
-        # Envoie une commande bidon pour ne pas bloquer infiniment.
         timeout_counter = 0
         self.network.send_command("Inventory\n")
         
@@ -30,13 +28,12 @@ class ZappyCommand:
                 second_response = self._wait_for_response(expect_incantation=True)
                 logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
                 if second_response and second_response.startswith("Current level"):
-                    # On consomme la réponse de l'Inventory qui arrivera après l'incantation
                     self._wait_for_response() 
                     return True
                 return False
             elif response.startswith("["): 
                 timeout_counter += 1
-                if timeout_counter > 800: # Timeout de sécurité augmenté pour les hauts niveaux et le nettoyage de case par la reine
+                if timeout_counter > 800:
                     logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
                     return False
                 self.network.send_command("Inventory\n")
