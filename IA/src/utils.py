@@ -43,7 +43,7 @@ class utils:
         Retourne True si réussi, False sinon."""
         success = self.agent.cmd.send_command("Fork")
         if success:
-            logger.info("Reine : Un oeuf a été pondu. En attente de l'éclosion (600 TU)...")
+            logger.info("Un oeuf a été pondu. En attente de l'éclosion (600 TU)...")
             self.agent.eggs_laid += 1
             return True
         return False
@@ -72,23 +72,10 @@ class utils:
         return self.agent.message_stack.get(id, None)
     
     def which_role(self):
-        """Détermine le rôle de l'agent en fonction du décret royal de la reine.
+        """Détermine le rôle de l'agent.
         Retourne le rôle approprié (AgentRole)."""
         if self.agent.is_queen:
             return AgentRole.QUEEN
-        messages = self.verify_id_message(9999)
-        if messages is None:
-            return self.agent.role  # Pas de message de la reine, on garde le rôle actuel.
-        params = self.verify_command("royalsummon", messages)
-        if params is None:
-            return self.agent.role
-        # params contient les IDs des guards (indices 0-4) et protectors (indices 5-8)
-        agent_id_str = str(self.agent.agent_id)
-        for i, e in enumerate(params):
-            if agent_id_str == e and i < 5:
-                return AgentRole.GUARD
-            if agent_id_str == e and i >= 5:
-                return AgentRole.PROTECTOR
         return AgentRole.PEASANT
     
     def is_grouping(self):
@@ -103,11 +90,9 @@ class utils:
         messages = self.verify_id_message(9999)
         if messages is None:
             return False
-        # Stocker le k de la reine pour savoir dans quelle direction aller
         for msg_dict in messages:
             for k, (cmd, params) in msg_dict.items():
                 if cmd == "elevation":
-                    self.agent.k_queen = k
                     return True
         return False
 
@@ -115,8 +100,6 @@ class utils:
         """Vérifie si l'agent doit ramasser de la nourriture.
         Retourne True si il doit en ramasser, False sinon."""
         food_level = self.agent.inventory.get("food", 0)
-        if self.agent.state == AgentState.GROUPING:
-            return food_level <= 25
-        if self.agent.state == AgentState.ELEVATION:
-            return food_level <= 15
+        if self.agent.state == AgentState.GROUPING or self.agent.state == AgentState.ELEVATION:
+            return False
         return food_level <= 6

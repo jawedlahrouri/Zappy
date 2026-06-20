@@ -36,7 +36,7 @@ class ZappyCommand:
                 return False
             elif response.startswith("["): 
                 timeout_counter += 1
-                if timeout_counter > 150: # Timeout de sécurité augmenté pour les hauts niveaux (11 pierres * 7 TU = 77 TU + marge)
+                if timeout_counter > 800: # Timeout de sécurité augmenté pour les hauts niveaux et le nettoyage de case par la reine
                     logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
                     return False
                 self.network.send_command("Inventory\n")

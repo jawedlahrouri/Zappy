@@ -48,9 +48,10 @@ class Grouper:
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
                     if sender_id == 9999 and command == "grouping":
-                        logger.info(f"Appel de la Reine reçu de la direction {k}. En route !")
-                        self.current_k = k
-                        return k, "ROYAL_GROUPING"
+                        if self.agent.level >= 3:
+                            logger.info(f"Appel de la Reine reçu de la direction {k}. En route !")
+                            self.current_k = k
+                            return k, "ROYAL_GROUPING"
                     if command == "needmate":
                         sender_level = int(params_list[0]) if len(params_list) > 0 else None
                         if sender_level == self.agent.level:
@@ -92,37 +93,7 @@ class Grouper:
             
         return False
 
-    def act_grouping_protector(self):
-        queen_k = self.agent.k_queen
-        protector_index = self.agent.agent_id % 4  # Calculer l'index du protecteur basé sur son ID
-        
-        if queen_k is not None:
-            if not hasattr(self.agent, 'is_deployed'):
-                self.agent.is_deployed = False
 
-            if not self.agent.is_deployed:
-                if queen_k == 0:
-                    # Déjà sur la case de la reine, se positionner sur une case adjacente
-                    if protector_index == 0:
-                        self.cmd.send_command("Forward")
-                    elif protector_index == 1:
-                        self.cmd.send_command("Right")
-                        self.cmd.send_command("Forward")
-                    elif protector_index == 2:
-                        self.cmd.send_command("Right")
-                        self.cmd.send_command("Right")
-                        self.cmd.send_command("Forward")
-                    elif protector_index == 3:
-                        self.cmd.send_command("Left")
-                        self.cmd.send_command("Forward")
-
-                    # Faire face vers l'extérieur
-                    self.cmd.send_command("Right")
-                    self.cmd.send_command("Right")
-                    self.agent.is_deployed = True
-                else:
-                    # Pas encore sur la case de la reine, s'en rapprocher
-                    self._move_towards_sound(queen_k)
 
     def act_royal_grouping(self, level, my_id, vision, call_k):
         """Effectue les actions de regroupement royal.\n
@@ -141,35 +112,20 @@ class Grouper:
             logger.info(f"Reine : J'ai lancé un appel de regroupement royal. Tous les alliés doivent se rassembler.")
             self.cmd.send_command("Broadcast " + self.comms.encode(f"{my_id}-{level}", "grouping"))
             return False
-        elif self.agent.role == AgentRole.GUARD:
-            if call_k == 0:
-                logger.info(f"Garde : Je suis arrivé à la case de la Reine. Prêt pour l'élévation.")
-                self.agent.comportment.act_elevating()
-                return True
+        else:
+            if self.agent.level >= 3:
+                if call_k == 0:
+                    logger.info(f"{self.agent.role.name.capitalize()} (lvl {self.agent.level}) : Je suis arrivé à la case de la Reine. Prêt pour l'élévation.")
+                    self.agent.state = AgentState.ELEVATION
+                    self.role = 'ROYAL_FOLLOWER'
+                    return True
+                else:
+                    logger.info(f"{self.agent.role.name.capitalize()} (lvl {self.agent.level}) : J'ai entendu l'appel de la Reine. Je me dirige vers elle.")
+                    self._move_towards_sound(call_k)
+                    return False
             else:
-                logger.info(f"Garde : J'ai entendu l'appel de regroupement royal. Je me dirige vers la Reine.")
-                self._move_towards_sound(call_k)
+                self.agent.state = AgentState.FARMING
                 return False
-        elif self.agent.role == AgentRole.PROTECTOR:
-            if call_k == 0:
-                logger.info(f"Protecteur : Je suis arrivé à la case de la Reine. Je vais l'aider à se protéger.")
-                self.agent.comportment.act_pushing()
-                return True
-            else:
-                logger.info(f"Protecteur : J'ai entendu l'appel de regroupement royal. Je me dirige vers la Reine.")
-                self._move_towards_sound(call_k)
-                return False
-        elif self.agent.role == AgentRole.PEASANT:
-            self.agent.state = AgentState.FEEDER
-            if call_k == 0:
-                logger.info(f"Paysan : Je suis arrivé à la case de la Reine. Je vais l'aider à se nourrir.")
-                self.agent.comportment.act_feeder()
-                return True
-            else:
-                logger.info(f"Paysan : J'ai entendu l'appel de regroupement royal. Je me dirige vers la Reine.")
-                self._move_towards_sound(call_k)
-                return False
-        return False
 
     def act_follower(self, level, my_id, vision):
         """Effectue les actions d'un agent suiveur en fonction du niveau, de l'ID et de la vision.\n
@@ -221,7 +177,6 @@ class Grouper:
             return True
         elif players_on_tile > needed:
             logger.warning(f"Trop de joueurs sur la case ({players_on_tile}/{needed}). Éjection !")
-            self.cmd.send_command("Eject")
             return False
         logger.info(f"agent : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"{my_id}-{level}", "needmate")
