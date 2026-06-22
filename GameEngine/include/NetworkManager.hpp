@@ -27,6 +27,7 @@ class NetworkManager {
         sf::TcpSocket _socket;
         bool _isConnected;
         std::string _buffer;
+        static constexpr int BUFFER_SIZE = 1024;
 };
 
 #endif /* !NETWORKMANAGER_HPP_ */

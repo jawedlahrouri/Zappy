@@ -50,7 +50,7 @@ bool NetworkManager::authenticateAsGraphic()
     if (!_isConnected)
         return false;
 
-    std::vector<char> rawBuffer(1024);
+    std::vector<char> rawBuffer(BUFFER_SIZE);
     std::size_t received = 0;
 
     sf::Socket::Status status = _socket.receive(rawBuffer.data(), rawBuffer.size(), received);
@@ -84,7 +84,7 @@ std::string NetworkManager::receiveData()
     if (!_isConnected)
         return "";
 
-    std::vector<char> rawBuffer(1024);
+    std::vector<char> rawBuffer(BUFFER_SIZE);
     std::size_t received = 0;
     
     sf::Socket::Status status = _socket.receive(rawBuffer.data(), rawBuffer.size(), received);
