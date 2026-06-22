@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 from enum import Enum
 from src.logger import ZappyLogger
-from src.agent_submodules.agent_role import AgentRole
 
 
 logger = ZappyLogger.get_logger("AgentState")
@@ -63,6 +62,7 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour farming."""
         
+        from src.agent_submodules.agent_role import AgentRole
         if item == 'food':
             success = self.agent.pathfinder.search_and_take_items(['food'], self.agent.vision)
             if not success:
