@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 
 import random
-import sys
 import subprocess
-from enum import Enum
 from src.agent_submodules.pathfinding import Pathfinder
 from src.agent_submodules.farm import Farmer
 from src.agent_submodules.grouping import Grouper
 from src.agent_submodules.stealth_comms import StealthComms
-from src.agent_submodules.agent_state import StateComportment, AgentState 
+from src.agent_submodules.agent_state import StateComportment, AgentState
+from src.agent_submodules.agent_role import RoleTask, AgentRole
 from src.command import ZappyCommand
 from src.utils import utils
 from src.logger import ZappyLogger
@@ -16,40 +15,36 @@ from src.logger import ZappyLogger
 logger = ZappyLogger.get_logger("AgentCore")
 
 class ZappyAgent:
-    def __init__(self, command_interface: ZappyCommand, team_name: str, map_size : str, client_num):
+    def __init__(self, command_interface: ZappyCommand, team_name: str, map_size, client_num):
         self.cmd = command_interface # Interface de commande pour interagir avec le serveur.
         self.pathfinder = Pathfinder(self.cmd) # Module de pathfinding pour se déplacer efficacement.
         self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
         self.comms = StealthComms() # Module de cryptage des message pour sécuriser la communication entre nos agents.
-        self.grouper = Grouper(self.cmd, self.comms) # Module de groupage contenant la logique de regroupement de notre agent.
-        self.utils = utils(self.cmd, team_name) # Utilitaires divers, comme le lancement de clones.
+        self.grouper = Grouper(self.cmd, self.comms, self) # Module de groupage contenant la logique de regroupement de notre agent.
+        self.utils = utils(self.cmd, team_name, self) # Utilitaires divers, comme le lancement de clones.
         self.comportment = StateComportment(self) # Comportement de l'agent selon son état (survie, farming, grouping, etc).
+        self.task = RoleTask(self) # Role de l'agent
 
+        self.client_num = client_num # Le nombre de slots clients attribués à notre équipe, utilisé pour décider si on doit faire du forking dès le départ.
         self.team_name = team_name # Le nom de l'équipe.
+        self.map_size = map_size # Dimensions de la carte.
         self.unread_messages = [] # Messages reçus du serveur mais pas encore traités.
-        self.agent_id = random.randint(1000, 9999) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
+        self.agent_id = random.randint(1000, 9998) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
         self.is_alive = True # Flag pour savoir si l'agent est encore en vie.
-        self.state = AgentState.SURVIVAL # État initial de l'agent, il commencera en mode survie pour sécuriser sa position avant de faire autre chose.
+        self.state = AgentState.BEGINNER # État initial de l'agent, il commencera en mode beginner.
+        self.role = AgentRole.PEASANT
         self.level = 1 # Niveau actuel de l'agent, commence à 1 et augmente avec les incantations réussies.
         self.inventory = {} # Dictionnaire pour stocker les ressources que l'agent a en sa possession (nourriture, pierres, etc).
         self.vision = [] # Ce que l'agent voit autour de lui, mis à jour à chaque cycle.
-        self.food_minimum = 6 # Seuil de nourriture en dessous duquel l'agent passe en mode survie pour éviter de mourir de faim (ça serait bete).
-        self.food_safe = 15 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité pour faire des actions plus risquées comme le farming ou le regroupement.
+        self.food_minimum = 6 # Seuil de nourriture en dessous duquel l'agent passe en mode survie pour éviter de mourir de faim.
+        self.food_safe = 15 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité.
         self.team_roster = {} # Dictionnaire pour suivre les alliés connus et leur dernière activité.
-        self.population_target = 10 # Nombre d'agents que nous voulons idéalement dans l'équipe, utilisé pour décider quand faire du forking.
-        self.last_ping_cycle = 0 # Cycle de vie lors du dernier ping envoyé pour vérifier la présence des alliés.
-        self.x = 0 # position en X
-        self.y = 0 # position en Y
-        self.direction = 0 # direction dans laquelle le robot regarde
-        self.map_width, self.map_height = map_size[0], map_size[1] # taille de la map, utilisée pour le pathfinding et la navigation.
-        self.client_num = client_num # Le nombre de slots clients attribués à notre équipe, utilisé pour décider si on doit faire du forking dès le départ.
-        self.cycles_lived = 0 # Compte le nombre de cycles de vie de l'agent.
+        self.population_target = 15 # Nombre d'agents que nous voulons idéalement dans l'équipe.
         self.is_queen_elected = False # Flag pour savoir si la reine a été élue.
         self.is_queen = False # Flag pour savoir si cet agent est la reine.
-        self.last_connect_nbr = client_num # Nombre de slots clients lors du dernier check, utilisé pour détecter les oeufs éclos.
-        self.unclaimed_clones = 0 # Nombre d'agents nés mais pas encore connectés.
         self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
-        self.initial_cascade_pending = True # Flag pour savoir si la cascade initiale de forking est en cours.
+        self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
+        self.message_stack = {} # Messages radio parsés du cycle courant.
 
     def update_internal_state(self):
         """Met à jour la vision, l'inventaire, et les messages reçus du serveur.
@@ -58,22 +53,30 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
-        if not self.cmd.network.connected:
+        response = self.cmd.send_command('Inventory')
+        if response == 'dead':
             self.is_alive = False
-            logger.error("Connexion au serveur perdue.")
-            return
-        response = self.cmd.send_command("Look")
-        if response == "dead":
-            self.is_alive = False
-            logger.warning(f"L'agent {self.agent_id} est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
-            return
-        self.vision = response
-        response = self.cmd.send_command("Inventory")
-        if response == "dead":
-            self.is_alive = False
-            logger.warning(f"L'agent {self.agent_id} est mort. Il etait niveau {self.level}. Agent restant: {len(self.team_roster)}.")
             return
         self.inventory = response
+        response = self.cmd.send_command('Look')
+        if response == 'dead':
+            self.is_alive = False
+            return
+        self.vision = response
+        if not (self.role == AgentRole.PEASANT and self.state in [AgentState.GROUPING, AgentState.ELEVATION]):
+            ping_content = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
+            secret_message = self.comms.encode(ping_content, "ping")
+            self.cmd.send_command(f"Broadcast {secret_message}")
+        self.message_stack = self.analyze_calls()
+        self.process_radio_and_demographics()
+        return
+
+    def analyze_calls(self): 
+        """
+        Analyse les messages radio non lus.
+        Retourne : {id_agent : [{k : (command, [params])}], id_agent2 : ...}
+        """
+        parsed_calls = {}
         self.unread_messages = self.cmd.get_unread_broadcasts()
         self.decoded_messages = []
         for msg in self.unread_messages:
@@ -84,162 +87,105 @@ class ZappyAgent:
                 raw_text = parts[1].strip()
                 decoded = self.comms.decode(raw_text)
                 if decoded:
+                    command = decoded.get("command")
+                    raw_params = decoded.get("param", "") 
+                    param_parts = raw_params.split('-')
+                    sender_id = int(param_parts[0])
+                    params_list = param_parts[1:]
+                    decoded['param'] = params_list
                     self.decoded_messages.append({'k': k, 'data': decoded})
-            except Exception:
+                    if sender_id not in parsed_calls:
+                        parsed_calls[sender_id] = []
+                    parsed_calls[sender_id].append({k: (command, params_list)})
+            except Exception as e:
                 continue
-        if self.cycles_lived - self.last_ping_cycle > 10:
-            secret_msg = self.comms.encode(str(self.agent_id), "ping")
-            self.cmd.send_command(f"Broadcast {secret_msg}")
-            self.last_ping_cycle = self.cycles_lived
+        return parsed_calls
 
     def process_radio_and_demographics(self):
-        """Traite les messages radio reçus pour mettre à jour la liste des alliés connus
-        et détecter les agents qui ne répondent plus.\n
+        """Traite les messages radio reçus pour mettre à jour la liste des alliés connus,
+        leur niveau, et calculer l'inventaire global des agents d'élévation (gardes + reine).\n
         Params:
             -Aucun paramètre.
         Ne retourne rien."""
 
-        for msg_obj in self.decoded_messages:
-            decoded = msg_obj['data']
-            if decoded['command'] == 'ping':
-                sender_id = int(decoded['param'])
-                self.team_roster[sender_id] = self.cycles_lived
-            elif decoded['command'] == 'needmate':
-                sender_id = int(decoded['param'].split('-')[1])
-                self.team_roster[sender_id] = self.cycles_lived
-        dead_ids = [ally_id for ally_id, last_seen_cycle in self.team_roster.items() if self.cycles_lived - last_seen_cycle > 30]
-        for ally_id in dead_ids:
-            logger.warning(f"Allié {ally_id} ne répond plus. Déclaré mort.")
-            del self.team_roster[ally_id]
+        for agent_id, messages in self.message_stack.items():
+            if agent_id not in self.team_roster:
+                self.team_roster[agent_id] = {"last_seen": 0, "level": 1}
+            self.team_roster[agent_id]["last_seen"] = 0
+            for msg_dict in messages:
+                for k, (command, params_list) in msg_dict.items():
+                    if command == "ping" and len(params_list) >= 1:
+                        try:
+                            self.team_roster[agent_id]["level"] = int(params_list[0])
+                        except (ValueError, IndexError):
+                            pass
+        for agent_id in list(self.team_roster.keys()):
+            if agent_id not in self.message_stack:
+                self.team_roster[agent_id]["last_seen"] += 1
+                if self.team_roster[agent_id]["last_seen"] > 15:
+                    del self.team_roster[agent_id]
+
+
 
     def evaluate_situation(self):
-        """Évalue la situation actuelle de l'agent pour décider de son état (survie, farming, grouping, etc).\n
+        """Évalue la situation actuelle de l'agent pour décider de son rôle et état.\n
         Params:
             -Aucun paramètre.
-        Retourne immédiatement si l'agent est déjà en mode ÉLÉVATION, sinon retourne l'état décidé après évaluation."""
+        Ne retourne rien."""
 
-        if self.state == AgentState.ELEVATION:
+        for agent_id, messages in self.message_stack.items():
+            for msg_dict in messages:
+                for k, (command, params_list) in msg_dict.items():
+                    if command in ["evaqueen", "grouping"]:
+                        if agent_id > self.agent_id or not self.is_queen:
+                            self.is_queen_elected = True
+                            if self.is_queen and agent_id > self.agent_id:
+                                logger.info(f"Une autre Reine avec un ID plus grand ({agent_id}) détectée. Je redeviens paysan.")
+                                self.is_queen = False
+                                self.role = AgentRole.PEASANT
+                        break
+        if self.is_queen:
             return
-        self.process_radio_and_demographics()
-        self.cycles_lived += 1
-        if not self.is_queen_elected and self.cycles_lived > 5:
-            self.elect_queen()  
-        food = self.inventory.get('food', 0)
-        if food <= self.food_minimum:
-            self.state = AgentState.SURVIVAL
-            return
-        call_k = self.grouper.analyze_calls(self.level, self.agent_id, self.decoded_messages)
-        if call_k is not None:
-            logger.info(f"l'agent {self.agent_id} a reçu un appel radio valide pour le regroupement (K={call_k}).")
-            self.grouper.current_k = call_k
-            self.state = AgentState.GROUPING
-            return
-        if self.farmer.can_elevate(self.level, self.inventory):
-            return self.elevate_conditions(food)
-        current_population = len(self.team_roster) + 1
-        if current_population < self.population_target:
-            if self.check_population(food, current_population) == 1: 
+        if self.level >= 3 and not self.is_queen_elected:
+            eligible_ids = [self.agent_id]
+            for a_id, data in self.team_roster.items():
+                if data.get("level", 1) >= 3:
+                    eligible_ids.append(a_id)
+                    
+            if self.agent_id == max(eligible_ids):
+                self.role = AgentRole.QUEEN
+                self.is_queen = True
+                self.is_queen_elected = True
+                self.agent_id = 9999
+                queen_msg = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
+                secret_message = self.comms.encode(queen_msg, "evaqueen")
+                self.cmd.send_command(f"Broadcast {secret_message}")
+                logger.info(f"Agent élu REINE ! ID mis à: {self.agent_id}")
                 return
-        if food > self.food_safe:
-            self.state = AgentState.FARMING
-            return
-        self.state = AgentState.SURVIVAL
+        new_role = self.utils.which_role()
+        if new_role != self.role:
+            logger.info(f"Changement de rôle : {self.role} → {new_role}")
+            self.role = new_role
+        if self.level < 3 and self.role == AgentRole.PEASANT:
+            if self.state not in (AgentState.GROUPING, AgentState.ELEVATION):
+                self.state = AgentState.BEGINNER
 
-    def elect_queen(self):
-        """Détermine si cet agent doit devenir la Reine, après avoir laissé le temps aux pings d'arriver.
+    def act_based_on_role(self):
+        """Fais agir l'agent en fonction de son rôle actuel.\n
         Params:
             -Aucun paramètre.
-        Retourne rien, mais défini l'agent comme reine si les conditions sont réunies.
-        """
+        Ne retourne rien, mais fais agir l'agent selon son rôle (queen, guard, protector, peasant)."""
 
-        highest_id = self.agent_id
-        for ally_id in self.team_roster.keys():
-            if ally_id > highest_id:
-                highest_id = ally_id
-        if highest_id == self.agent_id:
-            self.is_queen = True
-            self.agent_id = 9999
-            logger.info("Agent élu comme REINE (ID 9999).")
-        self.is_queen_elected = True
-
-    def check_population(self, food, current_population):
-        """Vérifie si les conditions sont réunies pour pondre un oeuf\n
-        Params:
-            -food (int): La quantité de nourriture actuellement dans l'inventaire de l'agent.
-            -current_population (int): Le nombre actuel d'agents connus dans l'équipe
-        Retourne 1 si on décide de faire de pondre un oeuf, 0 sinon."""
-
-        if self.is_queen and food > self.food_safe:
-            if not self.utils.is_food_critical_for_action(42, self.inventory, self.food_minimum):
-                logger.info(f"l'agent {self.agent_id} est la REINE (ID {self.agent_id}). Pop actuelle: {current_population}/{self.population_target}.")
-                self.state = AgentState.FORKING
-                return 1
-        return 0
-
-    def elevate_conditions(self, food):
-        """Vérifie si les conditions sont réunies pour tenter une incantation\n
-        Params:
-            -food (int): La quantité de nourriture actuellement dans l'inventaire de l'agent.
-        Retourne True si on décide de tenter une incantation, False sinon."""
-
-        if food < (self.food_minimum + 3):
-            logger.warning(f"l'agent {self.agent_id} n'a pas assez de nourriture pour tenter une incantation en toute sécurité (food={food}).")
-            self.state = AgentState.SURVIVAL
-            return
-        logger.info(f"l'agent {self.agent_id} a toutes les ressources nécessaires pour l'incantation au Niveau {self.level}.")
-        if self.level == 1:
-            self.state = AgentState.ELEVATION
-        else:
-            self.state = AgentState.GROUPING
-        return
-
-    def act_based_on_state(self):
-        """"Fais agir l'agent en fonction de son état actuel.\n
-        Params:
-            -Aucun paramètre.
-        Ne retourne rien, mais fais agir l'agent selon son état (survie, farming, grouping, etc)."""
-
-        if self.state == AgentState.SURVIVAL:
-            self.state = self.comportment.act_survival()
-        elif self.state == AgentState.FARMING:
-            self.state = self.comportment.act_farming()
-        elif self.state == AgentState.GROUPING:
-            self.state = self.comportment.act_grouping()
-        elif self.state == AgentState.ELEVATION:
-            self.state = self.comportment.act_elevating()
-        elif self.state == AgentState.FORKING:
-            self.state = self.comportment.act_forking()
-
-    def manage_demographics(self):
-        """Gère le forking événementiel (uniquement exécuté par la Reine)."""
-        if not self.is_queen:
-            return
-            
-        response = self.cmd.send_command("Connect_nbr")
-        if response:
-            current_connect_nbr = int(response)
-            if self.initial_cascade_pending:
-                if current_connect_nbr > 0:
-                    logger.info(f"Reine : Cascade initiale avec {current_connect_nbr} slots ouverts.")
-                    for _ in range(current_connect_nbr):
-                        self.utils.launch_clone()
-                        self.unclaimed_clones += 1
-                self.initial_cascade_pending = False
-                self.last_connect_nbr = current_connect_nbr
-                return
-            delta = current_connect_nbr - self.last_connect_nbr
-            
-            if delta > 0:
-                logger.info(f"Reine : {delta} oeuf(s) a/ont éclos !")
-                for _ in range(delta):
-                    self.utils.launch_clone()
-                    self.unclaimed_clones += 1
-            elif delta < 0:
-                connected = abs(delta)
-                self.unclaimed_clones = max(0, self.unclaimed_clones - connected)
-                logger.info(f"Reine : {connected} clone(s) connecté(s). Unclaimed: {self.unclaimed_clones}")
-                
-            self.last_connect_nbr = current_connect_nbr
+        if self.eggs_laid >= 1:
+            nb_mature_egg = self.cmd.send_command('Connect_nbr')
+            if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
+                self.utils.launch_clone()
+                self.eggs_laid = max(0, self.eggs_laid - 1)
+        match self.role:
+            case AgentRole.QUEEN:
+                self.task.act_queen()
+            case AgentRole.PEASANT:
+                self.task.act_peasant()
 
     def run(self):
         """Lance la boucle principale de l'agent.\n
@@ -247,7 +193,9 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
-        logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
+        if self.client_num > 0:
+            self.utils.launch_clone()
+            self.client_num = 0
         while self.is_alive:
             self.update_internal_state()
             if not self.is_alive:
@@ -255,8 +203,6 @@ class ZappyAgent:
             self.evaluate_situation()
             if not self.is_alive:
                 break                
-            self.act_based_on_state()
-            if self.is_queen_elected:
-                self.manage_demographics()
-        self.cmd.network.close()
-        logger.info(f"l'agent {self.agent_id} a terminé son cycle de vie (Déconnecté).")
+            self.act_based_on_role()
+            if not self.is_alive:
+                break
