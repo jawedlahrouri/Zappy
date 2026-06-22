@@ -34,3 +34,7 @@ compile_commands.json
 subject/*
 .agents/
 build/
+zappy_gui.AppImage
+implementation_plan.md
+G-YEP-400_zappy.pdf
+Team1_logs.txt

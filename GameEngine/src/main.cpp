@@ -2,12 +2,13 @@
 ** EPITECH PROJECT, 2026
 ** Zappy-1
 ** File description:
-** main.cpp
+** main
 */
 
-#include <iostream>
+#include "Core.hpp"
 
-int main () {
-    std::cout << "Hello World" << std::endl;
-    return 0;
+int main(int ac, char** av)
+{
+    Core core;
+    return core.run(ac, av);
 }

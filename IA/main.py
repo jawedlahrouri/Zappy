@@ -53,9 +53,6 @@ def wait_for_infos(net):
                 if client_num is None and msg.isdigit():
                     client_num = int(msg)
                     print(f"[Handshake] CLIENT-NUM: {client_num}")
-                    if client_num == 0:
-                        print("[Erreur] 0 slots restants.")
-                        return False, 0, None
                 elif dimensions is None and ' ' in msg:
                     parts = msg.split()
                     if len(parts) == 2 and all(p.isdigit() for p in parts):

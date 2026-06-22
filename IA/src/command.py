@@ -19,18 +19,26 @@ class ZappyCommand:
         Retourne True si l'incantation réussit, False en cas d'échec."""
 
         logger.info(f"l'agent attend les messages d'incantation.")
-        first_response = None
+        timeout_counter = 0
+        self.network.send_command("Inventory\n")
         
         while True:
-            first_response = self._wait_for_response(expect_incantation=True)
-            if first_response in ["Elevation underway", "ko"]:
-                break     
-        if first_response == "Elevation underway":
-            second_response = self._wait_for_response(expect_incantation=True)
-            logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
-            if second_response and second_response.startswith("Current level"):
-                return True
-        return False
+            response = self._wait_for_response(expect_incantation=True)
+            if response == "Elevation underway":
+                second_response = self._wait_for_response(expect_incantation=True)
+                logger.info(f"l'agent a reçu les messages d'incantation du leader. Résultat: {second_response}")
+                if second_response and second_response.startswith("Current level"):
+                    self._wait_for_response() 
+                    return True
+                return False
+            elif response.startswith("["): 
+                timeout_counter += 1
+                if timeout_counter > 800:
+                    logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
+                    return False
+                self.network.send_command("Inventory\n")
+            elif response == "ko":
+                return False
 
     def _wait_for_response(self, expect_incantation=False):
         """Attends une réponse du serveur, en filtrant les messages de diffusion et en gérant les cas d'incantation.\n
@@ -53,7 +61,6 @@ class ZappyCommand:
                     logger.warning(f"l'agent a été éjecté par un autre joueur. Détails: {msg}")
                 elif msg == "dead":
                     self.system_queue.append("dead")
-                    logger.warning(f"l'agent est mort.")
                 else:
                     self.system_queue.append(msg)
             if not messages:

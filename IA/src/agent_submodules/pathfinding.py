@@ -98,8 +98,8 @@ class Pathfinder:
                 self.explore_step += 1
             else:
                 logger.info(f"Agent explore en virant pour quadriller la zone. Étape {self.explore_step + 1}/3.")
-                action = random.choice([self.cmd.send_command("Right"), self.cmd.send_command("Left")])
-                action()
+                action = random.choice(["Right", "Left"])
+                self.cmd.send_command(action)
                 self.explore_step = 0 
         else:
             if self.explore_step < 3:
@@ -111,24 +111,4 @@ class Pathfinder:
                 self.cmd.send_command("Forward")
                 self.explore_step = 0
     
-    def update_position(self, action_type: str):
-        """Met à jour les coordonnées internes suite à une action validée."""
-        match action_type:
-            case "Forward":
-                if self.direction == 0:
-                    self.y += 1
-                elif self.direction == 1:
-                    self.x += 1
-                elif self.direction == 2:
-                    self.y -= 1
-                elif self.direction == 3:
-                    self.x -= 1
-                
-                self.x = self.x % self.map_width
-                self.y = self.y % self.map_height
 
-            case "Right":
-                self.direction = (self.direction + 1) % 4
-
-            case "Left":
-                self.direction = (self.direction - 1) % 4
