@@ -28,14 +28,15 @@ done
 rm logs/TeamA_logs.txt
 # ==========================================
 # Fonction de nettoyage (Clean exit)
-# ===========================cmake -S . -B build
-cmake --build build -j2===============
+# ==========================================
 # Se déclenche quand on fait un Ctrl+C
 cleanup() {
     echo -e "\n[+] Arrêt de tous les processus Zappy..."
     pkill -f "./server/zappy_ref-v3.0.1/linux/zappy_server"
     pkill -f "./zappy_gui"
     pkill -f "./zappy_ai"
+    pkill -f "python3.*zappy"
+    pkill -f "python.*zappy"
     echo "[+] Terminé."
     exit 0
 }

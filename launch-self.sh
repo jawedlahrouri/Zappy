@@ -22,6 +22,8 @@ cleanup() {
     pkill -f "./zappy_server"
     pkill -f "./zappy_gui"
     pkill -f "./zappy_ai"
+    pkill -f "python3.*zappy"
+    pkill -f "python.*zappy"
     echo "[+] Terminé."
     exit 0
 }
@@ -48,10 +50,8 @@ echo "[+] Lancement des clients IA..."
 # TeamA sera bleue et TeamB sera rouge dans le GUI.
 # On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
 ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
-./zappy_ai -p $PORT -n $TEAM2 -h $MACHINE > /dev/null 2>&1 &
-./zappy_ai -p $PORT -n $TEAM3 -h $MACHINE > /dev/null 2>&1 &
 
-echo "[+] Les IA sont lancées : $TEAM1 en bleu, $TEAM2 en rouge."
+echo "[+] Les IA sont lancées : $TEAM1"
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."
 
 sleep 3
