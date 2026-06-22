@@ -42,3 +42,37 @@ class Farmer:
             if inventory.get(item, 0) < amount:
                 missing.append(item)                
         return missing
+    
+    def get_max_level_stones(self, level):
+        """Retourne la somme des pierres nécessaires pour atteindre le niveau maximum depuis le niveau donné.\n
+        Params:
+            -level (int): Le niveau actuel de l'agent.
+        Retourne:
+            -dict: Un dictionnaire contenant le total de chaque pierre nécessaire pour atteindre le niveau 8 (ex: {'linemate': 7, ...})."""
+
+        total_needed = {}
+        max_level = max(self.requirements.keys()) 
+        for l in range(level, max_level + 1):
+            needed_for_level = self.requirements.get(l, {})
+            for stone, amount in needed_for_level.items():
+                total_needed[stone] = total_needed.get(stone, 0) + amount
+        for stone in total_needed:
+            total_needed[stone] += 5
+        return total_needed
+
+    def get_missing_stones_for_max_level(self, level, global_inventory):
+        """Retourne la liste des pierres manquantes pour atteindre le niveau maximum d'incantation depuis le niveau donné.\n
+        Params:
+            -level (int): Le niveau actuel de l'agent.
+            -global_inventory (dict): L'inventaire global de l'équipe, avec les quantités de chaque ressource.
+        Retourne:
+            -list: La liste des noms des pierres manquantes pour le niveau max, vide si aucune pierre n'est manquante."""
+        
+        total_needed = self.get_max_level_stones(level)
+        missing = []
+        
+        for stone, required_amount in total_needed.items():
+            current_amount = global_inventory.get(stone, 0)
+            if current_amount < required_amount:
+                missing.append(stone)
+        return missing

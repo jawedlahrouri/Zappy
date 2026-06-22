@@ -214,6 +214,24 @@ void GameWorld::removeEgg(int id) {
     _eggs.erase(id);
 }
 
+void GameWorld::adjustTileResource(int x, int y, int resourceIndex, int delta)
+{
+    if (x < 0 || x >= _width || y < 0 || y >= _height)
+        return;
+    Resources& res = _map[x][y].resources;
+    switch (resourceIndex) {
+        case 0: res.food      = std::max(0, res.food      + delta); break;
+        case 1: res.linemate  = std::max(0, res.linemate  + delta); break;
+        case 2: res.deraumere = std::max(0, res.deraumere + delta); break;
+        case 3: res.sibur     = std::max(0, res.sibur     + delta); break;
+        case 4: res.mendiane  = std::max(0, res.mendiane  + delta); break;
+        case 5: res.phiras    = std::max(0, res.phiras    + delta); break;
+        case 6: res.thystame  = std::max(0, res.thystame  + delta); break;
+        default: break;
+    }
+}
+
+
 const std::map<int, Egg>&  GameWorld::getEggs() const
 {
     return _eggs;

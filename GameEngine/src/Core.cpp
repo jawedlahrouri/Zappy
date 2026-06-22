@@ -386,7 +386,37 @@ void Core::initCommands()
         std::cout << "[Graphic] edi handler: eggId=" << eggId << std::endl;
         _world.removeEgg(eggId);
     };
+
+    _commands["pdi"] = [this](std::stringstream& ss) {
+        int id = 0;
+        parseValue(ss, id);
+        std::cout << "[Graphic] pdi handler: id=" << id << std::endl;
+        _world.removePlayer(id);
+    };
+
+    _commands["pgt"] = [this](std::stringstream& ss) {
+        int id = 0, resourceIndex = 0;
+        parseValue(ss, id);
+        parseValue(ss, resourceIndex);
+        const auto& players = _world.getPlayers();
+        auto it = players.find(id);
+        if (it != players.end()) {
+            _world.adjustTileResource(it->second.x, it->second.y, resourceIndex, -1);
+        }
+    };
+
+    _commands["pdr"] = [this](std::stringstream& ss) {
+        int id = 0, resourceIndex = 0;
+        parseValue(ss, id);
+        parseValue(ss, resourceIndex);
+        const auto& players = _world.getPlayers();
+        auto it = players.find(id);
+        if (it != players.end()) {
+            _world.adjustTileResource(it->second.x, it->second.y, resourceIndex, +1);
+        }
+    };
 }
+
 
 void Core::parseCommand(const std::string& command)
 {

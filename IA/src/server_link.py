@@ -32,7 +32,6 @@ class ZappyNetwork:
             self.connected = False
             raise
 
-    #envoie une commande au serveur
     def send_command(self, command: str):
         """Envoie une commande au serveur Zappy.\n
         Params:
@@ -52,7 +51,6 @@ class ZappyNetwork:
             self.connected = False
             return False
 
-    #reçoit les messages du serveur et les parse en une liste de messages complet
     def receive_messages(self) -> list:
         """Reçoit les messages du serveur Zappy et les parse en une liste de messages complets.\n
         Params:

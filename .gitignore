@@ -41,3 +41,7 @@ server_strace.*
 *.exe
 vcpkg.json
 zappy_gui.AppImage
+zappy_gui.AppImage
+implementation_plan.md
+G-YEP-400_zappy.pdf
+Team1_logs.txt
