@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <iostream>
 #include <limits>
 
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
@@ -28,12 +29,14 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _height(height),
     _title(title),
     _fontLoaded(false),
+    _menuMusicLoaded(false),
     _menuIp("127.0.0.1"),
     _menuPort("4242"),
     _menuStatus(""),
     _menuTeamNames(),
     _menuConnectionEdited(false),
     _showGrid(false),
+    _showBroadcasts(true),
     _showInfoPanel(true),
     _serverFreq(100),
     _resumeServerFreq(100),
@@ -43,11 +46,22 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     create2DWindow(width, height);
     loadTextures();
     loadFont();
+    loadMenuMusic();
 }
 
 void WindowManager::loadTextures()
 {
     TextureManager& tm = TextureManager::getInstance();
+    const auto loadSayenAnimation = [&tm](const std::string& color,
+        const std::string& folder, const std::string& suffix) {
+        for (int frame = 1; frame <= 17; frame++) {
+            const std::string frameNumber =
+                frame < 10 ? "0" + std::to_string(frame) : std::to_string(frame);
+
+            tm.loadTexture(color + "Sayen" + frameNumber,
+                folder + "/sayen" + frameNumber + suffix + ".png");
+        }
+    };
     
     tm.loadTexture("menuBackground", "background_menu.png");
     tm.loadTexture("spursBackground", "spurs_background.png");
@@ -74,23 +88,22 @@ void WindowManager::loadTextures()
     tm.loadTexture("whiteRedRight", "white_red_right.png");
     tm.loadTexture("whiteRedLeft", "white_red_left.png");
 
-    tm.loadTexture("sayen01", "sayen01.png");
-    tm.loadTexture("sayen02", "sayen02.png");
-    tm.loadTexture("sayen03", "sayen03.png");
-    tm.loadTexture("sayen04", "sayen04.png");
-    tm.loadTexture("sayen05", "sayen05.png");
-    tm.loadTexture("sayen06", "sayen06.png");
-    tm.loadTexture("sayen07", "sayen07.png");
-    tm.loadTexture("sayen08", "sayen08.png");
-    tm.loadTexture("sayen09", "sayen09.png");
-    tm.loadTexture("sayen10", "sayen10.png");
-    tm.loadTexture("sayen11", "sayen11.png");
-    tm.loadTexture("sayen12", "sayen12.png");
-    tm.loadTexture("sayen13", "sayen13.png");
-    tm.loadTexture("sayen14", "sayen14.png");
-    tm.loadTexture("sayen15", "sayen15.png");
-    tm.loadTexture("sayen16", "sayen16.png");
-    tm.loadTexture("sayen17", "sayen17.png");
+    loadSayenAnimation("red", "redsayen", "");
+    loadSayenAnimation("blue", "bluesayen", "blue");
+    loadSayenAnimation("green", "greensayen", "green");
+    loadSayenAnimation("pink", "pinksayen", "pink");
+
+    const std::string deathColors[] = {"red", "blue", "green", "pink"};
+
+    for (const std::string& color : deathColors) {
+        for (int frame = 0; frame < 7; frame++) {
+            const std::string key = color + "Death" + std::to_string(frame);
+            const std::string file = color + "_death_" +
+                std::to_string(frame) + ".png";
+
+            tm.loadTexture(key, file);
+        }
+    }
 
     tm.loadTexture("bluePlayer", "blue_character.png");
     tm.loadTexture("blueBack", "blue_back.png");
@@ -139,8 +152,38 @@ void WindowManager::loadFont()
     std::cerr << "[WindowManager] Police introuvable: panneau d'information 2D sans texte." << std::endl;
 }
 
+void WindowManager::loadMenuMusic()
+{
+    const std::string musicPath = "GameEngine/assets/sprites/Chicago_Bulls_intro.mp3";
+
+    if (!_menuMusic.openFromFile(musicPath)) {
+        std::cerr << "[WindowManager] Musique de menu introuvable: "
+            << musicPath << std::endl;
+        return;
+    }
+    _menuMusic.setLoop(true);
+    _menuMusicLoaded = true;
+}
+
+void WindowManager::playMenuMusic()
+{
+    if (!_menuMusicLoaded)
+        return;
+    if (_menuMusic.getStatus() != sf::Music::Playing)
+        _menuMusic.play();
+}
+
+void WindowManager::stopMenuMusic()
+{
+    if (!_menuMusicLoaded)
+        return;
+    if (_menuMusic.getStatus() != sf::Music::Stopped)
+        _menuMusic.stop();
+}
+
 WindowManager::~WindowManager()
 {
+    stopMenuMusic();
     if (_window.isOpen())
         _window.close();
 }
@@ -203,13 +246,13 @@ void WindowManager::update2DPan()
         return;
     if (!_window.hasFocus())
         return;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         movement.y -= panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
         movement.y += panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         movement.x -= panStep;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
         movement.x += panStep;
     if (movement.x == 0.0f && movement.y == 0.0f)
         return;
@@ -588,6 +631,8 @@ bool WindowManager::handleGameEvent(const sf::Event& event, const GameWorld& wor
             resetZoom();
         } else if (event.key.code == sf::Keyboard::G) {
             _showGrid = !_showGrid;
+        } else if (event.key.code == sf::Keyboard::B) {
+            _showBroadcasts = !_showBroadcasts;
         } else if (event.key.code == sf::Keyboard::I) {
             _showInfoPanel = !_showInfoPanel;
         }
@@ -670,13 +715,15 @@ void WindowManager::display()
 
 void WindowManager::drawMenu()
 {
+    playMenuMusic();
     Menu::draw(_window, _font, _fontLoaded, _menuIp, _menuPort,
         _activeMenuField, _menuStatus, _menuTeamNames);
 }
 
 void WindowManager::drawWorld(const GameWorld& world)
 {
+    stopMenuMusic();
     WorldRenderer::draw(_window, _worldView, world, _selectedTile,
-        _selectedPlayerId, _font, _fontLoaded, _showGrid, _serverFreq,
-        _timePaused, _showInfoPanel, _openedTeamInventory);
+        _selectedPlayerId, _font, _fontLoaded, _showGrid, _showBroadcasts,
+        _serverFreq, _timePaused, _showInfoPanel, _openedTeamInventory);
 }

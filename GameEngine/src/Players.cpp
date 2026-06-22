@@ -122,7 +122,8 @@ std::string Players::getSelectedPlayerTextureKey(const Player& player)
     return "whiteRedFace";
 }
 
-std::string Players::getIncantationTextureKey(const IncantationState& incantation)
+std::string Players::getIncantationTextureKey(const IncantationState& incantation,
+    int teamColor)
 {
     const auto now = std::chrono::steady_clock::now();
     const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - incantation.startTime).count();
@@ -130,8 +131,40 @@ std::string Players::getIncantationTextureKey(const IncantationState& incantatio
     const int frameDurationMs = std::max(1, durationMs / SAYEN_FRAME_COUNT);
     const int frameIndex = static_cast<int>((elapsedMs / frameDurationMs) % SAYEN_FRAME_COUNT) + 1;
     std::ostringstream key;
+    std::string color = "red";
 
-    key << "sayen" << std::setw(2) << std::setfill('0') << frameIndex;
+    if (teamColor == 1)
+        color = "blue";
+    if (teamColor == 3)
+        color = "green";
+    if (teamColor == 4)
+        color = "pink";
+    key << color << "Sayen" << std::setw(2) << std::setfill('0') << frameIndex;
+    return key.str();
+}
+
+std::string Players::getDeathTextureKey(const DeathState& death)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsedMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - death.startTime).count();
+    const int durationMs = std::max(1, death.durationMs);
+    const int frameDurationMs = std::max(1, durationMs / DEATH_FRAME_COUNT);
+    const int frameIndex = std::clamp(
+        static_cast<int>(elapsedMs / frameDurationMs), 0,
+        DEATH_FRAME_COUNT - 1);
+    std::ostringstream key;
+
+    if (death.teamColor == 1)
+        key << "blueDeath";
+    else if (death.teamColor == 3)
+        key << "greenDeath";
+    else if (death.teamColor == 4)
+        key << "pinkDeath";
+    else
+        key << "redDeath";
+    key << frameIndex;
     return key.str();
 }
 
@@ -143,13 +176,61 @@ static bool shouldShowSelectedSprite()
     return ((clock.getElapsedTime().asMilliseconds() / BLINK_PERIOD_MS) % 2) == 0;
 }
 
+sf::Color Players::getBroadcastColor(int teamColor, sf::Uint8 alpha)
+{
+    if (teamColor == 1)
+        return sf::Color(75, 165, 255, alpha);
+    if (teamColor == 3)
+        return sf::Color(75, 235, 145, alpha);
+    if (teamColor == 4)
+        return sf::Color(255, 105, 195, alpha);
+    return sf::Color(255, 95, 95, alpha);
+}
+
+void Players::drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,
+    float offsetX, float offsetY)
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    for (const BroadcastState& broadcast : world.getBroadcasts()) {
+        const float duration = static_cast<float>(std::max(1,
+            broadcast.durationMs));
+        const float elapsed = static_cast<float>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - broadcast.startTime).count());
+        const float progress = std::clamp(elapsed / duration, 0.0f, 1.0f);
+        const float minRadius = WorldRenderer::TILE_SIZE * 0.08f;
+        const float maxRadius = WorldRenderer::TILE_SIZE * 1.15f;
+        const float radius = minRadius + (maxRadius - minRadius) * progress;
+        const sf::Uint8 alpha = static_cast<sf::Uint8>(
+            std::clamp(220.0f * (1.0f - progress), 0.0f, 220.0f));
+        sf::CircleShape circle(radius);
+
+        circle.setOrigin(radius, radius);
+        circle.setPosition(
+            static_cast<float>(broadcast.x) * WorldRenderer::TILE_SIZE +
+                offsetX + (WorldRenderer::TILE_SIZE / 2.0f),
+            static_cast<float>(broadcast.y) * WorldRenderer::TILE_SIZE +
+                offsetY + (WorldRenderer::TILE_SIZE / 2.0f));
+        circle.setFillColor(sf::Color::Transparent);
+        circle.setOutlineColor(getBroadcastColor(broadcast.teamColor, alpha));
+        circle.setOutlineThickness(2.0f + 3.0f * (1.0f - progress));
+        target.draw(circle);
+    }
+}
+
 void Players::draw(sf::RenderWindow& target, const GameWorld& world,
-    float offsetX, float offsetY, const std::optional<int>& selectedPlayerId)
+    float offsetX, float offsetY, const std::optional<int>& selectedPlayerId,
+    bool showBroadcasts)
 {
     const auto& players = world.getPlayers();
 
+    if (showBroadcasts)
+        drawBroadcasts(target, world, offsetX, offsetY);
     for (const auto& pair : players) {
         const Player& player = pair.second;
+        const std::optional<DeathState> death =
+            world.getPlayerDeath(player.id);
         const std::optional<IncantationState> incantation =
             world.getPlayerIncantation(player.id);
         const bool selected = selectedPlayerId.has_value() &&
@@ -161,8 +242,10 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const TextureManager& tm = TextureManager::getInstance();
         std::string texKey;
 
-        if (incantation.has_value())
-            texKey = getIncantationTextureKey(*incantation);
+        if (death.has_value())
+            texKey = getDeathTextureKey(*death);
+        else if (incantation.has_value())
+            texKey = getIncantationTextureKey(*incantation, player.teamColor);
         else if (selected && shouldShowSelectedSprite())
             texKey = getSelectedPlayerTextureKey(player);
         else
@@ -171,9 +254,12 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
         const sf::Vector2u texSize = tm.getTexture(texKey).getSize();
 
         if (texSize.x > 0 && texSize.y > 0) {
-            const float desired = incantation.has_value()
-                ? WorldRenderer::TILE_SIZE * INCANTATION_SIZE_RATIO
-                : WorldRenderer::TILE_SIZE * PLAYER_SIZE_RATIO;
+            float desired = WorldRenderer::TILE_SIZE * PLAYER_SIZE_RATIO;
+
+            if (death.has_value())
+                desired = WorldRenderer::TILE_SIZE * DEATH_SIZE_RATIO;
+            else if (incantation.has_value())
+                desired = WorldRenderer::TILE_SIZE * INCANTATION_SIZE_RATIO;
             const float scaleX = desired / static_cast<float>(texSize.x);
             const float scaleY = desired / static_cast<float>(texSize.y);
             sprite.setScale(scaleX, scaleY);
@@ -260,12 +346,12 @@ void Players::drawTextInPanel(const sf::Font& font, sf::RenderWindow& window,  c
     drawInfoLine(window, text, "orientation: " + intToOrientation(player.orientation), 4, 17, panelX, panelY);
     drawInfoLine(window, text, "inventory", 6, 18, panelX, panelY);
     drawInfoLine(window, text, "food: " + std::to_string(player.inventory.food), 7, 16, panelX, panelY);
-    drawInfoLine(window, text, "linemate: " + std::to_string(player.inventory.linemate), 8, 16, panelX, panelY);
-    drawInfoLine(window, text, "deraumere: " + std::to_string(player.inventory.deraumere), 9, 16, panelX, panelY);
-    drawInfoLine(window, text, "sibur: " + std::to_string(player.inventory.sibur), 10, 16, panelX, panelY);
-    drawInfoLine(window, text, "mendiane: " + std::to_string(player.inventory.mendiane), 11, 16, panelX, panelY);
-    drawInfoLine(window, text, "phiras: " + std::to_string(player.inventory.phiras), 12, 16, panelX, panelY);
-    drawInfoLine(window, text, "thystame: " + std::to_string(player.inventory.thystame), 13, 16, panelX, panelY);
+    drawInfoLine(window, text, "brick: " + std::to_string(player.inventory.linemate), 8, 16, panelX, panelY);
+    drawInfoLine(window, text, "shoe: " + std::to_string(player.inventory.deraumere), 9, 16, panelX, panelY);
+    drawInfoLine(window, text, "balloon: " + std::to_string(player.inventory.sibur), 10, 16, panelX, panelY);
+    drawInfoLine(window, text, "jersey: " + std::to_string(player.inventory.mendiane), 11, 16, panelX, panelY);
+    drawInfoLine(window, text, "trophy: " + std::to_string(player.inventory.phiras), 12, 16, panelX, panelY);
+    drawInfoLine(window, text, "card: " + std::to_string(player.inventory.thystame), 13, 16, panelX, panelY);
 }
 
 void Players::drawPanel(sf::RenderWindow& window, const GameWorld& world,

@@ -8,9 +8,9 @@
 #ifndef CORE_HPP_
     #define CORE_HPP_
 
+    #include "GraphicLibrary.hpp"
     #include "NetworkManager.hpp"
     #include "GameWorld.hpp"
-    #include "WindowManager.hpp"
     #include <sstream>
     #include <chrono>
     #include <unordered_map>
@@ -30,13 +30,16 @@
 
         void setupMenuDefaults(int ac, char** av);
         bool connectFromMenu();
+        std::string getGraphicLibraryPath(int ac, char** av) const;
+        bool loadGraphicLibrary(const std::string& path);
         void parseCommand(const std::string& command);
         void sendPendingTileRequest();
         void sendPendingTimeRequest();
         void initCommands();
         void parseValue(std::stringstream& ss, int& value);
+        IGraphic& graphics();
 
-        WindowManager _windowManager;
+        GraphicLibrary _graphicLibrary;
         NetworkManager _network;
         GameWorld _world;
         AppState _appState;

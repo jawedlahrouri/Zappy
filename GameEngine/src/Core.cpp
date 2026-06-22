@@ -10,6 +10,11 @@
 #include <vector>
 #include <limits>
 
+static bool isGraphicPathOption(const std::string& arg)
+{
+    return arg == "-g" || arg == "--graphic" || arg == "--graphic-lib";
+}
+
 static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss)
 {
     std::vector<int> playerIds;
@@ -40,23 +45,25 @@ Core::~Core()
 
 int Core::run(int ac, char** av)
 {
+    if (!loadGraphicLibrary(getGraphicLibraryPath(ac, av)))
+        return 84;
     _isRunning = true;
     setupMenuDefaults(ac, av);
 
-    while (_windowManager.isOpen()) {
-        if (_appState == MENU && _windowManager.consumeMenuConnectionEdited()) {
+    while (graphics().isOpen()) {
+        if (_appState == MENU && graphics().consumeMenuConnectionEdited()) {
             _network.disconnect();
-            _windowManager.resetMenuTeamNames();
+            graphics().resetMenuTeamNames();
         }
-        if (_appState == MENU && _windowManager.handleMenuEvents()) {
+        if (_appState == MENU && graphics().handleMenuEvents()) {
             if (_network.isConnected())
                 _appState = GAME;
             else
                 connectFromMenu();
         }
-        if (_appState == GAME && _windowManager.handleGameEvents(_world)) {
+        if (_appState == GAME && graphics().handleGameEvents(_world)) {
             _network.disconnect();
-            _windowManager.setMenuStatus("Disconnected");
+            graphics().setMenuStatus("Disconnected");
             _appState = MENU;
         }
         if (_appState == GAME)
@@ -70,55 +77,100 @@ int Core::run(int ac, char** av)
                 parseCommand(command);
             }
         }
+        _world.updateAnimations();
  
-        _windowManager.clear();
+        graphics().clear();
 
         if (_appState == MENU)
-            _windowManager.drawMenu();
+            graphics().drawMenu();
         else if (_appState == GAME)
-            _windowManager.drawWorld(_world);
+            graphics().drawWorld(_world);
 
-        _windowManager.display();
+        graphics().display();
     }
 
     return 0;
 }
 
-void Core::setupMenuDefaults([[maybe_unused]] int ac, [[maybe_unused]] char** av)
+std::string Core::getGraphicLibraryPath(int ac, char** av) const
+{
+    const std::string defaultPath = "./libzappy_graphic_2d.so";
+
+    for (int i = 1; i < ac; i++) {
+        const std::string arg = av[i];
+
+        if (isGraphicPathOption(arg) && i + 1 < ac)
+            return av[i + 1];
+        if (arg.rfind("--graphic=", 0) == 0)
+            return arg.substr(std::string("--graphic=").size());
+        if (arg.rfind("--graphic-lib=", 0) == 0)
+            return arg.substr(std::string("--graphic-lib=").size());
+    }
+    return defaultPath;
+}
+
+bool Core::loadGraphicLibrary(const std::string& path)
+{
+    if (_graphicLibrary.load(path))
+        return true;
+    std::cerr << "[Core] Cannot load graphic library: " << path << std::endl;
+    std::cerr << "[Core] " << _graphicLibrary.getLastError() << std::endl;
+    std::cerr << "[Core] Build it with the GameEngine CMake target "
+        << "zappy_graphic_2d, or pass another library with -g <path>."
+        << std::endl;
+    return false;
+}
+
+IGraphic& Core::graphics()
+{
+    return _graphicLibrary.get();
+}
+
+void Core::setupMenuDefaults(int ac, char** av)
 {
     // const std::string port = (ac > 1) ? av[1] : "4242";
     // const std::string ip = (ac > 2) ? av[2] : "127.0.0.1";
     std::string port = "4242";
     std::string ip = "127.0.0.1";
+    int positionalArgument = 0;
 
     for (int i = 1; i < ac; i++) {
         std::string arg = av[i];
 
-        if ((arg == "-p" || arg == "--port") && i + 1 < ac) {
+        if (isGraphicPathOption(arg) && i + 1 < ac) {
+            i++;
+        } else if (arg.rfind("--graphic=", 0) == 0 ||
+            arg.rfind("--graphic-lib=", 0) == 0) {
+            continue;
+        } else if ((arg == "-p" || arg == "--port") && i + 1 < ac) {
             port = av[i + 1];
             i++;
         } else if ((arg == "-h" || arg == "--host" || arg == "--machine")
             && i + 1 < ac) {
             ip = av[i + 1];
             i++;
-        } else if (i == 1) {
+        } else if (!arg.empty() && arg.front() == '-') {
+            continue;
+        } else if (positionalArgument == 0) {
             port = arg;
-        } else if (i == 2) {
+            positionalArgument++;
+        } else if (positionalArgument == 1) {
             ip = arg;
+            positionalArgument++;
         }
     }
 
-    _windowManager.setMenuConnectionInfo(ip, port);
+    graphics().setMenuConnectionInfo(ip, port);
 }
 
 bool Core::connectFromMenu()
 {
-    const std::string ip = _windowManager.getMenuIp();
-    const std::string portInput = _windowManager.getMenuPort();
+    const std::string ip = graphics().getMenuIp();
+    const std::string portInput = graphics().getMenuPort();
     int parsedPort = 0;
 
     if (ip.empty() || portInput.empty()) {
-        _windowManager.setMenuStatus("IP and port are required");
+        graphics().setMenuStatus("IP and port are required");
         return false;
     }
     try {
@@ -127,33 +179,33 @@ bool Core::connectFromMenu()
         parsedPort = std::stoi(portInput, &parsedSize);
         if (parsedSize != portInput.size() || parsedPort <= 0 ||
             parsedPort > std::numeric_limits<unsigned short>::max()) {
-            _windowManager.setMenuStatus("Invalid port");
+            graphics().setMenuStatus("Invalid port");
             return false;
         }
     } catch (const std::exception&) {
-        _windowManager.setMenuStatus("Invalid port");
+        graphics().setMenuStatus("Invalid port");
         return false;
     }
-    _windowManager.setMenuStatus("Connecting...");
+    graphics().setMenuStatus("Connecting...");
     _world = GameWorld();
-    _windowManager.resetMenuTeamNames();
+    graphics().resetMenuTeamNames();
     if (!_network.connectToServer(ip, static_cast<unsigned short>(parsedPort))) {
-        _windowManager.setMenuStatus("Connection failed");
+        graphics().setMenuStatus("Connection failed");
         return false;
     }
     if (!_network.authenticateAsGraphic()) {
         _network.disconnect();
-        _windowManager.setMenuStatus("Authentication failed");
+        graphics().setMenuStatus("Authentication failed");
         return false;
     }
-    _windowManager.setMenuStatus("Server ready - Press Enter");
+    graphics().setMenuStatus("Server ready - Press Enter");
     std::cout << "[Core] Moteur démarré. Écoute du serveur..." << std::endl;
     return true;
 }
 
 void Core::sendPendingTileRequest()
 {
-    std::optional<std::pair<int, int>> request = _windowManager.consumeTileRequest();
+    std::optional<std::pair<int, int>> request = graphics().consumeTileRequest();
 
     if (!request.has_value())
         return;
@@ -166,7 +218,7 @@ void Core::sendPendingTileRequest()
 
 void Core::sendPendingTimeRequest()
 {
-    std::optional<int> request = _windowManager.consumeTimeRequest();
+    std::optional<int> request = graphics().consumeTimeRequest();
 
     if (!request.has_value())
         return;
@@ -199,7 +251,7 @@ void Core::initCommands()
         std::string teamName;
 
         ss >> teamName;
-        _windowManager.addMenuTeamName(teamName);
+        graphics().addMenuTeamName(teamName);
         _world.addTeamName(teamName);
     };
 
@@ -211,7 +263,7 @@ void Core::initCommands()
         parseValue(ss, p.orientation);
         parseValue(ss, p.level);
         ss >> p.teamName;
-        _windowManager.addMenuTeamName(p.teamName);
+        graphics().addMenuTeamName(p.teamName);
         _world.addPlayer(p);
     };
 
@@ -228,7 +280,7 @@ void Core::initCommands()
         int freq = 0;
 
         parseValue(ss, freq);
-        _windowManager.setServerFreq(freq);
+        graphics().setServerFreq(freq);
     };
 
     _commands["plv"] = [this](std::stringstream& ss) {
@@ -260,7 +312,7 @@ void Core::initCommands()
     _commands["pic"] = [this](std::stringstream& ss) {
         int x = 0, y = 0, level = 0;
         std::vector<int> playerIds;
-        const int serverFreq = std::max(1, _windowManager.getServerFreq());
+        const int serverFreq = std::max(1, graphics().getServerFreq());
         const int durationMs = 300000 / serverFreq;
 
         parseValue(ss, x);
@@ -279,6 +331,22 @@ void Core::initCommands()
         parseValue(ss, result);
         (void)result;
         _world.stopIncantation(x, y);
+    };
+
+    _commands["pbc"] = [this](std::stringstream& ss) {
+        int id = 0;
+        const int durationMs = 850;
+
+        parseValue(ss, id);
+        _world.triggerBroadcast(id, durationMs);
+    };
+
+    _commands["pdi"] = [this](std::stringstream& ss) {
+        int id = 0;
+        const int durationMs = 700;
+
+        parseValue(ss, id);
+        _world.triggerPlayerDeath(id, durationMs);
     };
 
     _commands["bct"] = [this](std::stringstream& ss) {
@@ -367,6 +435,6 @@ void Core::parseCommand(const std::string& command)
     if (it != _commands.end()) {
         it->second(ss);
     } else {
-        // std::cout << "[Graphic] No handler found for: " << cmdType << std::endl;
+        std::cout << "[Graphic] No handler found for: " << cmdType << std::endl;
     }
 }
