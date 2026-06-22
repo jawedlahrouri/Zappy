@@ -1,0 +1,85 @@
+/*
+** EPITECH PROJECT, 2026
+** Zappy-1
+** File description:
+** PpoCommand.cpp
+*/
+#include "application/Command/GUI/PpoCommand.hpp"
+#include "application/Command/GUI/GuiVisitor.hpp"
+#include "presentation/Parsing/GuiCommandParser.hpp"
+#include "application/Server/Server.hpp"
+#include "domain/Client/AI.hpp"
+#include "domain/Client/GUI.hpp"
+#include "shared/ServerException.hpp"
+
+#include <iostream>
+#include <sstream>
+
+void PpoCommand::Accept(IGuiVisitor *visitor)
+{
+    try {
+        visitor->visit(this);
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("PpoCommand::Accept: ") + e.what());
+    }
+}
+
+void PpoCommand::setPlayerId(int id)
+{
+    _playerId = id;
+}
+
+int PpoCommand::getPlayerId() const
+{
+    return _playerId;
+}
+
+void GuiCommandParser::parse_gui_ppo(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network)
+{
+    try {
+        std::istringstream iss(command);
+        std::string cmd;
+        int targetId = 0;
+
+        if (!(iss >> cmd >> targetId)) {
+            network.sendResponse(client->getId(), "sbp");
+            return;
+        }
+        PpoCommand ppoCmd;
+        ppoCmd.setPlayerId(targetId);
+        ppoCmd.setClient(client);
+        GuiVisitor visitor(network);
+        ppoCmd.Accept(&visitor);
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("parse_gui_ppo failed: ") + e.what());
+    }
+}
+
+void GuiVisitor::visit(PpoCommand *element) {
+    try {
+        Server* server = dynamic_cast<Server*>(&_network);
+        if (!server)
+            return;
+
+        int targetId = element->getPlayerId();
+        const auto& clients = server->getClients();
+        auto it = clients.find(targetId);
+
+        if (it == clients.end() || it->second->getType() != ClientType::AI) {
+            _network.sendResponse(element->getClient()->getId(), "sbp");
+            return;
+        }
+
+        auto ai = std::dynamic_pointer_cast<AI>(it->second);
+        if (!ai)
+            return;
+
+        std::string response = "ppo " + std::to_string(ai->getId()) + " " +
+                               std::to_string(ai->getX()) + " " +
+                               std::to_string(ai->getY()) + " " +
+                               std::to_string(ai->getOrientation());
+        _network.sendResponse(element->getClient()->getId(), response);
+    } catch (const std::exception &e) {
+        throw ServerException(std::string("GuiVisitor::visit(PpoCommand): ") + e.what());
+    }
+}
