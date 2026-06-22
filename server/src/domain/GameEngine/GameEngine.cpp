@@ -168,6 +168,9 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
             PfkEvent pfkEvent(ai->getId());
             EventVisitor visitor(network);
             pfkEvent.Accept(&visitor);
+            _logger.debug("Fork processed for AI #" + std::to_string(ai->getId()));
+            ai->getCommandQueue().pop();
+            return;
         }
 
         ai->setActionTicksLeft(network.getCommandDuration(next_cmd));
