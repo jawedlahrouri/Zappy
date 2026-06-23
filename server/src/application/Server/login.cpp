@@ -62,13 +62,6 @@ static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetw
         ai->setY(0);
         ai->setOrientation(1);
     }
-    auto& engine = network.getGameEngine();
-    if (engine) {
-        auto& tile = engine->getMap().getTile(x, y);
-        for (int i = 1; i < RESOURCE_COUNT; ++i) {
-            tile.resources[i] = 0;
-        }
-    }
 }
 
 // protocol:

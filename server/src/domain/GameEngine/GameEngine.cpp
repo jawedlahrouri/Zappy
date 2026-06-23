@@ -307,10 +307,6 @@ bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider&
         return false;
     }
 
-    // Consommer les ressources immédiatement pour les verrouiller
-    // (évite qu'un autre joueur les vole pendant les 300 ticks)
-    consumeIncantationResources(x, y, level);
-
     std::vector<int> playerIds;
     for (const auto& p : players) {
         p->setActionTicksLeft(300);
