@@ -257,6 +257,16 @@ void GameWorld::removePlayer(int id)
     _players.erase(id);
 }
 
+void GameWorld::setWinner(const std::string& teamName)
+{
+    _winner = teamName;
+}
+
+const std::optional<std::string>& GameWorld::getWinner() const
+{
+    return _winner;
+}
+
 int GameWorld::getWidth() const
 {
     return _width;

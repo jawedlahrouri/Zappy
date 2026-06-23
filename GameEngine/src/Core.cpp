@@ -72,8 +72,8 @@ int Core::run(int ac, char** av)
             sendPendingTileRequest();
 
         if (_network.isConnected()) {
-            std::string command = _network.receiveData();
-            if (!command.empty()) {
+            std::string command;
+            while (!(command = _network.receiveData()).empty()) {
                 parseCommand(command);
             }
         }
@@ -392,6 +392,12 @@ void Core::initCommands()
         parseValue(ss, id);
         std::cout << "[Graphic] pdi handler: id=" << id << std::endl;
         _world.removePlayer(id);
+    };
+
+    _commands["seg"] = [this](std::stringstream& ss) {
+        std::string teamName;
+        ss >> teamName;
+        _world.setWinner(teamName);
     };
 
     _commands["pgt"] = [this](std::stringstream& ss) {

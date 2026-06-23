@@ -105,6 +105,8 @@
         std::optional<IncantationState> getPlayerIncantation(int id) const;
         std::optional<DeathState> getPlayerDeath(int id) const;
         const std::vector<BroadcastState>& getBroadcasts() const;
+        void setWinner(const std::string& teamName);
+        const std::optional<std::string>& getWinner() const;
 
     private:
         int getTeamColor(const std::string& teamName);
@@ -119,6 +121,7 @@
         std::map<std::pair<int, int>, std::vector<int>> _incantationTiles;
         std::map<int, DeathState> _dyingPlayers;
         mutable std::vector<BroadcastState> _broadcasts;
+        std::optional<std::string> _winner;
     };
 
 #endif /* !GAMEWORLD_HPP_ */

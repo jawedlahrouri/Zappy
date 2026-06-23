@@ -25,6 +25,7 @@
             static void drawGrid(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
             static void drawSelectedTile(sf::RenderWindow& window, int x, int y, float posX, float posY, const std::optional<std::pair<int, int>>& selectedTile);
             static void drawEggs(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
+            static void drawWinnerOverlay(sf::RenderWindow& window, const std::string& teamName, const sf::Font& font, bool fontLoaded);
         };
 
 #endif /* !WORLD_HPP_ */
