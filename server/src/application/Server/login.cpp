@@ -170,6 +170,7 @@ void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
                 if (ai) {
                     PnwEvent pnwEvent(ai);
                     pnwEvent.Accept(&eventVisitor);
+                    network.sendResponse(fd, "plv " + std::to_string(ai->getId()) + " " + std::to_string(ai->getLevel()));
                 }
             }
         }

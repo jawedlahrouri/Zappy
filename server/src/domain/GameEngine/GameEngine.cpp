@@ -10,13 +10,11 @@
 #include "INetworkProvider.hpp"
 #include "AI.hpp"
 #include "Client.hpp"
-#include <iostream>
 #include <random>
 #include <cmath>
 #include <algorithm>
 #include "shared/ILogger.hpp"
 #include "application/Event/GUI/BctEvent.hpp"
-#include "application/Event/GUI/PfkEvent.hpp"
 #include "application/Event/GUI/PicEvent.hpp"
 #include "application/Event/GUI/EventVisitor.hpp"
 Map& GameEngine::getMap()
@@ -143,8 +141,13 @@ void GameEngine::handleAiActiveCommand(std::shared_ptr<AI> ai, INetworkProvider&
     if (ai->getActionTicksLeft() > 0) {
         ai->setActionTicksLeft(ai->getActionTicksLeft() - 1);
         if (ai->getActionTicksLeft() == 0) {
-            executeAiAction(ai, network);
-            ai->setActionTicksLeft(-1);
+            if (ai->isInIncantation()) {
+                ai->setInIncantation(false);
+                ai->setActionTicksLeft(-1);
+            } else {
+                executeAiAction(ai, network);
+                ai->setActionTicksLeft(-1);
+            }
         }
     }
     } catch (const std::exception &e) {
@@ -163,14 +166,6 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
                 ai->getCommandQueue().pop();
                 return;
             }
-        }
-        if (next_cmd == "Fork") {
-            PfkEvent pfkEvent(ai->getId());
-            EventVisitor visitor(network);
-            pfkEvent.Accept(&visitor);
-            _logger.debug("Fork processed for AI #" + std::to_string(ai->getId()));
-            ai->getCommandQueue().pop();
-            return;
         }
 
         ai->setActionTicksLeft(network.getCommandDuration(next_cmd));
@@ -253,6 +248,17 @@ void GameEngine::consumeIncantationResources(int x, int y, int level)
     }
 }
 
+void GameEngine::refundIncantationResources(int x, int y, int level)
+{
+    auto reqIt = _incantationReqs.find(level);
+    if (reqIt == _incantationReqs.end()) return;
+    const auto& req = reqIt->second;
+
+    for (int i = 1; i < RESOURCE_COUNT; ++i) {
+        _map.addResourceToTile(x, y, static_cast<ResourceType>(i), req.resources[i]);
+    }
+}
+
 void GameEngine::checkVictory(const std::string& teamName, INetworkProvider& network) const
 {
     int count = 0;
@@ -277,16 +283,41 @@ bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider&
     auto players = getPlayersOnTileForIncantation(x, y, level, network);
     auto reqIt = _incantationReqs.find(level);
     
-    if (reqIt == _incantationReqs.end() || players.size() < static_cast<size_t>(reqIt->second.players) || !checkIncantationRequirements(x, y, level)) {
+    bool reqMissing = reqIt == _incantationReqs.end();
+    bool notEnoughPlayers = !reqMissing && players.size() < static_cast<size_t>(reqIt->second.players);
+    bool missingResources = !reqMissing && !checkIncantationRequirements(x, y, level);
+    const Tile& dbgTile = _map.getTile(x, y);
+    static const char* resNames[] = {"food","lin","der","sib","men","phi","thy"};
+    std::string tileRes = "";
+    for (int i = 1; i < RESOURCE_COUNT; ++i)
+        tileRes += std::string(resNames[i]) + "=" + std::to_string(dbgTile.resources[i]) + " ";
+    std::string reqRes = "";
+    if (!reqMissing)
+        for (int i = 1; i < RESOURCE_COUNT; ++i)
+            reqRes += std::string(resNames[i]) + "=" + std::to_string(reqIt->second.resources[i]) + " ";
+    _logger.debug("checkIncantationStart AI#" + std::to_string(ai->getId())
+        + " lvl=" + std::to_string(level)
+        + " pos=(" + std::to_string(x) + "," + std::to_string(y) + ")"
+        + " players=" + std::to_string(players.size()) + "/" + std::to_string(reqMissing ? -1 : reqIt->second.players)
+        + " tile=[" + tileRes + "] req=[" + reqRes + "]"
+        + " notEnoughPlayers=" + std::to_string(notEnoughPlayers)
+        + " missingResources=" + std::to_string(missingResources));
+    if (reqMissing || notEnoughPlayers || missingResources) {
         network.sendResponse(ai->getId(), "ko\n");
         return false;
     }
+
+    // Consommer les ressources immédiatement pour les verrouiller
+    // (évite qu'un autre joueur les vole pendant les 300 ticks)
+    consumeIncantationResources(x, y, level);
 
     std::vector<int> playerIds;
     for (const auto& p : players) {
         p->setActionTicksLeft(300);
         network.sendResponse(p->getId(), "Elevation underway\n");
         playerIds.push_back(p->getId());
+        if (p->getId() != ai->getId())
+            p->setInIncantation(true);
     }
     
     PicEvent picEvent(x, y, level, playerIds);

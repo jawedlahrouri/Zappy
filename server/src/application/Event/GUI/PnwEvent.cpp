@@ -24,7 +24,7 @@ std::shared_ptr<AI> PnwEvent::getAi() const {
 void EventVisitor::visit(PnwEvent *event) {
     try {
         auto ai = event->getAi();
-        std::string payload = "pnw " + std::to_string(ai->getId()) + " " + 
+        std::string payload = "pnw #" + std::to_string(ai->getId()) + " " +
                             std::to_string(ai->getX()) + " " + std::to_string(ai->getY()) + " " +
                             std::to_string(static_cast<int>(ai->getOrientation())) + " " + 
                             std::to_string(ai->getLevel()) + " " + ai->getTeamName();

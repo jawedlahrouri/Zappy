@@ -46,6 +46,9 @@ class AI : public Client {
         int getFoodTicks() const { return _foodTicks; }
         void setFoodTicks(int ticks) { _foodTicks = ticks; }
 
+        bool isInIncantation() const { return _inIncantation; }
+        void setInIncantation(bool v) { _inIncantation = v; }
+
     private:
         std::string _teamName;
         int _x = 0;
@@ -57,6 +60,7 @@ class AI : public Client {
         std::queue<std::string> _commandQueue;
         int _actionTicksLeft = -1;
         int _foodTicks;
+        bool _inIncantation = false;
 };
 
 #endif /* !AI_HPP_ */

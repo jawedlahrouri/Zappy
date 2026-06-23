@@ -41,6 +41,7 @@ class GameEngine {
         int getRequiredPlayersForIncantation(int level) const;
         std::vector<std::shared_ptr<AI>> getPlayersOnTileForIncantation(int x, int y, int level, const INetworkProvider& network) const;
         void consumeIncantationResources(int x, int y, int level);
+        void refundIncantationResources(int x, int y, int level);
         void checkVictory(const std::string& teamName, INetworkProvider& network) const;
 
         void generateInitialResources();
