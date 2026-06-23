@@ -10,6 +10,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "GameWorld.hpp"
+#include <array>
 #include <map>
 #include <optional>
 #include <string>
@@ -20,8 +21,8 @@
             static constexpr float INFO_PANEL_WIDTH = 270.0f;
             static constexpr float INFO_PANEL_HEIGHT = 250.0f;
             static constexpr float INFO_PANEL_MARGIN = 20.0f;
-            static constexpr float GLOBAL_PANEL_WIDTH = 320.0f;
-            static constexpr float GLOBAL_PANEL_HEIGHT = 520.0f;
+            static constexpr float GLOBAL_PANEL_WIDTH = 390.0f;
+            static constexpr float GLOBAL_PANEL_HEIGHT = 720.0f;
             static constexpr float PLAYER_PANEL_WIDTH = 330.0f;
             static constexpr float PLAYER_PANEL_HEIGHT = 380.0f;
             static constexpr float TIME_PANEL_WIDTH = 280.0f;
@@ -40,7 +41,8 @@
                 int mouseX, int mouseY);
 
         private:
-            static constexpr int MAX_GLOBAL_INFO_ROW = 22;
+            static constexpr int MAX_GLOBAL_INFO_ROW = 31;
+            static constexpr int MAX_PLAYER_LEVEL = 8;
 
             static void addResources(Resources& total, const Resources& resources);
             static int countResourceItems(const Resources& resources);
@@ -48,11 +50,17 @@
             static int drawTeamSharedInventories(sf::RenderWindow& window,
                 sf::Text& text, const std::map<std::string, int>& teamCounts,
                 const std::map<std::string, Resources>& teamResources,
+                const std::map<std::string,
+                    std::array<int, MAX_PLAYER_LEVEL + 1>>& teamLevelCounts,
                 const std::optional<std::string>& openedTeamInventory, int row,
                 float panelX, float panelY);
             static void drawTeamInventoryDetails(sf::RenderWindow& window,
                 sf::Text& text, const Resources& resources, int row,
                 float panelX, float panelY);
+            static void drawTeamLevelGrid(sf::RenderWindow& window,
+                sf::Text& text,
+                const std::array<int, MAX_PLAYER_LEVEL + 1>& levelCounts,
+                int row, float panelX, float panelY);
             static void drawTimeButton(sf::RenderWindow& window,
                 sf::Text& text, const std::string& fallbackLabel,
                 const std::string& textureName, const sf::FloatRect& rect,

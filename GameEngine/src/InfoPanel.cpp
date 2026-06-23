@@ -53,6 +53,7 @@ void InfoPanelRenderer::drawGlobalInfoPanel(sf::RenderWindow& window, const Game
     Resources mapResources;
     std::map<std::string, int> teamCounts;
     std::map<std::string, Resources> teamResources;
+    std::map<std::string, std::array<int, MAX_PLAYER_LEVEL + 1>> teamLevelCounts;
     int maxLevel = 0;
 
     if (mapWidth > 0 && mapHeight > 0 && !world.getMap().empty()) {
@@ -67,6 +68,8 @@ void InfoPanelRenderer::drawGlobalInfoPanel(sf::RenderWindow& window, const Game
         const Player& player = pair.second;
 
         teamCounts[player.teamName]++;
+        teamLevelCounts[player.teamName][std::clamp(player.level, 1,
+            MAX_PLAYER_LEVEL)]++;
         maxLevel = std::max(maxLevel, player.level);
         addResources(teamResources[player.teamName], player.inventory);
     }
@@ -94,22 +97,28 @@ void InfoPanelRenderer::drawGlobalInfoPanel(sf::RenderWindow& window, const Game
     drawInfoLine(window, text, "shoe: " + std::to_string(mapResources.deraumere) + "  balloon: " + std::to_string(mapResources.sibur), 9, 14, panelX, panelY);
     drawInfoLine(window, text, "jersey: " + std::to_string(mapResources.mendiane) + "  trophy: " + std::to_string(mapResources.phiras), 10, 14, panelX, panelY);
     drawInfoLine(window, text, "card: " + std::to_string(mapResources.thystame), 11, 14, panelX, panelY);
-    drawInfoLine(window, text, "shared team inventories", 13, 16, panelX, panelY);
-    const int row = drawTeamSharedInventories(window, text, teamCounts, teamResources, openedTeamInventory, 14, panelX, panelY);
+    drawInfoLine(window, text, "teams", 13, 16, panelX, panelY);
+    const int row = drawTeamSharedInventories(window, text, teamCounts,
+        teamResources, teamLevelCounts, openedTeamInventory, 14, panelX,
+        panelY);
 
     drawInfoLine(window, text, "I: hide/show infos", row + 1, 13, panelX, panelY);
     window.setView(previousView);
 }
 
-int InfoPanelRenderer::drawTeamSharedInventories(sf::RenderWindow& window, sf::Text& text, const std::map<std::string, int>& teamCounts, const std::map<std::string, Resources>& teamResources, const std::optional<std::string>& openedTeamInventory, int row, float panelX, float panelY)
+int InfoPanelRenderer::drawTeamSharedInventories(sf::RenderWindow& window, sf::Text& text, const std::map<std::string, int>& teamCounts, const std::map<std::string, Resources>& teamResources, const std::map<std::string, std::array<int, MAX_PLAYER_LEVEL + 1>>& teamLevelCounts, const std::optional<std::string>& openedTeamInventory, int row, float panelX, float panelY)
 {
     int hiddenTeams = 0;
 
     for (const auto& pair : teamCounts) {
         const auto resourcesIt = teamResources.find(pair.first);
+        const auto levelsIt = teamLevelCounts.find(pair.first);
         const Resources resources = resourcesIt == teamResources.end() ? Resources() : resourcesIt->second;
+        const std::array<int, MAX_PLAYER_LEVEL + 1> levels =
+            levelsIt == teamLevelCounts.end() ?
+            std::array<int, MAX_PLAYER_LEVEL + 1>() : levelsIt->second;
         const bool opened = openedTeamInventory.has_value() && *openedTeamInventory == pair.first;
-        const int neededRows = opened ? 4 : 1;
+        const int neededRows = opened ? 6 : 1;
 
         if (row + neededRows > MAX_GLOBAL_INFO_ROW) {
             hiddenTeams++;
@@ -118,6 +127,8 @@ int InfoPanelRenderer::drawTeamSharedInventories(sf::RenderWindow& window, sf::T
         drawInfoLine(window, text, std::string(opened ? "- " : "+ ") + pair.first + ": " + std::to_string(pair.second) + " players", row, 14, panelX, panelY);
         row++;
         if (opened) {
+            drawTeamLevelGrid(window, text, levels, row, panelX, panelY);
+            row += 2;
             drawTeamInventoryDetails(window, text, resources, row, panelX, panelY);
             row += 3;
         }
@@ -136,6 +147,47 @@ void InfoPanelRenderer::drawTeamInventoryDetails(sf::RenderWindow& window, sf::T
     drawInfoLine(window, text, "trophy: " + std::to_string(resources.phiras) + "  card: " + std::to_string(resources.thystame), row + 2, 13, panelX, panelY);
 }
 
+void InfoPanelRenderer::drawTeamLevelGrid(sf::RenderWindow& window, sf::Text& text, const std::array<int, MAX_PLAYER_LEVEL + 1>& levelCounts, int row, float panelX, float panelY)
+{
+    const float startX = panelX + 18.0f;
+    const float startY = panelY + 16.0f + static_cast<float>(row) * 22.0f;
+    const float gap = 6.0f;
+    const float cellWidth = (GLOBAL_PANEL_WIDTH - 36.0f - (gap * 3.0f)) / 4.0f;
+    const float cellHeight = 20.0f;
+
+    for (int level = 1; level <= MAX_PLAYER_LEVEL; level++) {
+        const int index = level - 1;
+        const int column = index % 4;
+        const int line = index / 4;
+        const float x = startX + static_cast<float>(column) *
+            (cellWidth + gap);
+        const float y = startY + static_cast<float>(line) * 22.0f;
+        sf::RectangleShape cell({cellWidth, cellHeight});
+
+        cell.setPosition(x, y);
+        cell.setFillColor(sf::Color(34, 43, 52, 230));
+        cell.setOutlineThickness(1.0f);
+        cell.setOutlineColor(levelCounts[level] > 0 ?
+            sf::Color(255, 220, 80, 190) : sf::Color(80, 95, 110, 160));
+        window.draw(cell);
+
+        text.setCharacterSize(11);
+        text.setFillColor(sf::Color(165, 178, 190));
+        text.setString("L" + std::to_string(level));
+        text.setPosition(x + 7.0f, y + 2.0f);
+        window.draw(text);
+
+        text.setCharacterSize(13);
+        text.setFillColor(levelCounts[level] > 0 ?
+            sf::Color(255, 232, 130) : sf::Color(235, 240, 245));
+        text.setString(std::to_string(levelCounts[level]));
+        const sf::FloatRect bounds = text.getLocalBounds();
+        text.setPosition(x + cellWidth - bounds.width - 8.0f, y + 1.0f);
+        window.draw(text);
+    }
+    text.setFillColor(sf::Color(235, 240, 245));
+}
+
 std::optional<std::string> InfoPanelRenderer::getTeamInventoryAt(const GameWorld& world, const std::optional<std::string>& openedTeamInventory, int mouseX, int mouseY)
 {
     const float panelX = INFO_PANEL_MARGIN;
@@ -151,8 +203,8 @@ std::optional<std::string> InfoPanelRenderer::getTeamInventoryAt(const GameWorld
         teamCounts[pair.second.teamName]++;
     for (const auto& pair : teamCounts) {
         const bool opened = openedTeamInventory.has_value() && *openedTeamInventory == pair.first;
-        const int neededRows = opened ? 4 : 1;
-        const sf::FloatRect teamLine(panelX + 12.0f, panelY + 16.0f + static_cast<float>(row) * 22.0f, GLOBAL_PANEL_WIDTH - 24.0f, 22.0f);
+        const int neededRows = opened ? 6 : 1;
+        const sf::FloatRect teamLine(panelX + 12.0f, panelY + 16.0f + static_cast<float>(row) * 22.0f, GLOBAL_PANEL_WIDTH - 24.0f, static_cast<float>(neededRows) * 22.0f);
 
         if (row + neededRows > MAX_GLOBAL_INFO_ROW)
             return std::nullopt;
