@@ -21,7 +21,7 @@ std::string PbcEvent::getMessage() const { return _message; }
 
 void EventVisitor::visit(PbcEvent *event) {
     try {
-        std::string payload = "pbc " + std::to_string(event->getPlayerId()) + " " + event->getMessage() + "\n";
+        std::string payload = "pbc #" + std::to_string(event->getPlayerId()) + " " + event->getMessage() + "\n";
         if (_targetFd != -1) {
             _network.sendResponse(_targetFd, payload);
         } else {

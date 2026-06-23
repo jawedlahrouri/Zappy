@@ -75,7 +75,7 @@ void GuiVisitor::visit(PinCommand *element) {
 
         auto& inv = ai->getInventory();
 
-        std::string response = "pin " + std::to_string(ai->getId()) + " " +
+        std::string response = "pin #" + std::to_string(ai->getId()) + " " +
                                std::to_string(ai->getX()) + " " +
                                std::to_string(ai->getY()) + " " +
                                std::to_string(inv["food"]) + " " +

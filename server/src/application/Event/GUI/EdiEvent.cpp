@@ -19,7 +19,7 @@ int EdiEvent::getEggId() const { return _eggId; }
 
 void EventVisitor::visit(EdiEvent *event) {
     try {
-        std::string payload = "edi " + std::to_string(event->getEggId()) + "\n";
+        std::string payload = "edi #" + std::to_string(event->getEggId()) + "\n";
         if (_targetFd != -1) {
             _network.sendResponse(_targetFd, payload);
         } else {

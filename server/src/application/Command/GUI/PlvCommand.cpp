@@ -72,7 +72,7 @@ void GuiVisitor::visit(PlvCommand *element) {
         if (!ai)
             return;
 
-        std::string response = "plv " + std::to_string(ai->getId()) + " " +
+        std::string response = "plv #" + std::to_string(ai->getId()) + " " +
                                std::to_string(ai->getLevel());
         _network.sendResponse(element->getClient()->getId(), response);
     } catch (const std::exception &e) {

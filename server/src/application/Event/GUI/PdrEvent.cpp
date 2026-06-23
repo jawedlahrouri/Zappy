@@ -25,7 +25,7 @@ int PdrEvent::getResource() const {
 
 void EventVisitor::visit(PdrEvent *event) {
     try {
-        _network.sendToGuis("pdr " + std::to_string(event->getPlayerId()) + " " + std::to_string(event->getResource()));
+        _network.sendToGuis("pdr #" + std::to_string(event->getPlayerId()) + " " + std::to_string(event->getResource()));
     } catch (const std::exception &e) {
         throw ServerException(std::string("EventVisitor::visit(PdrEvent): ") + e.what());
     }

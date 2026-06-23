@@ -61,7 +61,7 @@ void AiVisitor::visit(IncantationCommand *element) {
                 p->setLevel(level + 1);
                 _network.getLogger().debug("IncantationSuccess: 'Current level:" + std::to_string(level + 1) + "' to fd=" + std::to_string(p->getId()));
                 _network.sendResponse(p->getId(), "Current level: " + std::to_string(level + 1) + "\n");
-                _network.sendToGuis("plv " + std::to_string(p->getId()) + " " + std::to_string(level + 1));
+                _network.sendToGuis("plv #" + std::to_string(p->getId()) + " " + std::to_string(level + 1));
                 if (p->getLevel() == 8) {
                     engine->checkVictory(p->getTeamName(), _network);
                 }

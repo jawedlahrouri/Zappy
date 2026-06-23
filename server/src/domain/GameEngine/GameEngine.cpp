@@ -125,7 +125,7 @@ bool GameEngine::handleAiSurvival(int fd, std::shared_ptr<AI> ai, INetworkProvid
             ai->setFoodTicks(126);
             return true;
         }
-        network.sendResponse(fd, "death");
+        network.sendResponse(fd, "dead");
         clientsToRemove.push_back(fd);
         return false;
     }
