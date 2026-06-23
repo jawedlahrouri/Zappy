@@ -357,6 +357,7 @@ void Server::executeCommand(std::shared_ptr<AI> ai, const std::string& command)
 void Server::notifyVictory(const std::string& teamName)
 {
     try {
+        _logger.info("[VICTORY] Team '" + teamName + "' wins the game (6 players reached level 8).");
         sendEvent(SegEvent(teamName));
     } catch (const std::exception &e) {
         throw ServerException(std::string("Server::notifyVictory: ") + e.what());
