@@ -15,6 +15,8 @@
     #include <chrono>
     #include <unordered_map>
     #include <functional>
+    #include <set>
+    #include <utility>
 
     class Core {
     public:
@@ -30,6 +32,9 @@
 
         void setupMenuDefaults(int ac, char** av);
         bool connectFromMenu();
+        void resetMenuLoadState();
+        void updateMenuReadyStatus();
+        void trackInitialTileLoaded(int x, int y);
         std::string getGraphicLibraryPath(int ac, char** av) const;
         bool loadGraphicLibrary(const std::string& path);
         void parseCommand(const std::string& command);
@@ -44,6 +49,10 @@
         GameWorld _world;
         AppState _appState;
         bool _isRunning;
+        bool _menuReady;
+        bool _hasMenuTeams;
+        int _expectedInitialTiles;
+        std::set<std::pair<int, int>> _loadedInitialTiles;
         std::unordered_map<std::string, std::function<void(std::stringstream&)>> _commands;
     };
 

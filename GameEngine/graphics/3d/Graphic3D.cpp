@@ -14,7 +14,7 @@ Graphic3D::Graphic3D()
     : _fontLoaded(false),
     _menuIp("127.0.0.1"),
     _menuPort("4242"),
-    _menuStatus("Press Enter to connect"),
+    _menuStatus("Press to enter"),
     _menuConnectionEdited(false),
     _serverFreq(100),
     _timePaused(false)
@@ -184,7 +184,7 @@ void Graphic3D::drawMenuLabel(sf::RenderTarget& target)
         return;
 
     sf::Text title("Zappy 3D", _font, 34);
-    sf::Text subtitle("Press Enter", _font, 18);
+    sf::Text subtitle("Press to enter", _font, 18);
     sf::Text status(_menuStatus, _font, 16);
 
     title.setPosition(28.0f, 18.0f);

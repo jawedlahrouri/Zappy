@@ -34,7 +34,8 @@ static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss)
     return playerIds;
 }
 
-Core::Core() : _appState(MENU), _isRunning(false)
+Core::Core() : _appState(MENU), _isRunning(false), _menuReady(false),
+    _hasMenuTeams(false), _expectedInitialTiles(0)
 {
     initCommands();
 }
@@ -54,10 +55,13 @@ int Core::run(int ac, char** av)
         if (_appState == MENU && graphics().consumeMenuConnectionEdited()) {
             _network.disconnect();
             graphics().resetMenuTeamNames();
+            resetMenuLoadState();
         }
         if (_appState == MENU && graphics().handleMenuEvents()) {
-            if (_network.isConnected())
+            if (_network.isConnected() && _menuReady)
                 _appState = GAME;
+            else if (_network.isConnected())
+                graphics().setMenuStatus("Loading map and teams...");
             else
                 connectFromMenu();
         }
@@ -189,6 +193,7 @@ bool Core::connectFromMenu()
     graphics().setMenuStatus("Connecting...");
     _world = GameWorld();
     graphics().resetMenuTeamNames();
+    resetMenuLoadState();
     if (!_network.connectToServer(ip, static_cast<unsigned short>(parsedPort))) {
         graphics().setMenuStatus("Connection failed");
         return false;
@@ -198,9 +203,36 @@ bool Core::connectFromMenu()
         graphics().setMenuStatus("Authentication failed");
         return false;
     }
-    graphics().setMenuStatus("Server ready - Press Enter");
+    graphics().setMenuStatus("Loading map and teams...");
     std::cout << "[Core] Moteur démarré. Écoute du serveur..." << std::endl;
     return true;
+}
+
+void Core::resetMenuLoadState()
+{
+    _menuReady = false;
+    _hasMenuTeams = false;
+    _expectedInitialTiles = 0;
+    _loadedInitialTiles.clear();
+}
+
+void Core::updateMenuReadyStatus()
+{
+    if (_menuReady || _expectedInitialTiles <= 0 || !_hasMenuTeams)
+        return;
+    if (static_cast<int>(_loadedInitialTiles.size()) < _expectedInitialTiles)
+        return;
+    _menuReady = true;
+    graphics().setMenuStatus("Server ready - Press to enter");
+}
+
+void Core::trackInitialTileLoaded(int x, int y)
+{
+    if (_expectedInitialTiles <= 0 || _menuReady)
+        return;
+    if (x < 0 || x >= _world.getWidth() || y < 0 || y >= _world.getHeight())
+        return;
+    _loadedInitialTiles.insert({x, y});
 }
 
 void Core::sendPendingTileRequest()
@@ -245,6 +277,9 @@ void Core::initCommands()
         parseValue(ss, width);
         parseValue(ss, height);
         _world.setMapSize(width, height);
+        _expectedInitialTiles = std::max(0, width * height);
+        _loadedInitialTiles.clear();
+        updateMenuReadyStatus();
     };
 
     _commands["tna"] = [this](std::stringstream& ss) {
@@ -253,6 +288,9 @@ void Core::initCommands()
         ss >> teamName;
         graphics().addMenuTeamName(teamName);
         _world.addTeamName(teamName);
+        if (!teamName.empty())
+            _hasMenuTeams = true;
+        updateMenuReadyStatus();
     };
 
     _commands["pnw"] = [this](std::stringstream& ss) {
@@ -265,6 +303,9 @@ void Core::initCommands()
         ss >> p.teamName;
         graphics().addMenuTeamName(p.teamName);
         _world.addPlayer(p);
+        if (!p.teamName.empty())
+            _hasMenuTeams = true;
+        updateMenuReadyStatus();
     };
 
     _commands["ppo"] = [this](std::stringstream& ss) {
@@ -361,6 +402,8 @@ void Core::initCommands()
         parseValue(ss, q5);
         parseValue(ss, q6);
         _world.setTileResources(x, y, _world.resToResources(q0, q1, q2, q3, q4, q5, q6));
+        trackInitialTileLoaded(x, y);
+        updateMenuReadyStatus();
     };
 
     _commands["enw"] = [this](std::stringstream& ss) {
