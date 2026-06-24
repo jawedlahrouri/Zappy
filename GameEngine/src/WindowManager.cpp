@@ -17,6 +17,33 @@
 #include <iostream>
 #include <limits>
 
+static constexpr int PAUSE_SERVER_FREQ = 1;
+static constexpr int NORMAL_SERVER_FREQ = 100;
+static constexpr int TIME_FREQ_PRESETS[] = {1, 10, 25, 50, 100, 200, 500, 1000};
+
+static int getTimePresetCount()
+{
+    return sizeof(TIME_FREQ_PRESETS) / sizeof(TIME_FREQ_PRESETS[0]);
+}
+
+static int getSlowerTimeFreq(int freq)
+{
+    for (int index = getTimePresetCount() - 1; index >= 0; index--) {
+        if (TIME_FREQ_PRESETS[index] < freq)
+            return TIME_FREQ_PRESETS[index];
+    }
+    return TIME_FREQ_PRESETS[0];
+}
+
+static int getFasterTimeFreq(int freq)
+{
+    for (int preset : TIME_FREQ_PRESETS) {
+        if (preset > freq)
+            return preset;
+    }
+    return TIME_FREQ_PRESETS[getTimePresetCount() - 1];
+}
+
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
     : _viewCenter(static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f),
     _selectedTile(std::nullopt),
@@ -30,16 +57,16 @@ WindowManager::WindowManager(unsigned int width, unsigned int height, const std:
     _title(title),
     _fontLoaded(false),
     _menuMusicLoaded(false),
-    _menuIp("127.0.0.1"),
-    _menuPort("4242"),
+    _menuIp(""),
+    _menuPort(""),
     _menuStatus(""),
     _menuTeamNames(),
     _menuConnectionEdited(false),
     _showGrid(false),
     _showBroadcasts(true),
     _showInfoPanel(true),
-    _serverFreq(100),
-    _resumeServerFreq(100),
+    _serverFreq(NORMAL_SERVER_FREQ),
+    _resumeServerFreq(NORMAL_SERVER_FREQ),
     _timePaused(false),
     _activeMenuField(IP_FIELD)
 {
@@ -349,36 +376,32 @@ bool WindowManager::handleTimeControlMousePressed(int mouseX, int mouseY)
                 MAX_SERVER_FREQ);
             _timePaused = false;
         } else {
-            _resumeServerFreq = std::clamp(_serverFreq, MIN_SERVER_FREQ,
+            _resumeServerFreq = _serverFreq <= PAUSE_SERVER_FREQ ?
+                NORMAL_SERVER_FREQ : std::clamp(_serverFreq, MIN_SERVER_FREQ,
                 MAX_SERVER_FREQ);
-            _serverFreq = MIN_SERVER_FREQ;
+            _serverFreq = PAUSE_SERVER_FREQ;
             _timePaused = true;
         }
         _pendingTimeRequest = _serverFreq;
         return true;
     }
     if (slowerButton.contains(mx, my)) {
-        if (_timePaused) {
-            _resumeServerFreq = std::clamp(_resumeServerFreq / 2,
-                MIN_SERVER_FREQ, MAX_SERVER_FREQ);
-        } else {
-            _serverFreq = std::clamp(_serverFreq / 2, MIN_SERVER_FREQ,
-                MAX_SERVER_FREQ);
-            _resumeServerFreq = _serverFreq;
-            _pendingTimeRequest = _serverFreq;
-        }
+        const int currentFreq = _timePaused ? _resumeServerFreq : _serverFreq;
+
+        _serverFreq = getSlowerTimeFreq(currentFreq);
+        _resumeServerFreq = _serverFreq <= PAUSE_SERVER_FREQ ?
+            NORMAL_SERVER_FREQ : _serverFreq;
+        _timePaused = _serverFreq <= PAUSE_SERVER_FREQ;
+        _pendingTimeRequest = _serverFreq;
         return true;
     }
     if (fasterButton.contains(mx, my)) {
-        if (_timePaused) {
-            _resumeServerFreq = std::clamp(_resumeServerFreq * 2,
-                MIN_SERVER_FREQ, MAX_SERVER_FREQ);
-        } else {
-            _serverFreq = std::clamp(_serverFreq * 2, MIN_SERVER_FREQ,
-                MAX_SERVER_FREQ);
-            _resumeServerFreq = _serverFreq;
-            _pendingTimeRequest = _serverFreq;
-        }
+        const int currentFreq = _timePaused ? _resumeServerFreq : _serverFreq;
+
+        _serverFreq = getFasterTimeFreq(currentFreq);
+        _resumeServerFreq = _serverFreq;
+        _timePaused = false;
+        _pendingTimeRequest = _serverFreq;
         return true;
     }
     return true;
@@ -478,8 +501,14 @@ std::optional<int> WindowManager::consumeTimeRequest()
 void WindowManager::setServerFreq(int freq)
 {
     _serverFreq = std::clamp(freq, MIN_SERVER_FREQ, MAX_SERVER_FREQ);
-    if (!_timePaused)
+    if (_serverFreq <= PAUSE_SERVER_FREQ) {
+        _timePaused = true;
+        if (_resumeServerFreq <= PAUSE_SERVER_FREQ)
+            _resumeServerFreq = NORMAL_SERVER_FREQ;
+    } else {
+        _timePaused = false;
         _resumeServerFreq = _serverFreq;
+    }
 }
 
 int WindowManager::getServerFreq() const

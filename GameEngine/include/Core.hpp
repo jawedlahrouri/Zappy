@@ -29,6 +29,8 @@
             MENU,
             GAME
         };
+        
+        static constexpr int MAX_NETWORK_COMMANDS_PER_FRAME = 512;
 
         void setupMenuDefaults(int ac, char** av);
         bool connectFromMenu();

@@ -12,8 +12,8 @@
 
 Graphic3D::Graphic3D()
     : _fontLoaded(false),
-    _menuIp("127.0.0.1"),
-    _menuPort("4242"),
+    _menuIp(""),
+    _menuPort(""),
     _menuStatus("Press to enter"),
     _menuConnectionEdited(false),
     _serverFreq(100),

@@ -76,8 +76,11 @@ int Core::run(int ac, char** av)
             sendPendingTileRequest();
 
         if (_network.isConnected()) {
-            std::string command = _network.receiveData();
-            if (!command.empty()) {
+            for (int commandCount = 0; commandCount < MAX_NETWORK_COMMANDS_PER_FRAME; commandCount++) {
+                std::string command = _network.receiveData();
+
+                if (command.empty())
+                    break;
                 parseCommand(command);
             }
         }
@@ -132,10 +135,8 @@ IGraphic& Core::graphics()
 
 void Core::setupMenuDefaults(int ac, char** av)
 {
-    // const std::string port = (ac > 1) ? av[1] : "4242";
-    // const std::string ip = (ac > 2) ? av[2] : "127.0.0.1";
-    std::string port = "4242";
-    std::string ip = "127.0.0.1";
+    std::string port;
+    std::string ip;
     int positionalArgument = 0;
 
     for (int i = 1; i < ac; i++) {
@@ -317,12 +318,15 @@ void Core::initCommands()
         _world.movePlayer(id, x, y, orientation);
     };
 
-    _commands["sgt"] = [this](std::stringstream& ss) {
+    const auto parseServerFrequency = [this](std::stringstream& ss) {
         int freq = 0;
 
         parseValue(ss, freq);
         graphics().setServerFreq(freq);
     };
+
+    _commands["sgt"] = parseServerFrequency;
+    _commands["sst"] = parseServerFrequency;
 
     _commands["plv"] = [this](std::stringstream& ss) {
         int id = 0, level = 0;
