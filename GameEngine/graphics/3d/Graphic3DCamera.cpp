@@ -69,6 +69,7 @@ void Graphic3DCamera::update(const GameWorld& world)
 {
     const float wheel = GetMouseWheelMove();
     const float panSpeed = std::max(0.08f, _distance * 0.012f);
+    const float rotationSpeed = 90.0f * GetFrameTime();
     const Vector2 mouseDelta = GetMouseDelta();
 
     if (!_initialized || (world.getWidth() > 0 && world.getHeight() > 0 &&
@@ -84,18 +85,26 @@ void Graphic3DCamera::update(const GameWorld& world)
         _pitch += mouseDelta.y * 0.18f;
         _pitch = clampFloat(_pitch, 18.0f, 78.0f);
     }
+    if (IsKeyDown(KEY_A))
+        _yaw += rotationSpeed;
+    if (IsKeyDown(KEY_D))
+        _yaw -= rotationSpeed;
+    if (IsKeyDown(KEY_W))
+        _pitch = clampFloat(_pitch + rotationSpeed, 18.0f, 78.0f);
+    if (IsKeyDown(KEY_S))
+        _pitch = clampFloat(_pitch - rotationSpeed, 18.0f, 78.0f);
 
     const float yaw = _yaw * DEG_TO_RAD;
     const Vector3 forward = {std::sin(yaw), 0.0f, std::cos(yaw)};
     const Vector3 right = {std::cos(yaw), 0.0f, -std::sin(yaw)};
 
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+    if (IsKeyDown(KEY_UP))
         _target = addVector(_target, scaleVector(forward, panSpeed));
-    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
+    if (IsKeyDown(KEY_DOWN))
         _target = addVector(_target, scaleVector(forward, -panSpeed));
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+    if (IsKeyDown(KEY_RIGHT))
         _target = addVector(_target, scaleVector(right, panSpeed));
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
+    if (IsKeyDown(KEY_LEFT))
         _target = addVector(_target, scaleVector(right, -panSpeed));
     if (IsKeyPressed(KEY_R))
         reset(world);
