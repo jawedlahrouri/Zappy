@@ -10,7 +10,13 @@
 
 #include "GameWorld.hpp"
 #include "IGraphic.hpp"
+#include "WindowAssets.hpp"
 #include "WindowContext.hpp"
+#include "WindowEvents.hpp"
+#include "WindowMenu.hpp"
+#include "WindowRender.hpp"
+#include "WindowSelection.hpp"
+#include "WindowTime.hpp"
 
 class WindowManager : public IGraphic {
     public:

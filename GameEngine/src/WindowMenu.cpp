@@ -6,10 +6,6 @@
 */
 
 #include "WindowMenu.hpp"
-#include "Menu.hpp"
-#include "WindowAssets.hpp"
-#include "WindowEvents.hpp"
-#include "WindowContext.hpp"
 
 bool WindowMenu::handleEvents(WindowContext& context)
 {

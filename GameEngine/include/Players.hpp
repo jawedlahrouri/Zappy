@@ -1,10 +1,14 @@
 #ifndef PLAYERS_HPP_
 #define PLAYERS_HPP_
 
+#include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include "GameWorld.hpp"
+#include <memory>
 #include <optional>
+#include <set>
 #include <string>
+#include <vector>
 
 class Players {
 public:
@@ -22,6 +26,9 @@ private:
     static constexpr float DEATH_SIZE_RATIO = 0.75f;
     static constexpr int SAYEN_FRAME_COUNT = 17;
     static constexpr int DEATH_FRAME_COUNT = 7;
+    static constexpr const char* SAYEN_SOUND_PATH =
+        "GameEngine/assets/sprites/crisayenbest.mp3";
+    static constexpr float SAYEN_SOUND_VOLUME = 35.0f;
 
     static constexpr float PANEL_WIDTH = 330.0f;
     static constexpr float PANEL_HEIGHT = 380.0f;
@@ -34,6 +41,9 @@ private:
     static std::string getIncantationTextureKey(const IncantationState& incantation,
         int teamColor);
     static std::string getDeathTextureKey(const DeathState& death);
+    static void updateSayenSounds(const GameWorld& world);
+    static void playSayenSound(int playerId);
+    static void cleanupSayenSounds();
     static sf::Color getBroadcastColor(int teamColor, sf::Uint8 alpha);
     static void drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,
         float offsetX, float offsetY);
@@ -42,6 +52,9 @@ private:
         const std::string& value, int row, unsigned int size, float panelX, float panelY);
     static void drawTextInPanel(const sf::Font& font, sf::RenderWindow& window,  const float panelX ,  const float panelY,const Player player);
     static std::string intToOrientation(int orientation);
+
+    static std::set<int> _activeSayenSounds;
+    static std::vector<std::unique_ptr<sf::Music>> _sayenSounds;
 };
 
 #endif /* !PLAYERS_HPP_ */

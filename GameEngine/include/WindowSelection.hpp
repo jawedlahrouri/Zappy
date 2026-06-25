@@ -9,9 +9,11 @@
     #define WINDOWSELECTION_HPP_
 
 #include "GameWorld.hpp"
+#include "InfoPanel.hpp"
+#include "Players.hpp"
+#include "WindowContext.hpp"
+#include "World.hpp"
 #include <cmath>
-
-class WindowContext;
 
 class WindowSelection {
     public:

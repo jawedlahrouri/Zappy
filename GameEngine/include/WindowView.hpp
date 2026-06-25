@@ -8,7 +8,8 @@
 #ifndef WINDOWVIEW_HPP_
     #define WINDOWVIEW_HPP_
 
-class WindowContext;
+#include "WindowContext.hpp"
+#include <algorithm>
 
 class WindowView {
     public:

@@ -9,8 +9,9 @@
     #define WINDOWRENDER_HPP_
 
 #include "GameWorld.hpp"
-
-class WindowContext;
+#include "WindowAssets.hpp"
+#include "WindowContext.hpp"
+#include "World.hpp"
 
 class WindowRender {
     public:

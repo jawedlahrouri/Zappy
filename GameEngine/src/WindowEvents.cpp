@@ -6,11 +6,6 @@
 */
 
 #include "WindowEvents.hpp"
-#include "InfoPanel.hpp"
-#include "WindowContext.hpp"
-#include "WindowSelection.hpp"
-#include "WindowTime.hpp"
-#include "WindowView.hpp"
 
 bool WindowEvents::handleGameEvents(WindowContext& context,
     const GameWorld& world)

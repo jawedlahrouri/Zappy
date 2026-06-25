@@ -6,10 +6,6 @@
 */
 
 #include "WindowSelection.hpp"
-#include "InfoPanel.hpp"
-#include "Players.hpp"
-#include "WindowContext.hpp"
-#include "World.hpp"
 
 bool WindowSelection::selectTile(WindowContext& context, const GameWorld& world,
     int mouseX, int mouseY)

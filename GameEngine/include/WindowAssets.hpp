@@ -8,10 +8,11 @@
 #ifndef WINDOWASSETS_HPP_
     #define WINDOWASSETS_HPP_
 
+#include "TextureManager.hpp"
+#include "WindowContext.hpp"
+#include "WindowView.hpp"
 #include <filesystem>
 #include <iostream>
-
-class WindowContext;
 
 class WindowAssets {
     public:

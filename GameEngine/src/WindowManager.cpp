@@ -6,12 +6,6 @@
 */
 
 #include "WindowManager.hpp"
-#include "WindowAssets.hpp"
-#include "WindowEvents.hpp"
-#include "WindowMenu.hpp"
-#include "WindowRender.hpp"
-#include "WindowSelection.hpp"
-#include "WindowTime.hpp"
 
 WindowManager::WindowManager(unsigned int width, unsigned int height,
     const std::string& title)

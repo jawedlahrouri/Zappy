@@ -6,9 +6,6 @@
 */
 
 #include "WindowRender.hpp"
-#include "WindowAssets.hpp"
-#include "WindowContext.hpp"
-#include "World.hpp"
 
 void WindowRender::clear(WindowContext& context)
 {

@@ -9,9 +9,12 @@
     #define WINDOWEVENTS_HPP_
 
 #include "GameWorld.hpp"
+#include "InfoPanel.hpp"
+#include "WindowContext.hpp"
+#include "WindowSelection.hpp"
+#include "WindowTime.hpp"
+#include "WindowView.hpp"
 #include <SFML/Graphics.hpp>
-
-class WindowContext;
 
 class WindowEvents {
     public:

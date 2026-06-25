@@ -6,9 +6,6 @@
 */
 
 #include "WindowAssets.hpp"
-#include "TextureManager.hpp"
-#include "WindowContext.hpp"
-#include "WindowView.hpp"
 
 void WindowAssets::createWindow(WindowContext& context, unsigned int width, unsigned int height)
 {

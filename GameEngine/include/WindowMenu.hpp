@@ -8,10 +8,12 @@
 #ifndef WINDOWMENU_HPP_
     #define WINDOWMENU_HPP_
 
+#include "Menu.hpp"
+#include "WindowAssets.hpp"
+#include "WindowContext.hpp"
+#include "WindowEvents.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Utf.hpp>
-
-class WindowContext;
 
 class WindowMenu {
 public:

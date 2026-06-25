@@ -6,8 +6,6 @@
 */
 
 #include "WindowTime.hpp"
-#include "InfoPanel.hpp"
-#include "WindowContext.hpp"
 
 int WindowTime::getPresetCount()
 {

@@ -8,7 +8,10 @@
 #ifndef WINDOWTIME_HPP_
     #define WINDOWTIME_HPP_
 
-class WindowContext;
+#include "InfoPanel.hpp"
+#include "WindowContext.hpp"
+#include <array>
+#include <optional>
 
 class WindowTime {
     public:

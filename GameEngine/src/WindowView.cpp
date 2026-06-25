@@ -6,7 +6,6 @@
 */
 
 #include "WindowView.hpp"
-#include "WindowContext.hpp"
 
 void WindowView::update(WindowContext& context, unsigned int width, unsigned int height)
 {
