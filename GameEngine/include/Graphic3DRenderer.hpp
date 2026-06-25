@@ -11,13 +11,18 @@
     #include "GameWorld.hpp"
     #include <raylib.h>
     #include <string>
+    #include <vector>
 
     class Graphic3DRenderer {
         public:
-            void drawMenu(const Camera3D& camera, const std::string& status) const;
+            void drawMenu(const Camera3D& camera, const std::string& status,
+                const std::vector<std::string>& teams) const;
             void drawWorld(const Camera3D& camera, const GameWorld& world) const;
 
         private:
+            void drawMenuTeams(const std::vector<std::string>& teams) const;
+            void drawMenuTeam(const std::string& teamName, std::size_t index,
+                float x, float y) const;
             void drawPreviewWorld() const;
             void drawMap(const GameWorld& world) const;
             void drawTiles(const GameWorld& world) const;

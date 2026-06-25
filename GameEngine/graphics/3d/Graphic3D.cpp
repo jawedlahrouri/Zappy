@@ -7,6 +7,7 @@
 
 #include "Graphic3D.hpp"
 #include "Graphic3DConfig.hpp"
+#include <algorithm>
 #include <raylib.h>
 
 Graphic3D::Graphic3D()
@@ -16,6 +17,7 @@ Graphic3D::Graphic3D()
     _menuIp(""),
     _menuPort(""),
     _menuStatus("Press Enter to enter"),
+    _teamNames(),
     _menuConnectionEdited(false),
     _serverFreq(100),
     _timePaused(false)
@@ -98,7 +100,7 @@ void Graphic3D::drawMenu()
 {
     if (!_windowOpen)
         return;
-    _renderer.drawMenu(_camera.getCamera(), _menuStatus);
+    _renderer.drawMenu(_camera.getCamera(), _menuStatus, _teamNames);
 }
 
 void Graphic3D::drawWorld(const GameWorld& world)
@@ -132,11 +134,17 @@ void Graphic3D::setMenuStatus(const std::string& status)
 
 void Graphic3D::resetMenuTeamNames()
 {
+    _teamNames.clear();
 }
 
 void Graphic3D::addMenuTeamName(const std::string& teamName)
 {
-    (void)teamName;
+    if (teamName.empty())
+        return;
+    if (std::find(_teamNames.begin(), _teamNames.end(), teamName) !=
+        _teamNames.end())
+        return;
+    _teamNames.push_back(teamName);
 }
 
 bool Graphic3D::consumeMenuConnectionEdited()

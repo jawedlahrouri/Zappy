@@ -14,6 +14,7 @@
     #include <optional>
     #include <string>
     #include <utility>
+    #include <vector>
 
     class Graphic3D : public IGraphic {
         public:
@@ -50,6 +51,7 @@
             std::string _menuIp;
             std::string _menuPort;
             std::string _menuStatus;
+            std::vector<std::string> _teamNames;
             bool _menuConnectionEdited;
             int _serverFreq;
             bool _timePaused;

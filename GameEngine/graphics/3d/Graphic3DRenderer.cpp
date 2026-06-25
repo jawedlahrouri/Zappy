@@ -9,6 +9,7 @@
 #include "Graphic3DConfig.hpp"
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <sstream>
 
 Vector3 Graphic3DRenderer::getTileCenter(int x, int y, int width,
@@ -210,8 +211,54 @@ void Graphic3DRenderer::drawHud(const GameWorld& world) const
         18, 34, 16, {190, 204, 210, 255});
 }
 
+void Graphic3DRenderer::drawMenuTeam(const std::string& teamName,
+    std::size_t index, float x, float y) const
+{
+    const int teamColor = static_cast<int>(index % 4) + 1;
+    const Color color = getPlayerColor(teamColor);
+    const int textWidth = MeasureText(teamName.c_str(), 22);
+
+    DrawCircle(static_cast<int>(x), static_cast<int>(y - 4.0f), 22, color);
+    DrawCircle(static_cast<int>(x), static_cast<int>(y - 28.0f), 13, RAYWHITE);
+    DrawRectangle(static_cast<int>(x - 18.0f), static_cast<int>(y + 9.0f),
+        36, 18, color);
+    DrawRectangle(static_cast<int>(x + 16.0f), static_cast<int>(y - 6.0f),
+        16, 8, BLACK);
+    DrawText(teamName.c_str(), static_cast<int>(x - textWidth / 2.0f),
+        static_cast<int>(y - 68.0f), 22, RAYWHITE);
+}
+
+void Graphic3DRenderer::drawMenuTeams(
+    const std::vector<std::string>& teams) const
+{
+    if (teams.empty()) {
+        const char* waiting = "Waiting for teams...";
+        const int textWidth = MeasureText(waiting, 22);
+
+        DrawText(waiting, GetScreenWidth() / 2 - textWidth / 2,
+            GetScreenHeight() - 122, 22, {183, 205, 205, 255});
+        return;
+    }
+
+    const int columns = teams.size() <= 4 ? static_cast<int>(teams.size()) : 4;
+    const int rows = static_cast<int>((teams.size() + 3) / 4);
+    const float spacingX = 170.0f;
+    const float spacingY = 118.0f;
+    const float startX = static_cast<float>(GetScreenWidth()) / 2.0f -
+        static_cast<float>(columns - 1) * spacingX / 2.0f;
+    const float startY = static_cast<float>(GetScreenHeight()) - 170.0f -
+        static_cast<float>(rows - 1) * spacingY;
+
+    for (std::size_t index = 0; index < teams.size(); index++) {
+        const float x = startX + static_cast<float>(index % 4) * spacingX;
+        const float y = startY + static_cast<float>(index / 4) * spacingY;
+
+        drawMenuTeam(teams[index], index, x, y);
+    }
+}
+
 void Graphic3DRenderer::drawMenu(const Camera3D& camera,
-    const std::string& status) const
+    const std::string& status, const std::vector<std::string>& teams) const
 {
     BeginMode3D(camera);
     drawPreviewWorld();
@@ -219,6 +266,7 @@ void Graphic3DRenderer::drawMenu(const Camera3D& camera,
     DrawRectangle(0, 0, GetScreenWidth(), 90, {9, 12, 17, 218});
     DrawText("Zappy 3D", 24, 18, 34, RAYWHITE);
     DrawText(status.c_str(), 26, 58, 18, {183, 205, 205, 255});
+    drawMenuTeams(teams);
 }
 
 void Graphic3DRenderer::drawWorld(const Camera3D& camera,
