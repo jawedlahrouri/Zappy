@@ -52,6 +52,7 @@ void WindowAssets::loadTextures(WindowContext& context)
     tm.loadTexture("timePlayButton", "boutonplay.png");
     tm.loadTexture("timeSlowerButton", "boutongauche.png");
     tm.loadTexture("timeFasterButton", "boutondroite.png");
+    tm.loadTexture("infoButton", "button_info.png");
 
     tm.loadTexture("playerFace", "character_face.png");
     tm.loadTexture("playerBack", "character_back.png");

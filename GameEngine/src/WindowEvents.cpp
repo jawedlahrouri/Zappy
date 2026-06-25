@@ -70,6 +70,9 @@ bool WindowEvents::handleGameEvent(WindowContext& context,
         }
     } else if (event.type == sf::Event::MouseButtonPressed &&
         event.mouseButton.button == sf::Mouse::Left) {
+        if (handleLegendMousePressed(context, event.mouseButton.x,
+            event.mouseButton.y))
+            return false;
         if (WindowTime::handleMousePressed(context, event.mouseButton.x,
             event.mouseButton.y))
             return false;
@@ -88,6 +91,20 @@ bool WindowEvents::handleGameEvent(WindowContext& context,
         WindowSelection::clear(context);
     }
     return false;
+}
+
+bool WindowEvents::handleLegendMousePressed(WindowContext& context,
+    int mouseX, int mouseY)
+{
+    const sf::Vector2u windowSize = context.window.getSize();
+    const sf::FloatRect button = InfoPanelRenderer::getInfoButtonRect(windowSize);
+
+    if (button.contains(static_cast<float>(mouseX), static_cast<float>(mouseY))) {
+        context.display.showLegend = !context.display.showLegend;
+        return true;
+    }
+    return InfoPanelRenderer::isInsideLegendUi(windowSize, mouseX, mouseY,
+        context.display.showLegend);
 }
 
 bool WindowEvents::handleGlobalInfoMousePressed(WindowContext& context,

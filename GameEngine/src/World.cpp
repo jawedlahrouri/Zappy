@@ -11,7 +11,7 @@
 #include "Players.hpp"
 #include "TextureManager.hpp"
 
-void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, bool showBroadcasts, int serverFreq, bool timePaused, bool showInfoPanel, const std::optional<std::string>& openedTeamInventory)
+void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, bool showBroadcasts, int serverFreq, bool timePaused, bool showInfoPanel, const std::optional<std::string>& openedTeamInventory, bool showLegend)
 {
     const int mapWidth = world.getWidth();
     const int mapHeight = world.getHeight();
@@ -21,6 +21,7 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, co
         if (showInfoPanel)
             InfoPanelRenderer::drawGlobalInfoPanel(window, world, font,
                 fontLoaded, serverFreq, timePaused, openedTeamInventory);
+        InfoPanelRenderer::drawLegend(window, font, fontLoaded, showLegend);
         return;
     }
 
@@ -54,6 +55,7 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, co
         selectedPlayerId, font, fontLoaded);
     InfoPanelRenderer::drawTimePanel(window, font, fontLoaded, serverFreq,
         timePaused);
+    InfoPanelRenderer::drawLegend(window, font, fontLoaded, showLegend);
 }
 
 void WorldRenderer::drawBackground(sf::RenderWindow& window)

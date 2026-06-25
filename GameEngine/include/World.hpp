@@ -18,7 +18,7 @@
         public:
             static constexpr float TILE_SIZE = 64.0f;
         
-            static void draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, bool showBroadcasts, int serverFreq, bool timePaused, bool showInfoPanel, const std::optional<std::string>& openedTeamInventory);
+            static void draw(sf::RenderWindow& window, const sf::View& worldView, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded, bool showGrid, bool showBroadcasts, int serverFreq, bool timePaused, bool showInfoPanel, const std::optional<std::string>& openedTeamInventory, bool showLegend);
         private:
             static void drawBackground(sf::RenderWindow& window);
             static void drawTiles(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);

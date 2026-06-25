@@ -27,6 +27,8 @@ class WindowEvents {
         static bool handleGameEvent(WindowContext& context, const sf::Event& event, const GameWorld& world);
         static bool handleGlobalInfoMousePressed(WindowContext& context, const GameWorld& world, int mouseX, int mouseY);
         static bool isInsideGlobalInfoPanel(const WindowContext& context, int mouseX, int mouseY);
+        static bool handleLegendMousePressed(WindowContext& context,
+            int mouseX, int mouseY);
 };
 
 #endif /* !WINDOWEVENTS_HPP_ */

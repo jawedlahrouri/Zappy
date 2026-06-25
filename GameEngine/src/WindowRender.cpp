@@ -24,5 +24,5 @@ void WindowRender::drawWorld(WindowContext& context, const GameWorld& world)
         context.selection.tile, context.selection.playerId, context.assets.font,
         context.assets.fontLoaded, context.display.showGrid, context.display.showBroadcasts,
         context.time.serverFreq, context.time.paused, context.display.showInfoPanel,
-        context.selection.openedTeamInventory);
+        context.selection.openedTeamInventory, context.display.showLegend);
 }

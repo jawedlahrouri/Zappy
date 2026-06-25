@@ -13,7 +13,7 @@ WindowContext::WindowContext(unsigned int width, unsigned int height, const std:
     selection{std::nullopt, std::nullopt, std::nullopt, std::nullopt},
     menu{"", "", "", {}, false, IP_FIELD},
     time{std::nullopt, NORMAL_SERVER_FREQ, NORMAL_SERVER_FREQ, false},
-    display{false, true, true},
+    display{false, true, true, false},
     width(width),
     height(height),
     title(title)

@@ -71,6 +71,7 @@ public:
         bool showGrid;
         bool showBroadcasts;
         bool showInfoPanel;
+        bool showLegend;
     };
 
     WindowContext(unsigned int width, unsigned int height,

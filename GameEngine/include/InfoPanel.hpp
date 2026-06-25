@@ -10,6 +10,9 @@
 
 #include <SFML/Graphics.hpp>
 #include "GameWorld.hpp"
+#include "Players.hpp"
+#include "TextureManager.hpp"
+#include <algorithm>
 #include <array>
 #include <map>
 #include <optional>
@@ -34,7 +37,15 @@
             static void drawGlobalInfoPanel(sf::RenderWindow& window, const GameWorld& world, const sf::Font& font, bool fontLoaded, int serverFreq, bool timePaused, const std::optional<std::string>& openedTeamInventory);
             static void drawTimePanel(sf::RenderWindow& window, const sf::Font& font, bool fontLoaded, int serverFreq, bool timePaused);
             static void drawInfoPanel(sf::RenderWindow& window, const GameWorld& world, const std::optional<std::pair<int, int>>& selectedTile, const std::optional<int>& selectedPlayerId, const sf::Font& font, bool fontLoaded);
+            static void drawLegend(sf::RenderWindow& window,
+                const sf::Font& font, bool fontLoaded, bool showLegend);
             static sf::FloatRect getTimePanelRect(const sf::Vector2u& windowSize);
+            static sf::FloatRect getInfoButtonRect(
+                const sf::Vector2u& windowSize);
+            static sf::FloatRect getLegendPanelRect(
+                const sf::Vector2u& windowSize);
+            static bool isInsideLegendUi(const sf::Vector2u& windowSize,
+                int mouseX, int mouseY, bool showLegend);
             static std::optional<std::string> getTeamInventoryAt(
                 const GameWorld& world,
                 const std::optional<std::string>& openedTeamInventory,
@@ -65,6 +76,9 @@
                 sf::Text& text, const std::string& fallbackLabel,
                 const std::string& textureName, const sf::FloatRect& rect,
                 bool active);
+            static void drawLegendItem(sf::RenderWindow& window,
+                sf::Text& text, const std::string& textureName,
+                const std::string& label, int row, float panelX, float panelY);
             static void drawInfoLine(sf::RenderWindow& window, sf::Text& text, const std::string& value, int row, unsigned int size, float panelX, float panelY);
     };
 
