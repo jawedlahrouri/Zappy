@@ -90,6 +90,14 @@ target_link_libraries(zappy_gui PRIVATE
 
 set(GRAPHIC_2D_SOURCES
     GameEngine/src/WindowManager.cpp
+    GameEngine/src/WindowContext.cpp
+    GameEngine/src/WindowAssets.cpp
+    GameEngine/src/WindowEvents.cpp
+    GameEngine/src/WindowMenu.cpp
+    GameEngine/src/WindowRender.cpp
+    GameEngine/src/WindowSelection.cpp
+    GameEngine/src/WindowTime.cpp
+    GameEngine/src/WindowView.cpp
     GameEngine/src/TextureManager.cpp
     GameEngine/src/InfoPanel.cpp
     GameEngine/src/Menu.cpp
