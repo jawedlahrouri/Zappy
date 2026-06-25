@@ -4,8 +4,8 @@
 # Configuration des variables du jeu
 # ==========================================
 PORT=4242
-WIDTH=10
-HEIGHT=10
+WIDTH=20
+HEIGHT=20
 TEAM1="TeamA"
 TEAM2="TeamB"
 CLIENTS_NB=3
@@ -58,7 +58,7 @@ sleep 1
 echo "[+] Lancement des clients IA..."
 # Lancement de 2 drones pour la TeamA et 1 pour la TeamB
 # On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
-./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
+./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > logs/ia_stdout.log 2> logs/ia_stderr.log &
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."

@@ -129,6 +129,8 @@ class StateComportment:
                 success = self.agent.cmd.send_command("Incantation")
                 if success:
                     self.agent.level += 1
+                    self.agent.agent_id_str = f"lvl{self.agent.level}"
+                    logger.info(f"Incantation réussie en tant que LEADER ! Niveau actuel : {self.agent.level}")
                     self.agent.state = AgentState.BEGINNER
                 else:
                     logger.warning("Incantation a échoué (ko reçu). La case est mauvaise, fuite...")
@@ -141,6 +143,8 @@ class StateComportment:
                 success = self.agent.cmd.wait_for_incantation_follower()
                 if success:
                     self.agent.level += 1
+                    self.agent.agent_id_str = f"lvl{self.agent.level}"
+                    logger.info(f"Incantation réussie en tant que FOLLOWER ! Niveau actuel : {self.agent.level}")
                 self.agent.state = AgentState.BEGINNER
             self.agent.grouper.role = None
             return AgentState.SURVIVAL
@@ -175,6 +179,15 @@ class StateComportment:
         if len(necessary_ressources) == 0:
             if self.agent.utils.is_food_critical_for_action(300, self.agent.inventory):
                 if self.agent.level == 1:
+                    vision = self.agent.cmd.send_command("Look")
+                    if vision:
+                        self.agent.vision = vision
+                    players_on_tile = self.agent.vision[0].count('player') if self.agent.vision else 0
+                    if players_on_tile > 1:
+                        logger.info("Beginner : Trop de monde sur ma case, je m'éloigne pour incanter.")
+                        self.agent.cmd.send_command("Forward")
+                        return AgentState.BEGINNER
+
                     required_stones = self.agent.farmer.requirements.get(self.agent.level, {})
                     if not self._clean_and_set_stones(required_stones):
                         logger.warning("Beginner : Nettoyage de case échoué, abandon.")

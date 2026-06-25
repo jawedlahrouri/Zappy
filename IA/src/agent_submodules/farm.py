@@ -57,7 +57,7 @@ class Farmer:
             for stone, amount in needed_for_level.items():
                 total_needed[stone] = total_needed.get(stone, 0) + amount
         for stone in total_needed:
-            total_needed[stone] += 5
+            total_needed[stone] += 3  # Marge de sécurité minimale
         return total_needed
 
     def get_missing_stones_for_max_level(self, level, global_inventory):

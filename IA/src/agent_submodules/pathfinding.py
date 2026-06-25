@@ -21,6 +21,13 @@ class Pathfinder:
 
         score = 0
         items_found = 0
+        
+        # Protection de l'incantation: on ne ramasse jamais de pierres sur une case très peuplée
+        if tile_contents.count('player') >= 6:
+            stones = ['linemate', 'deraumere', 'sibur', 'mendiane', 'phiras', 'thystame']
+            if any(item in stones for item in target_items):
+                return -999
+                
         for item in target_items:
             count = tile_contents.count(item)
             items_found += count
