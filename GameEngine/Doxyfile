@@ -2,19 +2,21 @@
 
 PROJECT_NAME           = "Zappy GameEngine"
 PROJECT_BRIEF          = "Graphical client, renderers, protocol model, and GUI controls."
-OUTPUT_DIRECTORY       = docs
+OUTPUT_DIRECTORY       = GameEngine/docs
 CREATE_SUBDIRS         = NO
 
-INPUT                  = include src graphics
+INPUT                  = GameEngine/include GameEngine/src GameEngine/graphics GameEngine/mainpage.md
 RECURSIVE              = YES
-FILE_PATTERNS          = *.hpp *.cpp
+FILE_PATTERNS          = *.hpp *.cpp *.md
 EXCLUDE_PATTERNS       =
+
+USE_MDFILE_AS_MAINPAGE = GameEngine/mainpage.md
 
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 GENERATE_LATEX         = NO
 
-EXTRACT_ALL            = NO
+EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = NO
 HIDE_UNDOC_MEMBERS     = NO
