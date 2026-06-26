@@ -5,102 +5,88 @@
 ** Graphic3D
 */
 
+/**
+ * @file Graphic3D.cpp
+ * @brief Implements the Raylib graphical backend and plugin entry points.
+ */
+
 #include "Graphic3D.hpp"
+#include "Graphic3DConfig.hpp"
 #include <algorithm>
-#include <filesystem>
-#include <iostream>
+#include <raylib.h>
 
 Graphic3D::Graphic3D()
-    : _fontLoaded(false),
-    _menuIp("127.0.0.1"),
-    _menuPort("4242"),
-    _menuStatus("Press Enter to connect"),
+    : _camera(),
+    _renderer(),
+    _windowOpen(false),
+    _menuIp(""),
+    _menuPort(""),
+    _menuStatus("Press Enter to enter"),
+    _teamNames(),
     _menuConnectionEdited(false),
     _serverFreq(100),
-    _timePaused(false)
+    _timePaused(false),
+    _selectedTile(),
+    _selectedPlayerId(),
+    _pendingTileRequest()
 {
-    createWindow(1600, 900);
-    loadFont();
+    createWindow();
 }
 
 Graphic3D::~Graphic3D()
 {
-    if (_window.isOpen())
-        _window.close();
+    if (IsWindowReady())
+        CloseWindow();
 }
 
-void Graphic3D::createWindow(unsigned int width, unsigned int height)
+void Graphic3D::createWindow()
 {
-    _window.create(sf::VideoMode(width, height), "Zappy 3D");
-    _window.setFramerateLimit(60);
-    _window.requestFocus();
-}
-
-void Graphic3D::loadFont()
-{
-    const std::string fonts[] = {
-        "GameEngine/assets/fonts/arial.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
-    };
-
-    for (const std::string& path : fonts) {
-        if (std::filesystem::exists(path) && _font.loadFromFile(path)) {
-            _fontLoaded = true;
-            return;
-        }
-    }
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
+    InitWindow(Graphic3DConfig::WINDOW_WIDTH, Graphic3DConfig::WINDOW_HEIGHT,
+        "Zappy 3D");
+    SetTargetFPS(60);
+    _windowOpen = true;
 }
 
 bool Graphic3D::isOpen() const
 {
-    return _window.isOpen();
-}
-
-void Graphic3D::handleCloseEvent(const sf::Event& event, bool& exitToMenu)
-{
-    if (event.type == sf::Event::Closed) {
-        _window.close();
-        exitToMenu = true;
-    }
+    return _windowOpen && !WindowShouldClose();
 }
 
 bool Graphic3D::handleMenuEvents()
 {
-    sf::Event event;
-    bool startGame = false;
-
-    while (_window.pollEvent(event)) {
-        handleCloseEvent(event, startGame);
-        if (event.type == sf::Event::KeyPressed) {
-            if (event.key.code == sf::Keyboard::Enter)
-                startGame = true;
-            else if (event.key.code == sf::Keyboard::Escape)
-                _window.close();
-        }
+    if (WindowShouldClose()) {
+        _windowOpen = false;
+        return false;
     }
-    return startGame;
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        _windowOpen = false;
+        return false;
+    }
+    _camera.update(GameWorld());
+    return IsKeyPressed(KEY_ENTER);
 }
 
 bool Graphic3D::handleGameEvents(const GameWorld& world)
 {
-    sf::Event event;
-    bool backToMenu = false;
-    (void)world;
-
-    while (_window.pollEvent(event)) {
-        handleCloseEvent(event, backToMenu);
-        if (event.type == sf::Event::KeyPressed &&
-            event.key.code == sf::Keyboard::Escape) {
-            backToMenu = true;
-        }
+    if (WindowShouldClose()) {
+        _windowOpen = false;
+        return true;
     }
-    return backToMenu;
+    if (IsKeyPressed(KEY_ESCAPE))
+        return true;
+    _camera.update(world);
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        handleSelection(world);
+    return false;
 }
 
 std::optional<std::pair<int, int>> Graphic3D::consumeTileRequest()
 {
-    return std::nullopt;
+    std::optional<std::pair<int, int>> request = _pendingTileRequest;
+
+    _pendingTileRequest.reset();
+    return request;
 }
 
 std::optional<int> Graphic3D::consumeTimeRequest()
@@ -110,125 +96,66 @@ std::optional<int> Graphic3D::consumeTimeRequest()
 
 void Graphic3D::clear()
 {
-    _window.clear(sf::Color(12, 18, 28));
+    if (!_windowOpen)
+        return;
+    BeginDrawing();
+    ClearBackground({12, 16, 22, 255});
 }
 
 void Graphic3D::display()
 {
-    _window.display();
-}
-
-void Graphic3D::drawIsoTile(sf::RenderTarget& target, float centerX,
-    float centerY, sf::Color fillColor, sf::Color outlineColor)
-{
-    sf::ConvexShape tile(4);
-
-    tile.setPoint(0, {centerX, centerY - TILE_HEIGHT / 2.0f});
-    tile.setPoint(1, {centerX + TILE_WIDTH / 2.0f, centerY});
-    tile.setPoint(2, {centerX, centerY + TILE_HEIGHT / 2.0f});
-    tile.setPoint(3, {centerX - TILE_WIDTH / 2.0f, centerY});
-    tile.setFillColor(fillColor);
-    tile.setOutlineColor(outlineColor);
-    tile.setOutlineThickness(1.0f);
-    target.draw(tile);
-}
-
-void Graphic3D::drawSceneBackground(sf::RenderTarget& target)
-{
-    sf::RectangleShape background;
-
-    background.setSize(sf::Vector2f(
-        static_cast<float>(_window.getSize().x),
-        static_cast<float>(_window.getSize().y)));
-    background.setFillColor(sf::Color(12, 18, 28));
-    target.draw(background);
-}
-
-sf::Color Graphic3D::tileColorFromResources(const Tile& tile) const
-{
-    const int total = tile.resources.food + tile.resources.linemate +
-        tile.resources.deraumere + tile.resources.sibur +
-        tile.resources.mendiane + tile.resources.phiras +
-        tile.resources.thystame;
-    const int base = std::clamp(55 + total * 12, 55, 210);
-
-    return sf::Color(base, std::clamp(base + 25, 0, 255),
-        std::clamp(base + 10, 0, 255), 255);
-}
-
-void Graphic3D::drawIsoGrid(sf::RenderTarget& target, int width, int height,
-    float originX, float originY, bool previewMode)
-{
-    const int safeWidth = std::max(1, width);
-    const int safeHeight = std::max(1, height);
-
-    for (int y = 0; y < safeHeight; y++) {
-        for (int x = 0; x < safeWidth; x++) {
-            const float isoX = originX + (static_cast<float>(x - y) * TILE_WIDTH / 2.0f);
-            const float isoY = originY + (static_cast<float>(x + y) * TILE_HEIGHT / 2.0f);
-            const sf::Color fill = previewMode ?
-                sf::Color(60, 100, 90, 220) :
-                sf::Color(70, 110, 96, 230);
-            const sf::Color outline = previewMode ?
-                sf::Color(150, 210, 190, 180) :
-                sf::Color(30, 40, 36, 255);
-
-            drawIsoTile(target, isoX, isoY, fill, outline);
-        }
-    }
-}
-
-void Graphic3D::drawMenuLabel(sf::RenderTarget& target)
-{
-    if (!_fontLoaded)
+    if (!_windowOpen)
         return;
-
-    sf::Text title("Zappy 3D", _font, 34);
-    sf::Text subtitle("Press Enter", _font, 18);
-    sf::Text status(_menuStatus, _font, 16);
-
-    title.setPosition(28.0f, 18.0f);
-    subtitle.setPosition(28.0f, 62.0f);
-    status.setPosition(28.0f, 88.0f);
-    title.setFillColor(sf::Color(240, 240, 240));
-    subtitle.setFillColor(sf::Color(190, 210, 210));
-    status.setFillColor(sf::Color(140, 180, 180));
-    target.draw(title);
-    target.draw(subtitle);
-    target.draw(status);
+    EndDrawing();
 }
 
 void Graphic3D::drawMenu()
 {
-    drawSceneBackground(_window);
-    drawIsoGrid(_window, 8, 8, 340.0f, 180.0f, true);
-    drawMenuLabel(_window);
+    if (!_windowOpen)
+        return;
+    _renderer.drawMenu(_camera.getCamera(), _menuStatus, _teamNames);
 }
 
 void Graphic3D::drawWorld(const GameWorld& world)
 {
-    drawSceneBackground(_window);
-    if (world.getWidth() <= 0 || world.getHeight() <= 0 ||
-        world.getMap().empty()) {
-        drawIsoGrid(_window, 8, 8, 420.0f, 180.0f, false);
+    if (!_windowOpen)
+        return;
+    _renderer.drawWorld(_camera.getCamera(), world, _selectedTile,
+        _selectedPlayerId);
+}
+
+void Graphic3D::handleSelection(const GameWorld& world)
+{
+    const Vector2 mousePosition = GetMousePosition();
+    const int mouseX = static_cast<int>(mousePosition.x);
+    const int mouseY = static_cast<int>(mousePosition.y);
+
+    if (mousePosition.y <= 54.0f || _renderer.isInsideInfoPanel(
+        _selectedTile, _selectedPlayerId, mouseX, mouseY))
+        return;
+
+    const std::optional<int> playerId = _renderer.pickPlayer(world,
+        _camera.getCamera(), mousePosition);
+
+    if (playerId.has_value()) {
+        const auto playerIt = world.getPlayers().find(*playerId);
+
+        if (playerIt == world.getPlayers().end())
+            return;
+        _selectedPlayerId = *playerId;
+        _selectedTile = {playerIt->second.x, playerIt->second.y};
+        _pendingTileRequest.reset();
         return;
     }
 
-    const int width = world.getWidth();
-    const int height = world.getHeight();
-    const float originX = static_cast<float>(_window.getSize().x) / 2.0f;
-    const float originY = 120.0f;
+    const std::optional<std::pair<int, int>> tile = _renderer.pickTile(world,
+        _camera.getCamera(), mousePosition);
 
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            const Tile& tile = world.getMap()[y][x];
-            const float isoX = originX + (static_cast<float>(x - y) * TILE_WIDTH / 2.0f);
-            const float isoY = originY + (static_cast<float>(x + y) * TILE_HEIGHT / 2.0f);
-            const sf::Color fill = tileColorFromResources(tile);
-
-            drawIsoTile(_window, isoX, isoY, fill, sf::Color(25, 30, 32));
-        }
-    }
+    if (!tile.has_value())
+        return;
+    _selectedTile = tile;
+    _selectedPlayerId.reset();
+    _pendingTileRequest = _selectedTile;
 }
 
 const std::string& Graphic3D::getMenuIp() const
@@ -255,11 +182,17 @@ void Graphic3D::setMenuStatus(const std::string& status)
 
 void Graphic3D::resetMenuTeamNames()
 {
+    _teamNames.clear();
 }
 
 void Graphic3D::addMenuTeamName(const std::string& teamName)
 {
-    (void)teamName;
+    if (teamName.empty())
+        return;
+    if (std::find(_teamNames.begin(), _teamNames.end(), teamName) !=
+        _teamNames.end())
+        return;
+    _teamNames.push_back(teamName);
 }
 
 bool Graphic3D::consumeMenuConnectionEdited()
@@ -285,11 +218,19 @@ bool Graphic3D::isTimePaused() const
     return _timePaused;
 }
 
+/**
+ * @brief Creates the Raylib graphical backend.
+ * @return Newly allocated graphical interface instance.
+ */
 extern "C" IGraphic* createGraphic()
 {
     return new Graphic3D();
 }
 
+/**
+ * @brief Destroys a graphical backend created by createGraphic().
+ * @param graphic Instance to destroy.
+ */
 extern "C" void destroyGraphic(IGraphic* graphic)
 {
     delete graphic;

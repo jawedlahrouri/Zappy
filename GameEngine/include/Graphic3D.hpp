@@ -5,66 +5,157 @@
 ** Graphic3D
 */
 
+/**
+ * @file Graphic3D.hpp
+ * @brief Declares the Raylib-based graphical backend.
+ */
+
 #ifndef GRAPHIC3D_HPP_
     #define GRAPHIC3D_HPP_
 
+    #include "Graphic3DCamera.hpp"
+    #include "Graphic3DRenderer.hpp"
     #include "IGraphic.hpp"
-    #include <SFML/Graphics.hpp>
     #include <optional>
     #include <string>
     #include <utility>
+    #include <vector>
 
-class Graphic3D : public IGraphic {
-public:
-    Graphic3D();
-    ~Graphic3D() override;
+    /**
+     * @brief Experimental Raylib implementation of the IGraphic interface.
+     */
+    class Graphic3D : public IGraphic {
+        public:
+            /**
+             * @brief Creates the Raylib window and initializes renderer state.
+             */
+            Graphic3D();
 
-    bool isOpen() const override;
-    bool handleMenuEvents() override;
-    bool handleGameEvents(const GameWorld& world) override;
-    std::optional<std::pair<int, int>> consumeTileRequest() override;
-    std::optional<int> consumeTimeRequest() override;
-    void clear() override;
-    void display() override;
-    void drawMenu() override;
-    void drawWorld(const GameWorld& world) override;
-    const std::string& getMenuIp() const override;
-    const std::string& getMenuPort() const override;
-    void setMenuConnectionInfo(const std::string& ip,
-        const std::string& port) override;
-    void setMenuStatus(const std::string& status) override;
-    void resetMenuTeamNames() override;
-    void addMenuTeamName(const std::string& teamName) override;
-    bool consumeMenuConnectionEdited() override;
-    void setServerFreq(int freq) override;
-    int getServerFreq() const override;
-    bool isTimePaused() const override;
+            /**
+             * @brief Closes the Raylib window when it is still open.
+             */
+            ~Graphic3D() override;
 
-private:
-    static constexpr float TILE_WIDTH = 64.0f;
-    static constexpr float TILE_HEIGHT = 32.0f;
-    static constexpr float TILE_DEPTH = 14.0f;
+            /**
+             * @copydoc IGraphic::isOpen()
+             */
+            bool isOpen() const override;
 
-    void createWindow(unsigned int width, unsigned int height);
-    void loadFont();
-    void handleCloseEvent(const sf::Event& event, bool& exitToMenu);
-    void drawIsoTile(sf::RenderTarget& target, float centerX, float centerY,
-        sf::Color fillColor, sf::Color outlineColor);
-    void drawSceneBackground(sf::RenderTarget& target);
-    void drawIsoGrid(sf::RenderTarget& target, int width, int height,
-        float originX, float originY, bool previewMode);
-    void drawMenuLabel(sf::RenderTarget& target);
-    sf::Color tileColorFromResources(const Tile& tile) const;
+            /**
+             * @copydoc IGraphic::handleMenuEvents()
+             */
+            bool handleMenuEvents() override;
 
-    sf::RenderWindow _window;
-    sf::Font _font;
-    bool _fontLoaded;
-    std::string _menuIp;
-    std::string _menuPort;
-    std::string _menuStatus;
-    bool _menuConnectionEdited;
-    int _serverFreq;
-    bool _timePaused;
-};
+            /**
+             * @copydoc IGraphic::handleGameEvents()
+             */
+            bool handleGameEvents(const GameWorld& world) override;
+
+            /**
+             * @copydoc IGraphic::consumeTileRequest()
+             */
+            std::optional<std::pair<int, int>> consumeTileRequest() override;
+
+            /**
+             * @copydoc IGraphic::consumeTimeRequest()
+             */
+            std::optional<int> consumeTimeRequest() override;
+
+            /**
+             * @copydoc IGraphic::clear()
+             */
+            void clear() override;
+
+            /**
+             * @copydoc IGraphic::display()
+             */
+            void display() override;
+
+            /**
+             * @copydoc IGraphic::drawMenu()
+             */
+            void drawMenu() override;
+
+            /**
+             * @copydoc IGraphic::drawWorld()
+             */
+            void drawWorld(const GameWorld& world) override;
+
+            /**
+             * @copydoc IGraphic::getMenuIp()
+             */
+            const std::string& getMenuIp() const override;
+
+            /**
+             * @copydoc IGraphic::getMenuPort()
+             */
+            const std::string& getMenuPort() const override;
+
+            /**
+             * @copydoc IGraphic::setMenuConnectionInfo()
+             */
+            void setMenuConnectionInfo(const std::string& ip,
+                const std::string& port) override;
+
+            /**
+             * @copydoc IGraphic::setMenuStatus()
+             */
+            void setMenuStatus(const std::string& status) override;
+
+            /**
+             * @copydoc IGraphic::resetMenuTeamNames()
+             */
+            void resetMenuTeamNames() override;
+
+            /**
+             * @copydoc IGraphic::addMenuTeamName()
+             */
+            void addMenuTeamName(const std::string& teamName) override;
+
+            /**
+             * @copydoc IGraphic::consumeMenuConnectionEdited()
+             */
+            bool consumeMenuConnectionEdited() override;
+
+            /**
+             * @copydoc IGraphic::setServerFreq()
+             */
+            void setServerFreq(int freq) override;
+
+            /**
+             * @copydoc IGraphic::getServerFreq()
+             */
+            int getServerFreq() const override;
+
+            /**
+             * @copydoc IGraphic::isTimePaused()
+             */
+            bool isTimePaused() const override;
+
+        private:
+            /**
+             * @brief Creates and configures the Raylib window.
+             */
+            void createWindow();
+
+            /**
+             * @brief Updates selected tile or player from a mouse click.
+             */
+            void handleSelection(const GameWorld& world);
+
+            Graphic3DCamera _camera;
+            Graphic3DRenderer _renderer;
+            bool _windowOpen;
+            std::string _menuIp;
+            std::string _menuPort;
+            std::string _menuStatus;
+            std::vector<std::string> _teamNames;
+            bool _menuConnectionEdited;
+            int _serverFreq;
+            bool _timePaused;
+            std::optional<std::pair<int, int>> _selectedTile;
+            std::optional<int> _selectedPlayerId;
+            std::optional<std::pair<int, int>> _pendingTileRequest;
+    };
 
 #endif /* !GRAPHIC3D_HPP_ */

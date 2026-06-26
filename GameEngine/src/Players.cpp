@@ -8,6 +8,9 @@
 #include <limits>
 #include <sstream>
 
+std::set<int> Players::_activeSayenSounds;
+std::vector<std::unique_ptr<sf::Music>> Players::_sayenSounds;
+
 std::string Players::getPlayerTextureKey(const Player& player)
 {
     if (player.teamColor == 1) {
@@ -168,6 +171,50 @@ std::string Players::getDeathTextureKey(const DeathState& death)
     return key.str();
 }
 
+void Players::cleanupSayenSounds()
+{
+    _sayenSounds.erase(std::remove_if(_sayenSounds.begin(),
+        _sayenSounds.end(), [](const std::unique_ptr<sf::Music>& sound) {
+            return sound->getStatus() == sf::Music::Stopped;
+        }), _sayenSounds.end());
+}
+
+void Players::playSayenSound(int playerId)
+{
+    std::unique_ptr<sf::Music> sound = std::make_unique<sf::Music>();
+
+    if (!sound->openFromFile(SAYEN_SOUND_PATH)) {
+        _activeSayenSounds.erase(playerId);
+        return;
+    }
+    sound->setVolume(SAYEN_SOUND_VOLUME);
+    sound->play();
+    _sayenSounds.push_back(std::move(sound));
+}
+
+void Players::updateSayenSounds(const GameWorld& world)
+{
+    std::set<int> activePlayers;
+
+    cleanupSayenSounds();
+    for (const auto& pair : world.getPlayers()) {
+        const int playerId = pair.first;
+
+        if (!world.getPlayerIncantation(playerId).has_value())
+            continue;
+        activePlayers.insert(playerId);
+        if (_activeSayenSounds.insert(playerId).second)
+            playSayenSound(playerId);
+    }
+    for (auto it = _activeSayenSounds.begin();
+        it != _activeSayenSounds.end(); ) {
+        if (activePlayers.find(*it) == activePlayers.end())
+            it = _activeSayenSounds.erase(it);
+        else
+            ++it;
+    }
+}
+
 static bool shouldShowSelectedSprite()
 {
     static const sf::Clock clock;
@@ -225,6 +272,7 @@ void Players::draw(sf::RenderWindow& target, const GameWorld& world,
 {
     const auto& players = world.getPlayers();
 
+    updateSayenSounds(world);
     if (showBroadcasts)
         drawBroadcasts(target, world, offsetX, offsetY);
     for (const auto& pair : players) {

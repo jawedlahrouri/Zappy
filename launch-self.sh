@@ -12,6 +12,7 @@ TEAM3="TeamC"
 CLIENTS_NB=3
 FREQ=100
 MACHINE="127.0.0.1"
+MODE="./libzappy_graphic_3d.so"
 
 # ==========================================
 # Fonction de nettoyage (Clean exit)
@@ -61,7 +62,7 @@ sleep 3
 # ==========================================
 echo "[+] Lancement du zappy_gui..."
 # Le GUI a besoin du port et de l'hôte
-./zappy_gui -p $PORT -h $MACHINE
+./zappy_gui -p $PORT -h $MACHINE -g $MODE
 
 # On attend que le processus du serveur se termine (bloque le script ici)
 wait $SERVER_PID
