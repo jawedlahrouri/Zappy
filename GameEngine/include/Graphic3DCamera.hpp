@@ -5,23 +5,47 @@
 ** Graphic3DCamera
 */
 
+/**
+ * @file Graphic3DCamera.hpp
+ * @brief Declares the orbital camera used by the Raylib renderer.
+ */
+
 #ifndef GRAPHIC3DCAMERA_HPP_
     #define GRAPHIC3DCAMERA_HPP_
 
     #include "GameWorld.hpp"
     #include <raylib.h>
 
+    /**
+     * @brief Maintains a bounded orbit camera around the 3D map.
+     */
     class Graphic3DCamera {
         public:
+            /**
+             * @brief Creates an uninitialized camera.
+             */
             Graphic3DCamera();
 
+            /**
+             * @brief Updates camera input and resets when map dimensions change.
+             */
             void update(const GameWorld& world);
+
+            /**
+             * @brief Gets the Raylib camera instance.
+             * @return Camera used by BeginMode3D().
+             */
             const Camera3D& getCamera() const;
 
         private:
+            /** Minimum allowed camera distance from the target. */
             static constexpr float MIN_CAMERA_DISTANCE = 4.0f;
+            /** Maximum allowed camera distance from the target. */
             static constexpr float MAX_CAMERA_DISTANCE = 80.0f;
 
+            /**
+             * @brief Re-centers the camera for a world snapshot.
+             */
             void reset(const GameWorld& world);
 
             Camera3D _camera;

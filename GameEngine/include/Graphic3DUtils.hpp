@@ -5,6 +5,11 @@
 ** Graphic3DUtils
 */
 
+/**
+ * @file Graphic3DUtils.hpp
+ * @brief Defines inline utility functions shared by the Raylib renderer.
+ */
+
 #ifndef GRAPHIC3DUTILS_HPP_
     #define GRAPHIC3DUTILS_HPP_
 
@@ -12,7 +17,18 @@
     #include <raylib.h>
     #include <string>
 
+/**
+ * @brief Utility namespace for 3D coordinate and color conversions.
+ */
 namespace Graphic3DUtils {
+    /**
+     * @brief Computes the world-space center of a tile.
+     * @param x Tile X coordinate.
+     * @param y Tile Y coordinate.
+     * @param width Map width in tiles.
+     * @param height Map height in tiles.
+     * @return 3D position at the center of the tile top.
+     */
     inline Vector3 getTileCenter(int x, int y, int width, int height)
     {
         const float step = Graphic3DConfig::TILE_SIZE +
@@ -29,6 +45,11 @@ namespace Graphic3DUtils {
         };
     }
 
+    /**
+     * @brief Converts a team palette identifier to a Raylib color.
+     * @param teamColor Team palette index.
+     * @return Color used for player and effect rendering.
+     */
     inline Color getPlayerColor(int teamColor)
     {
         switch (teamColor) {
@@ -44,6 +65,11 @@ namespace Graphic3DUtils {
         }
     }
 
+    /**
+     * @brief Converts a protocol orientation to a readable string.
+     * @param orientation Direction encoded as 1: north, 2: east, 3: south, 4: west.
+     * @return Human-readable orientation label.
+     */
     inline std::string orientationToString(int orientation)
     {
         switch (orientation) {

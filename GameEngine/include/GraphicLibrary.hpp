@@ -5,6 +5,11 @@
 ** GraphicLibrary
 */
 
+/**
+ * @file GraphicLibrary.hpp
+ * @brief Provides the dynamic loader used to instantiate graphical plugins.
+ */
+
 #ifndef GRAPHICLIBRARY_HPP_
     #define GRAPHICLIBRARY_HPP_
 
@@ -14,19 +19,62 @@
     #include <stdexcept>
     #include <string>
 
+/**
+ * @brief Owns the lifetime of a dynamically loaded graphical backend.
+ *
+ * The loader expects each shared object to export createGraphic() and
+ * destroyGraphic() symbols compatible with IGraphic.
+ */
 class GraphicLibrary {
 public:
+    /**
+     * @brief Creates an empty loader.
+     */
     GraphicLibrary();
+
+    /**
+     * @brief Unloads the current backend, if one is loaded.
+     */
     ~GraphicLibrary();
 
     GraphicLibrary(const GraphicLibrary&) = delete;
     GraphicLibrary& operator=(const GraphicLibrary&) = delete;
 
+    /**
+     * @brief Loads a graphical plugin from a shared-library path.
+     * @param path Path passed to dlopen().
+     * @return true when the plugin was opened and instantiated.
+     */
     bool load(const std::string& path);
+
+    /**
+     * @brief Destroys the current graphical instance and closes its library.
+     */
     void unload();
+
+    /**
+     * @brief Checks whether a graphical backend is currently loaded.
+     * @return true when get() can safely be called.
+     */
     bool isLoaded() const;
+
+    /**
+     * @brief Returns the loaded graphical backend.
+     * @return Reference to the active IGraphic implementation.
+     * @throws std::runtime_error when no backend is loaded.
+     */
     IGraphic& get();
+
+    /**
+     * @brief Gets the path used for the last load attempt.
+     * @return Shared-library path.
+     */
     const std::string& getPath() const;
+
+    /**
+     * @brief Gets the last dynamic-loading error.
+     * @return Empty string when the last load succeeded.
+     */
     const std::string& getLastError() const;
 
 private:
