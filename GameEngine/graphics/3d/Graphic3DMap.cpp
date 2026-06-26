@@ -161,7 +161,7 @@ std::optional<std::pair<int, int>> Graphic3DMap::pickTile(
     if (mapWidth <= 0 || mapHeight <= 0 || world.getMap().empty())
         return std::nullopt;
 
-    const Ray ray = GetMouseRay(mousePosition, camera);
+    const Ray ray = GetScreenToWorldRay(mousePosition, camera);
 
     if (std::fabs(ray.direction.y) < TILE_PICK_EPSILON)
         return std::nullopt;

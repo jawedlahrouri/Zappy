@@ -5,6 +5,11 @@
 ** Graphic3D
 */
 
+/**
+ * @file Graphic3D.cpp
+ * @brief Implements the Raylib graphical backend and plugin entry points.
+ */
+
 #include "Graphic3D.hpp"
 #include "Graphic3DConfig.hpp"
 #include <algorithm>
@@ -213,11 +218,19 @@ bool Graphic3D::isTimePaused() const
     return _timePaused;
 }
 
+/**
+ * @brief Creates the Raylib graphical backend.
+ * @return Newly allocated graphical interface instance.
+ */
 extern "C" IGraphic* createGraphic()
 {
     return new Graphic3D();
 }
 
+/**
+ * @brief Destroys a graphical backend created by createGraphic().
+ * @param graphic Instance to destroy.
+ */
 extern "C" void destroyGraphic(IGraphic* graphic)
 {
     delete graphic;
