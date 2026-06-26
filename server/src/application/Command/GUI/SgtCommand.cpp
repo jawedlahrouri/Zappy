@@ -32,6 +32,11 @@ void GuiCommandParser::parse_gui_sgt(std::shared_ptr<GUI> client, [[maybe_unused
     }
 }
 
+/**
+ * @brief Replies with the current time unit (frequency).
+ * @par Protocol (GUI protocol)
+ * Request "sgt\n" -> Response "sgt T\n".
+ */
 void GuiVisitor::visit(SgtCommand *element)
 {
     try {

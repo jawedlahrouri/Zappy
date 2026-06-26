@@ -32,6 +32,17 @@ std::shared_ptr<GUI> MszCommand::getClient() const
     return _client;
 }
 
+/**
+ * @brief Parses the GUI "msz" command (map size request) and dispatches it.
+ *
+ * @par Protocol (GUI protocol)
+ * Request : "msz\n"
+ * Response: "msz X Y\n"   (X = width, Y = height)
+ *
+ * @param client GUI client asking for the map dimensions.
+ * @param command Raw command line (unused: msz takes no argument).
+ * @param network Provider used by the visitor to send the reply.
+ */
 void GuiCommandParser::parse_gui_msz(std::shared_ptr<GUI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
@@ -44,6 +55,15 @@ void GuiCommandParser::parse_gui_msz(std::shared_ptr<GUI> client, [[maybe_unused
     }
 }
 
+/**
+ * @brief Sends the map dimensions back to the requesting GUI.
+ *
+ * @details Builds @c "msz X Y" from the running @ref GameEngine. The trailing
+ * newline is appended by @c ClientManager::sendResponse, so the GUI receives
+ * the protocol-mandated @c "msz X Y\n".
+ *
+ * @param element DTO carrying the requesting GUI client.
+ */
 void GuiVisitor::visit(MszCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);

@@ -27,7 +27,7 @@ bool NetworkManager::connectToServer(const std::string& ip, unsigned short port)
 {
     disconnect();
     _socket.setBlocking(true);
-    if (_socket.connect(ip, port) == sf::Socket::Done) {
+    if (_socket.connect(ip, port) == sf::Socket::Status::Done) {
         _isConnected = true;
         std::cout << "Connected to server " << ip << ":" << port << std::endl;
         return true;
@@ -55,7 +55,7 @@ bool NetworkManager::authenticateAsGraphic()
 
     sf::Socket::Status status = _socket.receive(rawBuffer.data(), rawBuffer.size(), received);
 
-    if (status == sf::Socket::Done) {
+    if (status == sf::Socket::Status::Done) {
         _buffer.append(rawBuffer.data(), received);
     }
 
@@ -81,32 +81,30 @@ bool NetworkManager::authenticateAsGraphic()
 
 std::string NetworkManager::receiveData()
 {
-    if (!_isConnected)
-        return "";
-
     std::vector<char> rawBuffer(BUFFER_SIZE);
     std::size_t received = 0;
-    
-    sf::Socket::Status status = _socket.receive(rawBuffer.data(), rawBuffer.size(), received);
+    sf::Socket::Status status;
+    std::size_t pos = 0;
 
-    if (status == sf::Socket::Done) {
-        _buffer.append(rawBuffer.data(), received);
-    } 
-    else if (status == sf::Socket::Disconnected) {
-        std::cout << "[Graphic] server is disconnected" << std::endl;
-        _isConnected = false;
+    if (!_isConnected)
         return "";
-    }
-
-    std::size_t pos = _buffer.find('\n');
-
-    if (pos != std::string::npos) {
-        std::string command = _buffer.substr(0, pos);
-        _buffer.erase(0, pos + 1);
-        return command;
-    }
-
-    return "";
+    do {
+        received = 0;
+        status = _socket.receive(rawBuffer.data(), rawBuffer.size(), received);
+        if (status == sf::Socket::Status::Done)
+            _buffer.append(rawBuffer.data(), received);
+        else if (status == sf::Socket::Status::Disconnected) {
+            std::cout << "[Graphic] server is disconnected" << std::endl;
+            _isConnected = false;
+            return "";
+        }
+    } while (status == sf::Socket::Status::Done && received == static_cast<std::size_t>(BUFFER_SIZE));
+    pos = _buffer.find('\n');
+    if (pos == std::string::npos)
+        return "";
+    std::string command = _buffer.substr(0, pos);
+    _buffer.erase(0, pos + 1);
+    return command;
 }
 
 bool NetworkManager::sendCommand(const std::string& command)
@@ -114,5 +112,5 @@ bool NetworkManager::sendCommand(const std::string& command)
     if (!_isConnected)
         return false;
 
-    return _socket.send(command.c_str(), command.size()) == sf::Socket::Done;
+    return _socket.send(command.c_str(), command.size()) == sf::Socket::Status::Done;
 }

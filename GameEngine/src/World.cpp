@@ -56,6 +56,52 @@ void WorldRenderer::draw(sf::RenderWindow& window, const sf::View& worldView, co
     InfoPanelRenderer::drawTimePanel(window, font, fontLoaded, serverFreq,
         timePaused);
     InfoPanelRenderer::drawLegend(window, font, fontLoaded, showLegend);
+    if (world.getWinner().has_value())
+        drawWinnerOverlay(window, *world.getWinner(), font, fontLoaded);
+}
+
+void WorldRenderer::drawWinnerOverlay(sf::RenderWindow& window, const std::string& teamName, const sf::Font& font, bool fontLoaded)
+{
+    const sf::View previousView = window.getView();
+    const sf::Vector2u windowSize = window.getSize();
+
+    window.setView(window.getDefaultView());
+
+    sf::RectangleShape overlay({static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)});
+    overlay.setFillColor(sf::Color(0, 0, 0, 160));
+    window.draw(overlay);
+
+    if (!fontLoaded) {
+        window.setView(previousView);
+        return;
+    }
+
+    sf::Text title;
+    title.setFont(font);
+    title.setString("GAME OVER");
+    title.setCharacterSize(64);
+    title.setFillColor(sf::Color::White);
+    title.setStyle(sf::Text::Bold);
+    const sf::FloatRect titleBounds = title.getLocalBounds();
+    title.setPosition(
+        (static_cast<float>(windowSize.x) - titleBounds.width) / 2.f,
+        static_cast<float>(windowSize.y) / 2.f - 90.f
+    );
+    window.draw(title);
+
+    sf::Text winner;
+    winner.setFont(font);
+    winner.setString(teamName + " wins!");
+    winner.setCharacterSize(40);
+    winner.setFillColor(sf::Color::Yellow);
+    const sf::FloatRect winnerBounds = winner.getLocalBounds();
+    winner.setPosition(
+        (static_cast<float>(windowSize.x) - winnerBounds.width) / 2.f,
+        static_cast<float>(windowSize.y) / 2.f
+    );
+    window.draw(winner);
+
+    window.setView(previousView);
 }
 
 void WorldRenderer::drawBackground(sf::RenderWindow& window)

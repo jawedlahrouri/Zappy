@@ -14,6 +14,9 @@ CircularBuffer::CircularBuffer(size_t capacity)
 {
 }
 
+/**
+ * @brief Returns the number of stored bytes, handling the wrapped layout.
+ */
 size_t CircularBuffer::size() const
 {
     if (_full)
@@ -29,6 +32,12 @@ size_t CircularBuffer::available_space() const
 }
 
 
+/**
+ * @brief Grows the buffer, re-linearising the contents from tail to head.
+ * @details Only grows (no-op if @p new_capacity is not larger). Stored bytes are
+ *          copied in order so that after resize @c _tail is 0 and @c _head is the
+ *          current size.
+ */
 void CircularBuffer::resize(size_t new_capacity)
 {
     if (new_capacity <= _capacity) return;
@@ -68,6 +77,9 @@ void CircularBuffer::pop(size_t len)
     _full = false;
 }
 
+/**
+ * @brief Writes bytes into the ring, doubling capacity until they fit.
+ */
 void CircularBuffer::append(const std::string& data)
 {
     if (data.empty())
@@ -93,6 +105,11 @@ void CircularBuffer::append(const std::string& data)
     }
 }
 
+/**
+ * @brief Scans for the next '\n', consuming the line and the terminator.
+ * @details Returns @c false (leaving the buffer intact) until a full line is
+ *          present. A trailing carriage return is stripped to tolerate CRLF.
+ */
 bool CircularBuffer::extract_line(std::string& line)
 {
     if (is_empty())

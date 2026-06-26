@@ -302,6 +302,8 @@
          * @return Broadcast list after pruning expired effects.
          */
         const std::vector<BroadcastState>& getBroadcasts() const;
+        void setWinner(const std::string& teamName);
+        const std::optional<std::string>& getWinner() const;
 
     private:
         /**
@@ -323,6 +325,7 @@
         std::map<std::pair<int, int>, std::vector<int>> _incantationTiles;
         std::map<int, DeathState> _dyingPlayers;
         mutable std::vector<BroadcastState> _broadcasts;
+        std::optional<std::string> _winner;
     };
 
 #endif /* !GAMEWORLD_HPP_ */

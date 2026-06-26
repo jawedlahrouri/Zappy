@@ -19,7 +19,7 @@ int PfkEvent::getPlayerId() const { return _playerId; }
 
 void EventVisitor::visit(PfkEvent *event) {
     try {
-        std::string payload = "pfk " + std::to_string(event->getPlayerId()) + "\n";
+        std::string payload = "pfk #" + std::to_string(event->getPlayerId()) + "\n";
         if (_targetFd != -1) {
             _network.sendResponse(_targetFd, payload);
         } else {

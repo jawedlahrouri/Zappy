@@ -441,6 +441,12 @@ void Core::initCommands()
         _world.removePlayer(id);
     };
 
+    _commands["seg"] = [this](std::stringstream& ss) {
+        std::string teamName;
+        ss >> teamName;
+        _world.setWinner(teamName);
+    };
+
     _commands["pgt"] = [this](std::stringstream& ss) {
         int id = 0, resourceIndex = 0;
         parseValue(ss, id);

@@ -54,22 +54,21 @@ void AiVisitor::visit(IncantationCommand *element) {
             + " players=" + std::to_string(players.size()) + "/" + std::to_string(requiredPlayers)
             + " enoughPlayers=" + std::to_string(enoughPlayers));
 
-        if (enoughPlayers) {
-            // Ressources déjà consommées au START — monter les niveaux
+        bool enoughResources = engine->checkIncantationRequirements(x, y, level);
+        if (enoughPlayers && enoughResources) {
+            engine->consumeIncantationResources(x, y, level);
             for (auto& p : players) {
                 p->setInIncantation(false);
                 p->setLevel(level + 1);
                 _network.getLogger().debug("IncantationSuccess: 'Current level:" + std::to_string(level + 1) + "' to fd=" + std::to_string(p->getId()));
                 _network.sendResponse(p->getId(), "Current level: " + std::to_string(level + 1) + "\n");
-                _network.sendToGuis("plv " + std::to_string(p->getId()) + " " + std::to_string(level + 1));
+                _network.sendToGuis("plv #" + std::to_string(p->getId()) + " " + std::to_string(level + 1));
                 if (p->getLevel() == 8) {
                     engine->checkVictory(p->getTeamName(), _network);
                 }
             }
             _network.sendEvent(PieEvent(x, y, 1));
         } else {
-            // Joueurs partis pendant le rituel : rembourser les ressources
-            engine->refundIncantationResources(x, y, level);
             _network.sendResponse(aiClient->getId(), "ko\n");
             _network.sendEvent(PieEvent(x, y, 0));
         }

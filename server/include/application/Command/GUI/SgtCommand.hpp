@@ -11,8 +11,15 @@
 #include "application/Command/GUI/BaseGuiCommand.hpp"
 #include <memory>
 
+/**
+ * @class SgtCommand
+ * @ingroup visitor_gui
+ * @brief GUI "sgt" command DTO (get time unit).
+ * @par Protocol: Request "sgt\n" -> Response "sgt T\n".
+ */
 class SgtCommand : public BaseGuiCommand {
 public:
+    /** @brief Dispatches to @c IGuiVisitor::visit(SgtCommand*). */
     void Accept(IGuiVisitor *visitor) override;
 };
 

@@ -31,6 +31,10 @@ static void borderWrap(std::shared_ptr<AI> client, int width, int height) {
         client->setY(0);
 }
 
+/**
+ * @brief Double-dispatch hook: routes this command to @c visit(ForwardCommand*).
+ * @param visitor Visitor whose @c ForwardCommand overload runs the move.
+ */
 void ForwardCommand::Accept(IAiVisitor *visitor) {
     try {
         visitor->visit(this);
@@ -39,6 +43,21 @@ void ForwardCommand::Accept(IAiVisitor *visitor) {
     }
 }
 
+/**
+ * @brief Parses the AI "Forward" command and dispatches it to the visitor.
+ *
+ * @par Protocol (AI protocol)
+ * Request : "Forward\n"
+ * Response: "ok\n"
+ * Duration: 7/f time units.
+ *
+ * The command takes no argument, so parsing only wraps the client in a
+ * @ref ForwardCommand DTO and hands it to a fresh @ref AiVisitor.
+ *
+ * @param client AI player issuing the command.
+ * @param command Raw command line (unused, kept for the parser signature).
+ * @param network Provider used by the visitor to reply and emit GUI events.
+ */
 void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client, [[maybe_unused]] const std::string &command, INetworkProvider &network)
 {
     try {
@@ -51,6 +70,16 @@ void AiCommandParser::parse_forward([[maybe_unused]] std::shared_ptr<AI> client,
     }
 }
 
+/**
+ * @brief Moves the player one tile forward, then notifies clients.
+ *
+ * @details Computes the destination from the player's orientation
+ * (1=N, 2=E, 3=S, 4=W), wraps it around the toroidal map (@c borderWrap),
+ * updates the map's AI position, replies @c "ok\n" to the player, and emits a
+ * @c ppo event so every GUI sees the new position.
+ *
+ * @param element DTO carrying the issuing AI client.
+ */
 void AiVisitor::visit([[maybe_unused]] ForwardCommand *element) {
     try {
         auto client = element->getClient();

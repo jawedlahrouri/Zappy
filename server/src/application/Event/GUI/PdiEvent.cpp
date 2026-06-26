@@ -21,7 +21,7 @@ int PdiEvent::getPlayerId() const {
 
 void EventVisitor::visit(PdiEvent *event) {
     try {
-        _network.sendToGuis("pdi " + std::to_string(event->getPlayerId()) + "\n");
+        _network.sendToGuis("pdi #" + std::to_string(event->getPlayerId()) + "\n");
     } catch (const std::exception &e) {
         throw ServerException(std::string("EventVisitor::visit(PdiEvent): ") + e.what());
     }

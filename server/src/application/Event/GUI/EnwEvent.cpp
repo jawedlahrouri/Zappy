@@ -35,7 +35,7 @@ int EnwEvent::getY() const {
 
 void EventVisitor::visit(EnwEvent *event) {
     try {
-        std::string payload = "enw " + std::to_string(event->getEggId()) + " " +
+        std::string payload = "enw #" + std::to_string(event->getEggId()) + " #" +
                             std::to_string(event->getPlayerId()) + " " +
                             std::to_string(event->getX()) + " " +
                             std::to_string(event->getY()) + "\n";

@@ -56,6 +56,7 @@
              * @brief Draws eggs over the tile layer.
              */
             static void drawEggs(sf::RenderWindow& window, const GameWorld& world, float offsetX, float offsetY);
+            static void drawWinnerOverlay(sf::RenderWindow& window, const std::string& teamName, const sf::Font& font, bool fontLoaded);
         };
 
 #endif /* !WORLD_HPP_ */

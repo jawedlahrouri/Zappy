@@ -46,6 +46,11 @@ void GuiCommandParser::parse_gui_mct(std::shared_ptr<GUI> client, [[maybe_unused
     }
 }
 
+/**
+ * @brief Streams the content of every tile to the requesting GUI.
+ * @par Protocol (GUI protocol)
+ * Request "mct\n" -> Response one "bct X Y q0..q6\n" line per tile.
+ */
 void GuiVisitor::visit(MctCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);

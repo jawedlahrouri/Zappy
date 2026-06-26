@@ -24,6 +24,9 @@
 
 #include <random>
 
+/**
+ * @brief Counts the eggs (free slots) currently available for a team.
+ */
 static int countTeamEggs(INetworkProvider &network, const std::string &team_name) {
     if (!network.getGameEngine())
         return 0;
@@ -41,6 +44,11 @@ static int countTeamEggs(INetworkProvider &network, const std::string &team_name
     return slots;
 }
 
+/**
+ * @brief Places a new AI on its egg's tile with a random orientation.
+ * @details Emits an @c ebo event (egg hatched) for the GUIs; falls back to
+ *          (0,0) facing north if no egg is provided.
+ */
 static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetworkProvider &network) {
     int x = 0;
     int y = 0;
@@ -62,20 +70,21 @@ static void spawnAiOnEgg(std::shared_ptr<AI> ai, std::shared_ptr<Egg> egg, INetw
         ai->setY(0);
         ai->setOrientation(1);
     }
-    auto& engine = network.getGameEngine();
-    if (engine) {
-        auto& tile = engine->getMap().getTile(x, y);
-        for (int i = 1; i < RESOURCE_COUNT; ++i) {
-            tile.resources[i] = 0;
-        }
-    }
 }
 
-// protocol:
-// <-- WELCOME (sent on connection accept)
-// --> TEAM-NAME
-// <-- CLIENT-NUM (unused slots)
-// <-- X Y (map dimensions)
+/**
+ * @brief Performs the AI login handshake and spawns the player.
+ *
+ * @par Protocol (AI protocol)
+ * @verbatim
+ *   <-- WELCOME            (already sent on accept)
+ *   --> TEAM-NAME          (this team_name)
+ *   <-- CLIENT-NUM         (remaining free slots)
+ *   <-- X Y                (map dimensions)
+ * @endverbatim
+ * Consumes one team egg, places the player on it and emits a @c pnw event.
+ * Replies "0" and fails if the team has no slot left.
+ */
 bool Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetworkProvider &network)
 {
     try {
@@ -112,12 +121,20 @@ bool Login::login_ai(std::shared_ptr<AI> ai, const std::string &team_name, INetw
     }
 }
 
-// protocol:
-// <-- WELCOME (sent on connection accept)
-// --> GRAPHIC
-// <-- msz X Y\n
-// <-- sgt T\n
-// <-- tna N\n * nbr_teams
+/**
+ * @brief Performs the GUI login handshake and sends the full world snapshot.
+ *
+ * @par Protocol (GUI protocol)
+ * @verbatim
+ *   <-- WELCOME            (already sent on accept)
+ *   --> GRAPHIC
+ *   <-- msz X Y            (map size)
+ *   <-- sgt T              (current time unit)
+ *   <-- tna N              (one per team)
+ * @endverbatim
+ * Then streams the initial state: every tile (@c bct), every egg (@c enw) and
+ * every connected player (@c pnw + @c plv) so the GUI can render the world.
+ */
 void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
 {
     try {
@@ -170,7 +187,7 @@ void Login::login_gui(std::shared_ptr<GUI> gui, INetworkProvider &network)
                 if (ai) {
                     PnwEvent pnwEvent(ai);
                     pnwEvent.Accept(&eventVisitor);
-                    network.sendResponse(fd, "plv " + std::to_string(ai->getId()) + " " + std::to_string(ai->getLevel()));
+                    network.sendResponse(fd, "plv #" + std::to_string(ai->getId()) + " " + std::to_string(ai->getLevel()));
                 }
             }
         }
