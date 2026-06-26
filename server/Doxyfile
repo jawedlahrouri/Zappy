@@ -1,0 +1,46 @@
+# Doxygen configuration for the Zappy server.
+# Generates HTML (docs/doxygen/html) and LaTeX (docs/doxygen/latex -> PDF).
+
+PROJECT_NAME           = "Zappy Server"
+PROJECT_BRIEF          = "Zappy network game server"
+OUTPUT_DIRECTORY       = docs/doxygen
+
+# --- Input ---------------------------------------------------------------
+INPUT                  = server/mainpage.dox server/include server/src
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.cpp *.h *.dox
+
+# Resolve @ref across the layered include tree.
+STRIP_FROM_PATH        = server
+INCLUDE_PATH           = server/include
+
+# --- Extraction ----------------------------------------------------------
+# We document entities explicitly; do not auto-document everything.
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+JAVADOC_AUTOBRIEF      = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+BUILTIN_STL_SUPPORT    = YES
+SORT_MEMBER_DOCS       = NO
+
+# --- Diagrams ------------------------------------------------------------
+HAVE_DOT               = NO
+
+# --- Warnings ------------------------------------------------------------
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_NO_PARAMDOC       = YES
+
+# --- HTML output ---------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_TREEVIEW      = YES
+
+# --- LaTeX / PDF output --------------------------------------------------
+GENERATE_LATEX         = YES
+LATEX_OUTPUT           = latex
+PDF_HYPERLINKS         = YES
+USE_PDFLATEX           = YES
+LATEX_BATCHMODE        = YES
+COMPACT_LATEX          = YES

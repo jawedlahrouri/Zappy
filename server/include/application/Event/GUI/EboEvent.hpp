@@ -11,10 +11,18 @@
 #include "IEventElement.hpp"
 #include "IEventVisitor.hpp"
 
+/**
+ * @class EboEvent
+ * @ingroup visitor_event
+ * @brief Event: a player connected for (hatched from) an egg.
+ * @par Protocol (server -> GUI): "ebo #e\n" (e = egg id).
+ */
 class EboEvent : public IEventElement {
 public:
+    /** @brief Builds the event for the given egg id. */
     EboEvent(int eggId);
     ~EboEvent() override = default;
+    /** @brief Dispatches to @c IEventVisitor::visit(EboEvent*). */
     void Accept(IEventVisitor *visitor) const override;
 
     int getEggId() const;

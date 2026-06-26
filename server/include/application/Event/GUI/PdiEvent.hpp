@@ -11,10 +11,18 @@
 #include "IEventElement.hpp"
 #include "IEventVisitor.hpp"
 
+/**
+ * @class PdiEvent
+ * @ingroup visitor_event
+ * @brief Event: a player died (or disconnected).
+ * @par Protocol (server -> GUI): "pdi #n\n" (n = player id).
+ */
 class PdiEvent : public IEventElement {
 public:
+    /** @brief Builds the event for the given player id. */
     PdiEvent(int playerId);
     ~PdiEvent() override = default;
+    /** @brief Dispatches to @c IEventVisitor::visit(PdiEvent*). */
     void Accept(IEventVisitor *visitor) const override;
     int getPlayerId() const;
 private:

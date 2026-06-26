@@ -15,6 +15,9 @@
 #include "AI.hpp"
 
 
+/**
+ * @brief Splits a command line into whitespace-separated tokens.
+ */
 std::vector<std::string> Parsing::split_command(const std::string &command)
 {
     try {
@@ -31,6 +34,12 @@ std::vector<std::string> Parsing::split_command(const std::string &command)
     }
 }
 
+/**
+ * @brief Validates and queues an AI command for tick-paced execution.
+ * @details Unknown commands get "ko". Valid ones are appended to the player's
+ *          command queue, which is capped at 10 pending commands per the
+ *          protocol; extra commands are dropped.
+ */
 void Parsing::parse_ai_command(std::shared_ptr<AI> client, const std::string &command, INetworkProvider &network)
 {
     try {

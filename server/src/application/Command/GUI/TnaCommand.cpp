@@ -42,6 +42,11 @@ void GuiCommandParser::parse_gui_tna(std::shared_ptr<GUI> client, [[maybe_unused
     }
 }
 
+/**
+ * @brief Sends one team-name line per registered team.
+ * @par Protocol (GUI protocol)
+ * Request "tna\n" -> Response one "tna N\n" per team.
+ */
 void GuiVisitor::visit(TnaCommand *element)
 {
     try {

@@ -12,6 +12,9 @@
 
 #include <iostream>
 
+/**
+ * @brief GUI command dispatch table: protocol name -> parser method.
+ */
 std::map<std::string, void (GuiCommandParser::*)(std::shared_ptr<GUI>, const std::string &command, INetworkProvider &network)> gui_cmds = {
     {"msz", &GuiCommandParser::parse_gui_msz},
     {"bct", &GuiCommandParser::parse_gui_bct},

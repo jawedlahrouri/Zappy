@@ -15,11 +15,20 @@
 class GUI;
 class Server;
 
+/**
+ * @class GuiCommandParser
+ * @ingroup visitor_gui
+ * @brief Parses GUI command lines and builds the matching command DTO/visitor.
+ *
+ * Each @c parse_gui_* method extracts the arguments, fills the DTO and dispatches
+ * it to a @ref GuiVisitor. Protocol details live on the corresponding DTO class.
+ */
 class GuiCommandParser {
     public:
         GuiCommandParser() = default;
         ~GuiCommandParser() = default;
 
+        /** @brief Parses GUI "msz" (map size). */
         void parse_gui_msz(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network);
         void parse_gui_bct(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network);
         void parse_gui_mct(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network);

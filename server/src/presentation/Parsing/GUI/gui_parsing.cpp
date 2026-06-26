@@ -14,6 +14,10 @@
 #include "GUI.hpp"
 
 
+/**
+ * @brief Looks up the GUI command and runs it immediately (no tick cost).
+ * @details Unknown commands get "suc" (unknown command) per the GUI protocol.
+ */
 void Parsing::parse_gui_command(std::shared_ptr<GUI> client, const std::string &command, INetworkProvider &network)
 {
     try {

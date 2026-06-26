@@ -9,6 +9,12 @@
 #include "AiCommandParser.hpp"
 #include "ai_execute_cmds.hpp"
 
+/**
+ * @brief AI command dispatch table: name -> {parser method, tick duration}.
+ * @details The durations are the protocol costs (in time units, divided by the
+ *          server frequency): Forward/Right/Left/Look/Broadcast/Eject/Take/Set
+ *          = 7, Inventory = 1, Connect_nbr = 0, Fork = 42, Incantation = 300.
+ */
 std::map<std::string, AiCommand> ai_cmds = {
     {"Forward", {&AiCommandParser::parse_forward, 7}},
     {"Right", {&AiCommandParser::parse_right, 7}},

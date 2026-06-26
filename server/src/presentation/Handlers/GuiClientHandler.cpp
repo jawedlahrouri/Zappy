@@ -10,6 +10,9 @@
 #include "presentation/Parsing/Parsing.hpp"
 #include "GUI.hpp"
 
+/**
+ * @brief Parses and immediately executes every complete line from a GUI client.
+ */
 void GuiClientHandler::handleData(std::shared_ptr<Client> client, Server& server)
 {
     std::string line;

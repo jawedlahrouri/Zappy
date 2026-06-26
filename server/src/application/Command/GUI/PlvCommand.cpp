@@ -55,6 +55,11 @@ void GuiCommandParser::parse_gui_plv(std::shared_ptr<GUI> client, const std::str
     }
 }
 
+/**
+ * @brief Replies with a player's level, or "sbp" if the id is unknown.
+ * @par Protocol (GUI protocol)
+ * Request "plv #n\n" -> Response "plv #n L\n".
+ */
 void GuiVisitor::visit(PlvCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);

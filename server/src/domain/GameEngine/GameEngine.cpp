@@ -47,6 +47,12 @@ GameEngine::GameEngine(int width, int height, ILogger& logger)
     }
 }
 
+/**
+ * @brief Global tick: every 20 ticks, respawn resources and push GUI updates.
+ * @details Accumulates ticks; on each cycle it tops up resources, then (only if
+ *          a GUI is connected) emits a @c bct event for every dirty tile before
+ *          clearing the dirty set.
+ */
 void GameEngine::update(INetworkProvider& network)
 {
     try {
@@ -84,6 +90,11 @@ void GameEngine::update(INetworkProvider& network)
     }
 }
 
+/**
+ * @brief Per-player tick: survival first, then progress/start a command.
+ * @details Bails out early if the player starved this tick; otherwise advances
+ *          the in-flight action and, if idle, schedules the next queued command.
+ */
 void GameEngine::updateAi(std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove)
 {
     try {
@@ -96,6 +107,11 @@ void GameEngine::updateAi(std::shared_ptr<AI> ai, INetworkProvider& network, std
     }
 }
 
+/**
+ * @brief Tops each resource back up to its density-derived target count.
+ * @details For every type, computes @c width*height*density (min 1) and scatters
+ *          the missing amount on random tiles.
+ */
 void GameEngine::spawnResourcesCycle()
 {
     std::random_device rd;
@@ -115,6 +131,13 @@ void GameEngine::spawnResourcesCycle()
     }
 }
 
+/**
+ * @brief Consumes one food tick; eats stored food or disconnects on starvation.
+ * @return @c true if the player survives this tick, @c false if it died.
+ * @details When the food timer hits zero, one unit of inventory food refills it
+ *          (126 ticks); with no food left, the player is sent @c "dead" and
+ *          queued for removal.
+ */
 bool GameEngine::handleAiSurvival(int fd, std::shared_ptr<AI> ai, INetworkProvider& network, std::vector<int>& clientsToRemove)
 {
     try {
@@ -135,6 +158,12 @@ bool GameEngine::handleAiSurvival(int fd, std::shared_ptr<AI> ai, INetworkProvid
     }
 }
 
+/**
+ * @brief Counts down the running action and executes it when its timer ends.
+ * @details An incantation completes silently here (its effect is applied
+ *          elsewhere); any other action fires via @ref executeAiAction. The
+ *          action slot is then freed (-1).
+ */
 void GameEngine::handleAiActiveCommand(std::shared_ptr<AI> ai, INetworkProvider& network)
 {
     try {
@@ -155,6 +184,12 @@ void GameEngine::handleAiActiveCommand(std::shared_ptr<AI> ai, INetworkProvider&
     }
 }
 
+/**
+ * @brief When idle, dequeues the next command and arms its tick duration.
+ * @details An "Incantation" is validated first (@ref checkIncantationStart);
+ *          if it fails, the command is dropped. Zero-duration commands run
+ *          immediately.
+ */
 void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& network)
 {
     try {
@@ -179,6 +214,9 @@ void GameEngine::handleAiNextCommand(std::shared_ptr<AI> ai, INetworkProvider& n
     }
 }
 
+/**
+ * @brief Pops the front command and dispatches it through the network facade.
+ */
 void GameEngine::executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& network)
 {
     try {
@@ -196,6 +234,11 @@ void GameEngine::executeAiAction(std::shared_ptr<AI> ai, INetworkProvider& netwo
 
 
 
+/**
+ * @brief Elevation requirements per level: {players, {stones by ResourceType}}.
+ * @details Keyed by the level being elevated *from* (1..7). Index 0 (FOOD) is
+ *          always 0 since food is never an elevation requirement.
+ */
 const std::unordered_map<int, GameEngine::IncantationRequirement> GameEngine::_incantationReqs = {
     {1, {1, {0, 1, 0, 0, 0, 0, 0}}},
     {2, {2, {0, 1, 1, 1, 0, 0, 0}}},
@@ -259,6 +302,9 @@ void GameEngine::refundIncantationResources(int x, int y, int level)
     }
 }
 
+/**
+ * @brief Declares victory once a team has six level-8 players.
+ */
 void GameEngine::checkVictory(const std::string& teamName, INetworkProvider& network) const
 {
     int count = 0;
@@ -274,6 +320,13 @@ void GameEngine::checkVictory(const std::string& teamName, INetworkProvider& net
     }
 }
 
+/**
+ * @brief Validates an incantation and, if valid, freezes the participants.
+ * @return @c true if the ritual started; @c false (and @c "ko\n" sent) otherwise.
+ * @details Checks the player count of the right level and the tile's stones. On
+ *          success, every participant is locked for 300 ticks, told "Elevation
+ *          underway", and a @c pic event is emitted to the GUIs.
+ */
 bool GameEngine::checkIncantationStart(std::shared_ptr<AI> ai, INetworkProvider& network)
 {
     int level = ai->getLevel();

@@ -59,6 +59,11 @@ int Map::getHeight() const
     return _height;
 }
 
+/**
+ * @brief Maps any coordinate onto the torus via double-modulo.
+ * @details The @c (v % n + n) % n form yields a non-negative result even for
+ *          negative inputs, so off-map coordinates wrap correctly on both sides.
+ */
 std::pair<int, int> Map::borderWrap(int x, int y) const
 {
     int toric_x = (x % _width + _width) % _width;
@@ -146,6 +151,9 @@ void Map::addAiToTile(int aiId, int x, int y)
     _grid[toric_y][toric_x].playerIds.push_back(aiId);
 }
 
+/**
+ * @brief Removes the player from its old tile and appends it to the new one.
+ */
 void Map::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
 {
     auto [toric_old_x, toric_old_y] = borderWrap(oldX, oldY);
@@ -160,6 +168,11 @@ void Map::moveAi(int aiId, int oldX, int oldY, int newX, int newY)
     _grid[toric_new_y][toric_new_x].playerIds.push_back(aiId);
 }
 
+/**
+ * @brief Collects all eggs of a team, picks one uniformly at random and pops it.
+ * @details Used when a new player joins a team: it hatches from a random
+ *          available egg. Returns @c nullptr if the team has no egg left.
+ */
 std::shared_ptr<Egg> Map::getAndRemoveRandomEggForTeam(const std::string& teamName)
 {
     std::vector<std::shared_ptr<Egg>> teamEggs;

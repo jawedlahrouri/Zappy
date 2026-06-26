@@ -23,6 +23,12 @@ void ClientManager::addClient(int fd, std::shared_ptr<Client> client)
     _clients[fd] = std::move(client);
 }
 
+/**
+ * @brief Removes a client, notifying GUIs and flushing its buffer first.
+ * @details For an AI it emits a @c pdi (player death/leave) event and clears the
+ *          player from its map tile; then it best-effort flushes any pending
+ *          output, closes the socket and erases the entry.
+ */
 void ClientManager::removeClient(int fd)
 {
     auto it = _clients.find(fd);
@@ -62,6 +68,12 @@ const std::unordered_map<int, std::shared_ptr<Client>>& ClientManager::getClient
     return _clients;
 }
 
+/**
+ * @brief Queues a message and arms POLLOUT so the loop will flush it.
+ * @details Ensures a trailing newline (the line terminator of every Zappy
+ *          message), appends to the client's write buffer, then requests the
+ *          @c Output poll event — the trigger for @ref Server::handleWritable.
+ */
 void ClientManager::sendResponse(int clientId, const std::string& message)
 {
     try {

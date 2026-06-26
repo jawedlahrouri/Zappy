@@ -22,6 +22,11 @@
 #include "presentation/Handlers/AiClientHandler.hpp"
 #include "presentation/Handlers/GuiClientHandler.hpp"
 
+/**
+ * @brief Stores injected dependencies and registers the per-type strategies.
+ * @details Wires one @ref IClientDataHandler per @ref ClientType (PENDING / AI /
+ *          GUI) — the Strategy table used by @ref handleClientData.
+ */
 Server::Server(ILogger& logger, std::unique_ptr<ISocket> masterSocket, std::unique_ptr<IPoll> poll)
     : _logger(logger), _masterSocket(std::move(masterSocket)), _poll(std::move(poll)), _clientManager(*this, logger)
 {
@@ -54,6 +59,9 @@ void Server::broadcastEvent(const std::string& message, int excludeClientId)
     _clientManager.broadcastEvent(message, excludeClientId);
 }
 
+/**
+ * @brief Serialises a GUI event by running it through an @ref EventVisitor.
+ */
 void Server::sendEvent(const IEventElement &event)
 {
     try {
@@ -79,6 +87,9 @@ void Server::addPollEvent(int fd, NetworkEvent event)
     _poll->addEvents(fd, event);
 }
 
+/**
+ * @brief Disconnects a client from both the manager and the poll watch list.
+ */
 void Server::removeClient(int clientSocket)
 {
     try {
@@ -90,6 +101,13 @@ void Server::removeClient(int clientSocket)
     }
 }
 
+/**
+ * @brief Flushes the client's write buffer and disarms POLLOUT when drained.
+ * @return @c true if the client was removed (send error), @c false otherwise.
+ * @details Sends as much as the non-blocking socket accepts, drops the sent
+ *          bytes, and removes the @c Output watch once nothing remains — this is
+ *          the "POLLOUT on demand" half of the loop (see @ref IPoll).
+ */
 bool Server::handleWritable(size_t index)
 {
     try {
@@ -126,6 +144,12 @@ bool Server::handleWritable(size_t index)
     }
 }
 
+/**
+ * @brief Reads available bytes and routes them to the client's strategy.
+ * @return @c true if the client was disconnected (peer closed or overflow).
+ * @details Reads up to 1024 bytes, appends to the read buffer, then delegates to
+ *          the @ref IClientDataHandler matching the client's type.
+ */
 bool Server::handleClientData(size_t pollIndex)
 {
     try {
@@ -168,6 +192,9 @@ bool Server::handleClientData(size_t pollIndex)
     }
 }
 
+/**
+ * @brief Disconnects all clients and closes the listening socket.
+ */
 void Server::cleanup()
 {
     try {
@@ -178,6 +205,20 @@ void Server::cleanup()
     }
 }
 
+/**
+ * @brief Dispatches the poll result for the watch-list entry at @p i.
+ *
+ * @details Applies the per-fd decision tree after @ref handlePollEvents has
+ * polled:
+ * - error/hang-up: drop the client (index 0 is the master socket, left alone);
+ * - readable: @c i==0 accepts a new connection, otherwise reads client data;
+ * - writable (clients only): flush pending output via @c handleWritable.
+ * The size is re-checked before the writable branch because reading may have
+ * disconnected the client and shrunk the list.
+ *
+ * @param i Index into the @ref IPoll watch list (0 = listening socket).
+ * @throws ServerException If event handling throws.
+ */
 void Server::processPollEvent(size_t i)
 {
     try {
@@ -204,6 +245,20 @@ void Server::processPollEvent(size_t i)
     }
 }
 
+/**
+ * @brief Computes the @c poll() timeout that keeps I/O in step with game ticks.
+ *
+ * @details Three regimes:
+ * - no clients connected: return @c -1 so @c poll() blocks forever and the
+ *   server idles at 0% CPU until someone connects;
+ * - next tick already due: return @c 0 for a non-blocking poll, so the loop
+ *   runs the pending tick immediately;
+ * - otherwise: return the milliseconds left until @p next_tick_time (rounded up
+ *   by 999µs) so @c poll() wakes up exactly in time for the next tick.
+ *
+ * @param next_tick_time Absolute time point of the upcoming game tick.
+ * @return Timeout in milliseconds for @ref IPoll::runPoll.
+ */
 int Server::calculateTimeout(const std::chrono::steady_clock::time_point& next_tick_time) const
 {
     if (_clientManager.getClients().empty()) {
@@ -218,6 +273,18 @@ int Server::calculateTimeout(const std::chrono::steady_clock::time_point& next_t
     return 0;
 }
 
+/**
+ * @brief Runs one poll cycle and dispatches every ready descriptor.
+ *
+ * @details After @ref IPoll::runPoll returns, the watch list is walked **in
+ * reverse** (highest index to 0). Iterating backwards means that when
+ * @ref processPollEvent removes a disconnected client, the erased entry only
+ * affects indices already visited, so no live entry is skipped or visited twice.
+ * The bounds re-check guards against the list shrinking under our feet.
+ *
+ * @param timeout_ms Timeout handed to @c poll(), from @ref calculateTimeout.
+ * @throws ServerException If @c poll() reports a fatal error.
+ */
 void Server::handlePollEvents(int timeout_ms)
 {
     int poll_count = _poll->runPoll(timeout_ms);
@@ -267,6 +334,18 @@ void Server::runGameTick(std::chrono::steady_clock::time_point& next_tick_time, 
     }
 }
 
+/**
+ * @brief The server's main loop: multiplex I/O, then advance the game.
+ *
+ * @details Each iteration: (1) compute the tick-aware timeout, (2) block in
+ * @ref handlePollEvents servicing network I/O, (3) resync the tick clock when
+ * the population changes (@c synchronizeTickTime), (4) run any due game ticks
+ * (@c runGameTick). The single @c poll() timeout is what interleaves
+ * responsive networking with a steady @c _freq-Hz simulation on one thread.
+ * Runs until the process is stopped.
+ *
+ * @throws ServerException Wrapping any exception escaping the loop.
+ */
 void Server::runPollLoop()
 {
     try {
@@ -286,6 +365,12 @@ void Server::runPollLoop()
     }
 }
 
+/**
+ * @brief Sets up the listening socket and game, then enters the main loop.
+ * @details Creates/binds/listens the master socket, registers it in @ref IPoll
+ *          for input, builds the @ref GameEngine and seeds the team eggs, then
+ *          blocks in @ref runPollLoop.
+ */
 void Server::openServer(int port, int clientsNb, const std::vector<std::string> &teamNames, int freq, int width, int height)
 {
     try {
@@ -344,6 +429,9 @@ ILogger& Server::getLogger() const
     return _logger;
 }
 
+/**
+ * @brief Parses and runs an AI command via the @ref AiCommandParser.
+ */
 void Server::executeCommand(std::shared_ptr<AI> ai, const std::string& command)
 {
     try {
@@ -354,6 +442,9 @@ void Server::executeCommand(std::shared_ptr<AI> ai, const std::string& command)
     }
 }
 
+/**
+ * @brief Logs the win and broadcasts the end-of-game @c seg event to GUIs.
+ */
 void Server::notifyVictory(const std::string& teamName)
 {
     try {
@@ -364,6 +455,10 @@ void Server::notifyVictory(const std::string& teamName)
     }
 }
 
+/**
+ * @brief Looks up a command's tick cost in the AI command table.
+ * @return The duration in time units, or 0 if the command is unknown.
+ */
 int Server::getCommandDuration(const std::string& command) const
 {
     try {

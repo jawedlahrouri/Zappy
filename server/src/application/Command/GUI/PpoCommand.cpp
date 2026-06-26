@@ -55,6 +55,11 @@ void GuiCommandParser::parse_gui_ppo(std::shared_ptr<GUI> client, const std::str
     }
 }
 
+/**
+ * @brief Replies with a player's position, or "sbp" if the id is unknown.
+ * @par Protocol (GUI protocol)
+ * Request "ppo #n\n" -> Response "ppo #n X Y O\n".
+ */
 void GuiVisitor::visit(PpoCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);

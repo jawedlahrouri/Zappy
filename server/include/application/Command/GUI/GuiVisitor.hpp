@@ -1,11 +1,28 @@
+/**
+ * @file GuiVisitor.hpp
+ * @brief Concrete visitor answering GUI commands.
+ */
+
 #ifndef GUIVISITOR_HPP_
 #define GUIVISITOR_HPP_
 
 #include "IGuiVisitor.hpp"
 #include "INetworkProvider.hpp"
 
+/**
+ * @class GuiVisitor
+ * @ingroup visitor_gui
+ * @brief Concrete @ref IGuiVisitor that builds and sends each GUI reply.
+ *
+ * Reads the requested data from the game via the injected @c INetworkProvider
+ * and formats the protocol response for the requesting GUI client.
+ */
 class GuiVisitor : public IGuiVisitor {
 public:
+    /**
+     * @brief Builds the visitor over the network used to reply.
+     * @param network Provider for game state and client responses.
+     */
     GuiVisitor(INetworkProvider &network) : _network(network) {}
     ~GuiVisitor() override = default;
 
@@ -21,7 +38,7 @@ public:
     void visit(SstCommand *element) override;
 
 private:
-    INetworkProvider &_network;
+    INetworkProvider &_network; /**< Injected network used to reply. */
 };
 
 #endif /* !GUIVISITOR_HPP_ */
