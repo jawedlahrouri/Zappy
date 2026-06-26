@@ -141,6 +141,9 @@ set(GRAPHIC_3D_SOURCES
     GameEngine/src/GameWorld.cpp
     GameEngine/graphics/3d/Graphic3DCamera.cpp
     GameEngine/graphics/3d/Graphic3D.cpp
+    GameEngine/graphics/3d/Graphic3DInterface.cpp
+    GameEngine/graphics/3d/Graphic3DMap.cpp
+    GameEngine/graphics/3d/Graphic3DPlayers.cpp
     GameEngine/graphics/3d/Graphic3DRenderer.cpp
 )
 

@@ -44,6 +44,7 @@
 
         private:
             void createWindow();
+            void handleSelection(const GameWorld& world);
 
             Graphic3DCamera _camera;
             Graphic3DRenderer _renderer;
@@ -55,6 +56,9 @@
             bool _menuConnectionEdited;
             int _serverFreq;
             bool _timePaused;
+            std::optional<std::pair<int, int>> _selectedTile;
+            std::optional<int> _selectedPlayerId;
+            std::optional<std::pair<int, int>> _pendingTileRequest;
     };
 
 #endif /* !GRAPHIC3D_HPP_ */

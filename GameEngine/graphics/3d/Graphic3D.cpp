@@ -20,7 +20,10 @@ Graphic3D::Graphic3D()
     _teamNames(),
     _menuConnectionEdited(false),
     _serverFreq(100),
-    _timePaused(false)
+    _timePaused(false),
+    _selectedTile(),
+    _selectedPlayerId(),
+    _pendingTileRequest()
 {
     createWindow();
 }
@@ -68,12 +71,17 @@ bool Graphic3D::handleGameEvents(const GameWorld& world)
     if (IsKeyPressed(KEY_ESCAPE))
         return true;
     _camera.update(world);
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        handleSelection(world);
     return false;
 }
 
 std::optional<std::pair<int, int>> Graphic3D::consumeTileRequest()
 {
-    return std::nullopt;
+    std::optional<std::pair<int, int>> request = _pendingTileRequest;
+
+    _pendingTileRequest.reset();
+    return request;
 }
 
 std::optional<int> Graphic3D::consumeTimeRequest()
@@ -107,7 +115,42 @@ void Graphic3D::drawWorld(const GameWorld& world)
 {
     if (!_windowOpen)
         return;
-    _renderer.drawWorld(_camera.getCamera(), world);
+    _renderer.drawWorld(_camera.getCamera(), world, _selectedTile,
+        _selectedPlayerId);
+}
+
+void Graphic3D::handleSelection(const GameWorld& world)
+{
+    const Vector2 mousePosition = GetMousePosition();
+    const int mouseX = static_cast<int>(mousePosition.x);
+    const int mouseY = static_cast<int>(mousePosition.y);
+
+    if (mousePosition.y <= 54.0f || _renderer.isInsideInfoPanel(
+        _selectedTile, _selectedPlayerId, mouseX, mouseY))
+        return;
+
+    const std::optional<int> playerId = _renderer.pickPlayer(world,
+        _camera.getCamera(), mousePosition);
+
+    if (playerId.has_value()) {
+        const auto playerIt = world.getPlayers().find(*playerId);
+
+        if (playerIt == world.getPlayers().end())
+            return;
+        _selectedPlayerId = *playerId;
+        _selectedTile = {playerIt->second.x, playerIt->second.y};
+        _pendingTileRequest.reset();
+        return;
+    }
+
+    const std::optional<std::pair<int, int>> tile = _renderer.pickTile(world,
+        _camera.getCamera(), mousePosition);
+
+    if (!tile.has_value())
+        return;
+    _selectedTile = tile;
+    _selectedPlayerId.reset();
+    _pendingTileRequest = _selectedTile;
 }
 
 const std::string& Graphic3D::getMenuIp() const

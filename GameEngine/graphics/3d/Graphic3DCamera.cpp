@@ -85,9 +85,9 @@ void Graphic3DCamera::update(const GameWorld& world)
         _pitch += mouseDelta.y * 0.18f;
         _pitch = clampFloat(_pitch, 18.0f, 78.0f);
     }
-    if (IsKeyDown(KEY_A))
-        _yaw += rotationSpeed;
     if (IsKeyDown(KEY_D))
+        _yaw += rotationSpeed;
+    if (IsKeyDown(KEY_A))
         _yaw -= rotationSpeed;
     if (IsKeyDown(KEY_W))
         _pitch = clampFloat(_pitch + rotationSpeed, 18.0f, 78.0f);
@@ -98,9 +98,9 @@ void Graphic3DCamera::update(const GameWorld& world)
     const Vector3 forward = {std::sin(yaw), 0.0f, std::cos(yaw)};
     const Vector3 right = {std::cos(yaw), 0.0f, -std::sin(yaw)};
 
-    if (IsKeyDown(KEY_UP))
-        _target = addVector(_target, scaleVector(forward, panSpeed));
     if (IsKeyDown(KEY_DOWN))
+        _target = addVector(_target, scaleVector(forward, panSpeed));
+    if (IsKeyDown(KEY_UP))
         _target = addVector(_target, scaleVector(forward, -panSpeed));
     if (IsKeyDown(KEY_RIGHT))
         _target = addVector(_target, scaleVector(right, panSpeed));
