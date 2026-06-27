@@ -34,6 +34,7 @@ cleanup() {
     pkill -f "./server/zappy_ref-v3.0.1/linux/zappy_server"
     pkill -f "./zappy_gui"
     pkill -f "./zappy_ai"
+    pkill -f "auto_connect.py"
     echo "[+] Terminé."
     exit 0
 }
@@ -56,9 +57,12 @@ sleep 1
 # 3. Lancement des IA
 # ==========================================
 echo "[+] Lancement des clients IA..."
-# Lancement de 2 drones pour la TeamA et 1 pour la TeamB
-# On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
-./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > logs/ia_stdout.log 2> logs/ia_stderr.log &
+# Lancement de $CLIENTS_NB instances de zappy_ai pour remplir tous les slots
+for i in $(seq 1 $CLIENTS_NB); do
+    ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > logs/ia_stdout_${i}.log 2> logs/ia_stderr_${i}.log &
+    echo "  -> Agent IA #${i} lancé"
+    sleep 0.2
+done
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."

@@ -219,9 +219,7 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
-        if self.client_num > 0: # TODO changer cette boucle pour que ca soit un script qui s'en occupe
-            self.utils.launch_clone()
-            self.client_num = 0
+        # Les connexions initiales sont gérées par launch.sh
         while self.is_alive:
             self.update_internal_state()
             if not self.is_alive:
