@@ -30,12 +30,18 @@ class RoleTask:
                     if self.agent.inventory.get('food', 0) > 3:
                         self.agent.utils.fork()
         food_level = self.agent.inventory.get('food', 0)
-        if self.agent.level >= 3 and self.agent.utils.is_grouping() and food_level >= 15:
+        if self.agent.level >= 3 and self.agent.utils.is_grouping() and food_level >= 30:
             self.agent.state = AgentState.GROUPING
             self.agent.comportment.act_grouping()
             return
         if self.agent.state == AgentState.GROUPING:
-            if food_level < 15:
+            # Les ROYAL_FOLLOWER ne quittent JAMAIS le grouping/elevation,
+            # même si la food est basse — ils doivent rester sur la case.
+            if self.agent.grouper.role == 'ROYAL_FOLLOWER':
+                logger.info(f"Peasant lvl{self.agent.level} : ROYAL_FOLLOWER, je reste en position.")
+                self.agent.comportment.act_grouping()
+                return
+            if food_level < 30:
                 logger.info(f"Peasant lvl{self.agent.level} : Pas assez de food, quitte le grouping pour farmer.")
                 self.agent.state = AgentState.FARMING
                 self.agent.comportment.act_farming('food')
@@ -43,6 +49,10 @@ class RoleTask:
                 self.agent.comportment.act_grouping()
             return
         elif self.agent.state == AgentState.ELEVATION:
+            # Les ROYAL_FOLLOWER restent en élévation quoi qu'il arrive.
+            if self.agent.grouper.role == 'ROYAL_FOLLOWER':
+                self.agent.comportment.act_elevating()
+                return
             self.agent.comportment.act_elevating()
             return
         if self.agent.level < 3:
@@ -80,10 +90,10 @@ class RoleTask:
             current_food = self.agent.inventory.get('food', 0)
             should_farm = False
             if self.agent.state != AgentState.GROUPING:
-                if current_food < 30:
+                if current_food < 45:
                     should_farm = True
             else:
-                if current_food < 15:
+                if current_food < 30:
                     should_farm = True
             
             if should_farm:
@@ -91,19 +101,31 @@ class RoleTask:
                 self.agent.comportment.act_farming('food')
                 return
             else:
-                min_food = 15 if self.agent.state == AgentState.GROUPING else 30
+                min_food = 30 if self.agent.state == AgentState.GROUPING else 45
                 level_3_gardes = sum(1 for k, data in self.agent.team_roster.items() if data.get("level", 1) >= 3 and data.get("food", 0) >= min_food and k != 9999)
                 if level_3_gardes >= 5:
                     self.agent.state = AgentState.GROUPING
                     grouping_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "grouping")
                     self.agent.cmd.send_command(f"Broadcast {grouping_msg}")
+                    # Look FRAIS juste avant de compter les joueurs
+                    fresh_vision = self.agent.cmd.send_command('Look')
+                    if fresh_vision and fresh_vision != 'dead':
+                        self.agent.vision = fresh_vision
                     players_on_tile = self.agent.vision[0].count('player') if self.agent.vision else 0
                     if players_on_tile >= 6:
-                        logger.info(f"Reine : 6 joueurs réunis ! Lancement de l'élévation !")
-                        self.agent.state = AgentState.ELEVATION
-                        result = self.agent.comportment.act_elevating()
-                        if result and result != AgentState.ELEVATION:
-                            self.agent.state = result
+                        # Double vérification : re-Look une dernière fois pour être sûr
+                        confirm_vision = self.agent.cmd.send_command('Look')
+                        if confirm_vision and confirm_vision != 'dead':
+                            self.agent.vision = confirm_vision
+                        confirmed_players = self.agent.vision[0].count('player') if self.agent.vision else 0
+                        if confirmed_players >= 6:
+                            logger.info(f"Reine : {confirmed_players} joueurs confirmés ! Lancement de l'élévation !")
+                            self.agent.state = AgentState.ELEVATION
+                            result = self.agent.comportment.act_elevating()
+                            if result and result != AgentState.ELEVATION:
+                                self.agent.state = result
+                        else:
+                            logger.warning(f"Reine : Joueurs partis entre temps ! ({confirmed_players}/6). Attente...")
                     else:
                         logger.info(f"Reine : En attente de regroupement. Joueurs sur ma case : {players_on_tile}/6")
                 else:

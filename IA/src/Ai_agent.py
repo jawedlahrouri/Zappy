@@ -80,6 +80,11 @@ class ZappyAgent:
                     logger.error(f"Erreur lors de la mise à jour du niveau inattendu: {e}")
             self.cmd.pending_incantation_result = None
 
+        # ROYAL_FOLLOWER : mode verrouillé — ne pas gaspiller de TU en Look/Inventory
+        if self.grouper.role == 'ROYAL_FOLLOWER' and self.state == AgentState.ELEVATION:
+            self.message_stack = self.analyze_calls()
+            return
+
         if not (self.role == AgentRole.PEASANT and self.state in [AgentState.GROUPING, AgentState.ELEVATION]):
             ping_content = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
             secret_message = self.comms.encode(ping_content, "ping")
