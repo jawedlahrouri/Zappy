@@ -282,8 +282,6 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
-        if self.client_num > 0:
-            self.utils.launch_clone()
         logger.info(f"l'agent {self.agent_id} démarre le cycle de vie.")
         while self.is_alive:
             self.update_internal_state()

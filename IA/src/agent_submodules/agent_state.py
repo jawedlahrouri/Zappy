@@ -156,7 +156,6 @@ class StateComportment:
         Retourne:
             -AgentState: L'état dans lequel l'agent doit rester ou passer après avoir agi pour le regroupement."""
 
-        # ROYAL_FOLLOWER : JAMAIS quitter, rester en position pour l'incantation
         if self.agent.grouper.role == 'ROYAL_FOLLOWER':
             logger.info("ROYAL_FOLLOWER : En position sur la case de la Reine, attente de l'incantation.")
             self.agent.state = AgentState.ELEVATION

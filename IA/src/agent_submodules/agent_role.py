@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 from enum import Enum
 from src.logger import ZappyLogger
 from src.agent_submodules.agent_state import AgentState
@@ -35,8 +36,6 @@ class RoleTask:
             self.agent.comportment.act_grouping()
             return
         if self.agent.state == AgentState.GROUPING:
-            # Les ROYAL_FOLLOWER ne quittent JAMAIS le grouping/elevation,
-            # même si la food est basse — ils doivent rester sur la case.
             if self.agent.grouper.role == 'ROYAL_FOLLOWER':
                 logger.info(f"Peasant lvl{self.agent.level} : ROYAL_FOLLOWER, je reste en position.")
                 self.agent.comportment.act_grouping()
@@ -49,7 +48,6 @@ class RoleTask:
                 self.agent.comportment.act_grouping()
             return
         elif self.agent.state == AgentState.ELEVATION:
-            # Les ROYAL_FOLLOWER restent en élévation quoi qu'il arrive.
             if self.agent.grouper.role == 'ROYAL_FOLLOWER':
                 self.agent.comportment.act_elevating()
                 return
@@ -107,13 +105,11 @@ class RoleTask:
                     self.agent.state = AgentState.GROUPING
                     grouping_msg = self.agent.comms.encode(f"{self.agent.agent_id}-{self.agent.level}", "grouping")
                     self.agent.cmd.send_command(f"Broadcast {grouping_msg}")
-                    # Look FRAIS juste avant de compter les joueurs
                     fresh_vision = self.agent.cmd.send_command('Look')
                     if fresh_vision and fresh_vision != 'dead':
                         self.agent.vision = fresh_vision
                     players_on_tile = self.agent.vision[0].count('player') if self.agent.vision else 0
                     if players_on_tile >= 6:
-                        # Double vérification : re-Look une dernière fois pour être sûr
                         confirm_vision = self.agent.cmd.send_command('Look')
                         if confirm_vision and confirm_vision != 'dead':
                             self.agent.vision = confirm_vision

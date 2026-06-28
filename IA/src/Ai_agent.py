@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import random
-import subprocess
 from src.agent_submodules.pathfinding import Pathfinder
 from src.agent_submodules.farm import Farmer
 from src.agent_submodules.grouping import Grouper
@@ -21,7 +20,7 @@ class ZappyAgent:
         self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
         self.comms = StealthComms() # Module de cryptage des message pour sécuriser la communication entre nos agents.
         self.grouper = Grouper(self.cmd, self.comms, self) # Module de groupage contenant la logique de regroupement de notre agent.
-        self.utils = utils(self.cmd, team_name, self) # Utilitaires divers, comme le lancement de clones.
+        self.utils = utils(self.cmd, team_name, self) # Utilitaires divers de l'agent.
         self.comportment = StateComportment(self) # Comportement de l'agent selon son état (survie, farming, grouping, etc).
         self.task = RoleTask(self) # Role de l'agent
 
@@ -79,8 +78,6 @@ class ZappyAgent:
                 except Exception as e:
                     logger.error(f"Erreur lors de la mise à jour du niveau inattendu: {e}")
             self.cmd.pending_incantation_result = None
-
-        # ROYAL_FOLLOWER : mode verrouillé — ne pas gaspiller de TU en Look/Inventory
         if self.grouper.role == 'ROYAL_FOLLOWER' and self.state == AgentState.ELEVATION:
             self.message_stack = self.analyze_calls()
             return
@@ -205,7 +202,6 @@ class ZappyAgent:
         if self.eggs_laid >= 1:
             nb_mature_egg = self.cmd.send_command('Connect_nbr')
             if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
-                self.utils.launch_clone()
                 self.eggs_laid = max(0, self.eggs_laid - 1)
         match self.role:
             case AgentRole.QUEEN:
@@ -219,7 +215,6 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
-        # Les connexions initiales sont gérées par launch.sh
         while self.is_alive:
             self.update_internal_state()
             if not self.is_alive:

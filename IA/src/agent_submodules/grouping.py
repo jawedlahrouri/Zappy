@@ -172,7 +172,6 @@ class Grouper:
             self.agent.state = AgentState.ELEVATION
             return True
         elif players_on_tile > needed:
-            # logger.warning(f"Trop de joueurs sur la case ({players_on_tile}/{needed}). Éjection !")
             return False
         logger.info(f"agent : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"{my_id}-{level}", "needmate")

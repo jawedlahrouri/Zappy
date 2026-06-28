@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import subprocess
 from src.agent_submodules.agent_role import AgentRole
 from src.agent_submodules.agent_state import AgentState
 from src.logger import ZappyLogger
@@ -10,20 +9,8 @@ logger = ZappyLogger.get_logger("AgentCore")
 class utils:
     def __init__(self, command_interface, team_name: str, agent):
         self.cmd = command_interface # Interface de commande pour interagir avec le serveur.
-        self.team_name = team_name # Le nom de l'équipe, utilisé pour le lancement de clones et la communication.
+        self.team_name = team_name # Le nom de l'équipe, utilisé pour la communication.
         self.agent = agent # Référence à l'agent principal.
-
-    def launch_clone(self):
-        """Lance un nouveau clone de l'agent en arrière-plan en utilisant subprocess pour exécuter une nouvelle instance du client Zappy.\n
-        Params:
-            aucun paramètre.
-        Retourne None."""
-        
-        logger.info(f"l'agent a pondu un nouvel œuf et lance un nouveau clone.")
-        port = str(self.cmd.network.port)
-        machine = self.cmd.network.machine
-        with open("logs/clone_crash.log", "a") as f:
-            subprocess.Popen(["./zappy_ai", "-p", port, "-h", machine, "-n", self.team_name], stdout=f, stderr=subprocess.STDOUT)
 
     def is_food_critical_for_action(self, estimated_tu_cost, inventory):
         """Vérifie si la nourriture actuelle est suffisante pour effectuer une action risquée\n
