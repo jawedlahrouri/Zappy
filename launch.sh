@@ -56,13 +56,11 @@ sleep 1
 # ==========================================
 # 3. Lancement des IA
 # ==========================================
-echo "[+] Lancement des clients IA..."
-# Lancement de $CLIENTS_NB instances de zappy_ai pour remplir tous les slots
-for i in $(seq 1 $CLIENTS_NB); do
-    ./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > logs/ia_stdout_${i}.log 2> logs/ia_stderr_${i}.log &
-    echo "  -> Agent IA #${i} lancé"
-    sleep 0.2
-done
+echo "[+] Lancement de l'auto-connect IA..."
+# Lancement d'auto_connect.py qui surveille les slots et spawne les agents dynamiquement
+python3 IA/auto_connect.py -p $PORT -n $TEAM1 -h $MACHINE &
+AUTOCONNECT_PID=$!
+echo "  -> Auto-connect lancé (PID: $AUTOCONNECT_PID)"
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."
