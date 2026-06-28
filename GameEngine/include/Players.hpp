@@ -40,6 +40,11 @@ public:
     static void drawPanel(sf::RenderWindow& window, const GameWorld& world,
         int playerId, const sf::Font& font, bool fontLoaded);
 
+    /**
+     * @brief Stops and releases every player sound still owned by the renderer.
+     */
+    static void clearSounds();
+
 private:
     /** Ratio of TILE_SIZE used by the default player sprite. */
     static constexpr float PLAYER_SIZE_RATIO = 0.5f;
@@ -111,6 +116,11 @@ private:
      * @brief Returns the broadcast color associated with a team palette.
      */
     static sf::Color getBroadcastColor(int teamColor, sf::Uint8 alpha);
+
+    /**
+     * @brief Returns whether the selected-player blink is currently visible.
+     */
+    static bool shouldShowSelectedSprite();
 
     /**
      * @brief Draws active broadcast effects.

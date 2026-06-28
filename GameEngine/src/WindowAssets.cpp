@@ -6,6 +6,7 @@
 */
 
 #include "WindowAssets.hpp"
+#include "Players.hpp"
 
 void WindowAssets::createWindow(WindowContext& context, unsigned int width, unsigned int height)
 {
@@ -134,27 +135,40 @@ void WindowAssets::loadMusic(WindowContext& context)
     const std::string musicPath =
         "GameEngine/assets/sprites/Chicago_Bulls_intro.mp3";
 
-    if (!context.assets.menuMusic.openFromFile(musicPath)) {
+    stopMusic(context);
+    context.assets.menuMusicLoaded = false;
+    context.assets.menuMusic = std::make_unique<sf::Music>();
+    if (!context.assets.menuMusic->openFromFile(musicPath)) {
         std::cerr << "[WindowManager] Musique de menu introuvable: "
             << musicPath << std::endl;
+        context.assets.menuMusic.reset();
         return;
     }
-    context.assets.menuMusic.setLoop(true);
+    context.assets.menuMusic->setLoop(true);
     context.assets.menuMusicLoaded = true;
 }
 
 void WindowAssets::playMusic(WindowContext& context)
 {
-    if (!context.assets.menuMusicLoaded)
+    if (!context.assets.menuMusicLoaded || context.assets.menuMusic == nullptr)
         return;
-    if (context.assets.menuMusic.getStatus() != sf::Music::Playing)
-        context.assets.menuMusic.play();
+    if (context.assets.menuMusic->getStatus() != sf::Music::Playing)
+        context.assets.menuMusic->play();
 }
 
 void WindowAssets::stopMusic(WindowContext& context)
 {
-    if (!context.assets.menuMusicLoaded)
+    if (!context.assets.menuMusicLoaded || context.assets.menuMusic == nullptr)
         return;
-    if (context.assets.menuMusic.getStatus() != sf::Music::Stopped)
-        context.assets.menuMusic.stop();
+    if (context.assets.menuMusic->getStatus() != sf::Music::Stopped)
+        context.assets.menuMusic->stop();
+}
+
+void WindowAssets::release(WindowContext& context)
+{
+    stopMusic(context);
+    context.assets.menuMusic.reset();
+    context.assets.menuMusicLoaded = false;
+    Players::clearSounds();
+    TextureManager::getInstance().clear();
 }

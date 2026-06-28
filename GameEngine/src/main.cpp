@@ -20,6 +20,13 @@
  */
 int main(int ac, char** av)
 {
-    Core core;
-    return core.run(ac, av);
+    try {
+        Core core;
+
+        return core.run(ac, av);
+    } catch (const std::exception& exception) {
+        std::cerr << exception.what() << std::endl;
+        return 84;
+    }
+    return 0;
 }

@@ -23,17 +23,6 @@ int InfoPanelRenderer::countResourceItems(const Resources& resources)
     return resources.food + resources.linemate + resources.deraumere + resources.sibur + resources.mendiane + resources.phiras + resources.thystame;
 }
 
-int InfoPanelRenderer::countHatchedEggs(const GameWorld& world)
-{
-    int count = 0;
-
-    for (const auto& pair : world.getEggs()) {
-        if (pair.second.isHatched)
-            count++;
-    }
-    return count;
-}
-
 void InfoPanelRenderer::drawGlobalInfoPanel(sf::RenderWindow& window, const GameWorld& world, const sf::Font& font, bool fontLoaded, int serverFreq, bool timePaused, const std::optional<std::string>& openedTeamInventory)
 {
     if (!fontLoaded)
@@ -87,7 +76,7 @@ void InfoPanelRenderer::drawGlobalInfoPanel(sf::RenderWindow& window, const Game
     drawInfoLine(window, text, "Map infos", 0, 20, panelX, panelY);
     drawInfoLine(window, text, "size: " + std::to_string(mapWidth) + " x " + std::to_string(mapHeight) + " (" + std::to_string(tileCount) + " tiles)", 2, 15, panelX, panelY);
     drawInfoLine(window, text, "players: " + std::to_string(players.size()) + "  teams: " + std::to_string(teamCounts.size()), 3, 15, panelX, panelY);
-    drawInfoLine(window, text, "eggs: " + std::to_string(eggs.size()) + "  hatched: " + std::to_string(countHatchedEggs(world)), 4, 15, panelX, panelY);
+    drawInfoLine(window, text, "eggs: " + std::to_string(eggs.size()), 4, 15, panelX, panelY);
     drawInfoLine(window, text, "max level: " + std::to_string(maxLevel) + "  freq: " + std::to_string(serverFreq) + (timePaused ? " paused" : ""), 5, 15, panelX, panelY);
     drawInfoLine(window, text, "map resources: " + std::to_string(countResourceItems(mapResources)), 7, 16, panelX, panelY);
     drawInfoLine(window, text, "food: " + std::to_string(mapResources.food) + "  brick: " + std::to_string(mapResources.linemate), 8, 14, panelX, panelY);

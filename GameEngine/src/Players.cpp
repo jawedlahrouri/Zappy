@@ -179,6 +179,16 @@ void Players::cleanupSayenSounds()
         }), _sayenSounds.end());
 }
 
+void Players::clearSounds()
+{
+    for (const std::unique_ptr<sf::Music>& sound : _sayenSounds) {
+        if (sound != nullptr)
+            sound->stop();
+    }
+    _sayenSounds.clear();
+    _activeSayenSounds.clear();
+}
+
 void Players::playSayenSound(int playerId)
 {
     std::unique_ptr<sf::Music> sound = std::make_unique<sf::Music>();
@@ -215,7 +225,7 @@ void Players::updateSayenSounds(const GameWorld& world)
     }
 }
 
-static bool shouldShowSelectedSprite()
+bool Players::shouldShowSelectedSprite()
 {
     static const sf::Clock clock;
     static constexpr int BLINK_PERIOD_MS = 350;

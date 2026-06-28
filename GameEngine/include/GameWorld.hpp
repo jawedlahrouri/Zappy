@@ -86,8 +86,6 @@
         int y;
         /** Identifier of the player that laid the egg. */
         int playerParentId;
-        /** true when the egg has hatched and is ready. */
-        bool isHatched;
     };
 
     /**
@@ -239,11 +237,6 @@
          * @brief Adds or replaces an egg on the map.
          */
         void addEgg(int id, int parentId, int x, int y);
-
-        /**
-         * @brief Marks an egg as hatched.
-         */
-        void hatchEgg(int id);
 
         /**
          * @brief Removes an egg from the map.

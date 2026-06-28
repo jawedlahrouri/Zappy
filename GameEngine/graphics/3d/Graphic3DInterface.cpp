@@ -18,7 +18,7 @@ void Graphic3DInterface::drawHud(const GameWorld& world) const
         << world.getHeight() << "  |  players " << world.getPlayers().size();
     DrawRectangle(0, 0, GetScreenWidth(), 54, {9, 12, 17, 210});
     DrawText(status.str().c_str(), 18, 14, 20, RAYWHITE);
-    DrawText("Left click: inspect player/tile  |  Mouse wheel: zoom  |  ZQSD/right drag: rotate  |  arrows: move  |  R: reset",
+    DrawText("Left click: inspect player/tile  |  Mouse wheel: zoom  |  ZQSD: rotate  |  arrows: move  |  R: reset",
         18, 34, 16, {190, 204, 210, 255});
 }
 

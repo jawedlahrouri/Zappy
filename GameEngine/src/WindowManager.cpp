@@ -19,7 +19,7 @@ WindowManager::WindowManager(unsigned int width, unsigned int height,
 
 WindowManager::~WindowManager()
 {
-    WindowAssets::stopMusic(_context);
+    WindowAssets::release(_context);
     if (_context.window.isOpen())
         _context.window.close();
 }

@@ -22,6 +22,7 @@
     #include <functional>
     #include <set>
     #include <utility>
+    #include <vector>
 
     /**
      * @brief Coordinates networking, protocol parsing, and graphical rendering.
@@ -46,6 +47,7 @@
          * @param ac Argument count received by main().
          * @param av Argument vector received by main().
          * @return Process exit code.
+         * @throws CoreException when the client cannot start.
          */
         int run(int ac, char** av);
 
@@ -61,6 +63,16 @@
         };
         
         static constexpr int MAX_NETWORK_COMMANDS_PER_FRAME = 512;
+
+        /**
+         * @brief Checks whether an argument selects the graphical backend.
+         */
+        static bool isGraphicPathOption(const std::string& arg);
+
+        /**
+         * @brief Parses optional player ids from an incantation command tail.
+         */
+        static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss);
 
         /**
          * @brief Initializes menu connection fields from CLI defaults.
@@ -103,9 +115,9 @@
         /**
          * @brief Loads the graphical backend.
          * @param path Shared-library path.
-         * @return true when the backend was loaded successfully.
+         * @throws CoreException when the backend cannot be loaded.
          */
-        bool loadGraphicLibrary(const std::string& path);
+        void loadGraphicLibrary(const std::string& path);
 
         /**
          * @brief Parses one protocol line received from the server.

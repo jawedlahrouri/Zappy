@@ -15,7 +15,11 @@
 
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
+#include <memory>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 /**
  * @brief Runtime state container for the SFML graphical backend.
@@ -49,13 +53,13 @@ public:
      */
     struct Assets {
         /** Looping menu music instance. */
-        sf::Music menuMusic;
+        std::unique_ptr<sf::Music> menuMusic;
         /** Font used by menu and HUD text. */
         sf::Font font;
         /** true when font loading succeeded. */
-        bool fontLoaded;
+        bool fontLoaded = false;
         /** true when menu music loading succeeded. */
-        bool menuMusicLoaded;
+        bool menuMusicLoaded = false;
         /** Cached ground tile texture. */
         sf::Texture tileTexture;
         /** Cached linemate texture used by legacy drawing paths. */
@@ -69,11 +73,11 @@ public:
         /** SFML view used for world rendering. */
         sf::View world;
         /** Current view center in world coordinates. */
-        sf::Vector2f center;
+        sf::Vector2f center = {0.0f, 0.0f};
         /** Clock used to make keyboard panning frame-rate independent. */
         sf::Clock panClock;
         /** Current zoom multiplier. */
-        float zoomLevel;
+        float zoomLevel = 1.0f;
     };
 
     /**
@@ -103,9 +107,9 @@ public:
         /** Team names shown before entering the world. */
         std::vector<std::string> teamNames;
         /** true when IP or port was edited since the last consume. */
-        bool connectionEdited;
+        bool connectionEdited = false;
         /** Currently focused input field. */
-        MenuField activeField;
+        MenuField activeField = IP_FIELD;
     };
 
     /**
@@ -115,11 +119,11 @@ public:
         /** Pending frequency request selected by the user. */
         std::optional<int> pendingRequest;
         /** Latest active server frequency. */
-        int serverFreq;
+        int serverFreq = NORMAL_SERVER_FREQ;
         /** Frequency to restore after leaving pause. */
-        int resumeServerFreq;
+        int resumeServerFreq = NORMAL_SERVER_FREQ;
         /** true when the pause control is active. */
-        bool paused;
+        bool paused = false;
     };
 
     /**
@@ -127,13 +131,13 @@ public:
      */
     struct Display {
         /** Draws tile grid lines when true. */
-        bool showGrid;
+        bool showGrid = false;
         /** Draws player broadcast waves when true. */
-        bool showBroadcasts;
+        bool showBroadcasts = true;
         /** Draws the global information panel when true. */
-        bool showInfoPanel;
+        bool showInfoPanel = true;
         /** Expands the legend panel when true. */
-        bool showLegend;
+        bool showLegend = false;
     };
 
     /**
@@ -160,9 +164,9 @@ public:
     /** Overlay visibility flags. */
     Display display;
     /** Current window width in pixels. */
-    unsigned int width;
+    unsigned int width = 0;
     /** Current window height in pixels. */
-    unsigned int height;
+    unsigned int height = 0;
     /** Window title. */
     std::string title;
 };

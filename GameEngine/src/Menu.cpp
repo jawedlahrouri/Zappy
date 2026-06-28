@@ -8,7 +8,7 @@
 #include "Menu.hpp"
 #include "TextureManager.hpp"
 
-static std::string getMenuTeamTexture(std::size_t index)
+std::string Menu::getMenuTeamTexture(std::size_t index)
 {
     if (index == 0)
         return "bluePlayer";

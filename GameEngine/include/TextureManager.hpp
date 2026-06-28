@@ -43,6 +43,11 @@
          */
         const sf::Texture& getTexture(const std::string& name) const;
 
+        /**
+         * @brief Releases every texture currently kept in the cache.
+         */
+        void clear();
+
     private:
         TextureManager() = default;
         ~TextureManager() = default;
