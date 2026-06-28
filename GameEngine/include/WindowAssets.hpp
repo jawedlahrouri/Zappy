@@ -55,6 +55,11 @@ class WindowAssets {
          * @brief Stops menu music playback.
          */
         static void stopMusic(WindowContext& context);
+
+        /**
+         * @brief Releases SFML resources owned by the 2D backend.
+         */
+        static void release(WindowContext& context);
     };
 
 #endif /* !WINDOWASSETS_HPP_ */

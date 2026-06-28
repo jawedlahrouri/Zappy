@@ -40,6 +40,11 @@ public:
     static void drawPanel(sf::RenderWindow& window, const GameWorld& world,
         int playerId, const sf::Font& font, bool fontLoaded);
 
+    /**
+     * @brief Stops and releases every player sound still owned by the renderer.
+     */
+    static void clearSounds();
+
 private:
     /** Ratio of TILE_SIZE used by the default player sprite. */
     static constexpr float PLAYER_SIZE_RATIO = 0.5f;
