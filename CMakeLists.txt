@@ -6,9 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Werror)
 
-# ----------------------------------------------------------------======
-# ASTUCE EPITECH : Force les exécutables C++ à poper à la racine du repo
-# ----------------------------------------------------------------======
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # ----------------------------------------------------------------======
