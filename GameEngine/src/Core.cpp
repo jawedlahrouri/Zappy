@@ -6,6 +6,7 @@
 */
 
 #include "Core.hpp"
+#include "Exception/CoreException.hpp"
 #include <algorithm>
 #include <vector>
 #include <limits>
@@ -48,8 +49,7 @@ std::vector<int> Core::parseTrailingPlayerIds(std::stringstream& ss)
 
 int Core::run(int ac, char** av)
 {
-    if (!loadGraphicLibrary(getGraphicLibraryPath(ac, av)))
-        return 84;
+    loadGraphicLibrary(getGraphicLibraryPath(ac, av));
     _isRunning = true;
     setupMenuDefaults(ac, av);
 
@@ -114,16 +114,14 @@ std::string Core::getGraphicLibraryPath(int ac, char** av) const
     return defaultPath;
 }
 
-bool Core::loadGraphicLibrary(const std::string& path)
+void Core::loadGraphicLibrary(const std::string& path)
 {
     if (_graphicLibrary.load(path))
-        return true;
-    std::cerr << "[Core] Cannot load graphic library: " << path << std::endl;
-    std::cerr << "[Core] " << _graphicLibrary.getLastError() << std::endl;
-    std::cerr << "[Core] Build it with the GameEngine CMake target "
-        << "zappy_graphic_2d, or pass another library with -g <path>."
-        << std::endl;
-    return false;
+        return;
+    throw CoreException("Cannot load graphic library '" + path + "': "
+        + _graphicLibrary.getLastError()
+        + ". Build it with the GameEngine CMake target zappy_graphic_2d, "
+        + "or pass another library with -g <path>.");
 }
 
 IGraphic& Core::graphics()

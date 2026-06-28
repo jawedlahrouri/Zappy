@@ -47,6 +47,7 @@
          * @param ac Argument count received by main().
          * @param av Argument vector received by main().
          * @return Process exit code.
+         * @throws CoreException when the client cannot start.
          */
         int run(int ac, char** av);
 
@@ -114,9 +115,9 @@
         /**
          * @brief Loads the graphical backend.
          * @param path Shared-library path.
-         * @return true when the backend was loaded successfully.
+         * @throws CoreException when the backend cannot be loaded.
          */
-        bool loadGraphicLibrary(const std::string& path);
+        void loadGraphicLibrary(const std::string& path);
 
         /**
          * @brief Parses one protocol line received from the server.
