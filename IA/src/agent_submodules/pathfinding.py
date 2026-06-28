@@ -110,5 +110,3 @@ class Pathfinder:
                 logger.info(f"Agent explore en avançant après scan. Étape {self.explore_step + 1}/3.")
                 self.cmd.send_command("Forward")
                 self.explore_step = 0
-    
-
