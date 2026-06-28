@@ -21,6 +21,18 @@
 #include "application/Server/Handlers/PendingClientHandler.hpp"
 #include "presentation/Handlers/AiClientHandler.hpp"
 #include "presentation/Handlers/GuiClientHandler.hpp"
+#include <csignal>
+
+void Server::requestShutdown(int)
+{
+    _shutdownRequested.test_and_set();
+}
+
+void Server::installShutdownHandlers()
+{
+    std::signal(SIGINT, &Server::requestShutdown);
+    std::signal(SIGTERM, &Server::requestShutdown);
+}
 
 /**
  * @brief Stores injected dependencies and registers the per-type strategies.
@@ -353,13 +365,14 @@ void Server::runPollLoop()
         auto next_tick_time = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / _freq);
         bool was_empty = true;
 
-        while (true) {
+        while (!_shutdownRequested.test()) {
             std::chrono::microseconds tick_duration = std::chrono::microseconds(1000000 / _freq);
             int timeout_ms = calculateTimeout(next_tick_time);
             handlePollEvents(timeout_ms);
             synchronizeTickTime(was_empty, next_tick_time, tick_duration);
             runGameTick(next_tick_time, tick_duration);
         }
+        _logger.info("Server shutting down.");
     } catch (const std::exception &e) {
         throw ServerException(std::string("runPollLoop: ") + e.what());
     }
@@ -382,6 +395,8 @@ void Server::openServer(int port, int clientsNb, const std::vector<std::string> 
             _masterSocket->createSocket(port, clientsNb);
             _masterSocket->bindSocket();
             _masterSocket->receiveData();
+
+            installShutdownHandlers();
 
             _logger.info("Server opened on port " + std::to_string(_port));
             _poll->addFd(_masterSocket->getSocket(), NetworkEvent::Input);

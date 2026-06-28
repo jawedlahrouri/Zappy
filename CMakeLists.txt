@@ -85,6 +85,13 @@ endif()
 # Le serveur doit être construit après le backend réseau
 add_dependencies(zappy_server ${NETWORK_BACKEND_TARGET})
 
+# Instrumentation gcov UNIQUEMENT sur le serveur (cmake -DZAPPY_COVERAGE=ON)
+option(ZAPPY_COVERAGE "Active la couverture gcov sur zappy_server" OFF)
+if(ZAPPY_COVERAGE)
+    target_compile_options(zappy_server PRIVATE --coverage -O0 -g)
+    target_link_options(zappy_server PRIVATE --coverage)
+endif()
+
 # ----------------------------------------------------------------======
 # 3. CIBLE : zappy_gui + bibliothèques graphiques
 # ----------------------------------------------------------------======

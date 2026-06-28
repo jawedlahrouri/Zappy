@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <atomic>
 #include "ISocket.hpp"
 #include "shared/ILogger.hpp"
 #include "IPoll.hpp"
@@ -90,6 +91,13 @@ class Server : public INetworkProvider {
         int getCommandDuration(const std::string& command) const override;
 
     private:
+        /** @brief Installs the SIGINT/SIGTERM handlers requesting a clean shutdown. */
+        void installShutdownHandlers();
+        /** @brief Async-signal-safe handler: flags that a shutdown was requested. */
+        static void requestShutdown(int sig);
+        /** @brief Set by @ref requestShutdown, polled by @ref runPollLoop to exit. */
+        inline static std::atomic_flag _shutdownRequested{};
+
         /** @brief Main loop: multiplex I/O then advance the game (see @ref IPoll). */
         void runPollLoop();
         /** @brief Dispatches the poll result for the entry at @p i. */
