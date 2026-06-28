@@ -153,6 +153,21 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
+        if self.is_queen_elected and not self.is_queen:
+            queen_data = self.team_roster.get(9999, None)
+            queen_is_dead = False
+            if queen_data is None:
+                queen_is_dead = True
+            if queen_is_dead:
+                logger.warning("La Reine (9999) semble morte ! Réinitialisation de l'élection.")
+                self.is_queen_elected = False
+                if 9999 in self.team_roster:
+                    del self.team_roster[9999]
+                if self.state == AgentState.GROUPING and self.grouper.role == 'ROYAL_FOLLOWER':
+                    self.grouper.role = None
+                    self.state = AgentState.FARMING
+                    logger.info("Grouping royal annulé suite à la mort de la Reine.")
+
         for agent_id, messages in self.message_stack.items():
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
@@ -200,9 +215,17 @@ class ZappyAgent:
         Ne retourne rien, mais fais agir l'agent selon son rôle (queen, guard, protector, peasant)."""
 
         if self.eggs_laid >= 1:
-            nb_mature_egg = self.cmd.send_command('Connect_nbr')
-            if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
-                self.eggs_laid = max(0, self.eggs_laid - 1)
+            current_connect_nbr = self.cmd.send_command('Connect_nbr')
+            if isinstance(current_connect_nbr, int):
+                if not hasattr(self, 'last_connect_nbr'):
+                    self.last_connect_nbr = current_connect_nbr
+                
+                delta = current_connect_nbr - self.last_connect_nbr
+                if delta > 0:
+                    self.eggs_laid = max(0, self.eggs_laid - delta)
+                
+                self.last_connect_nbr = current_connect_nbr
+
         match self.role:
             case AgentRole.QUEEN:
                 self.task.act_queen()
