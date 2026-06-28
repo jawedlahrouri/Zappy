@@ -10,12 +10,24 @@
 #include <vector>
 #include <limits>
 
-static bool isGraphicPathOption(const std::string& arg)
+
+Core::Core() : _appState(MENU), _isRunning(false), _menuReady(false),
+    _hasMenuTeams(false), _expectedInitialTiles(0)
+{
+    initCommands();
+}
+
+Core::~Core()
+{
+
+}
+
+bool Core::isGraphicPathOption(const std::string& arg)
 {
     return arg == "-g" || arg == "--graphic" || arg == "--graphic-lib";
 }
 
-static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss)
+std::vector<int> Core::parseTrailingPlayerIds(std::stringstream& ss)
 {
     std::vector<int> playerIds;
 
@@ -32,16 +44,6 @@ static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss)
         playerIds.push_back(playerId);
     }
     return playerIds;
-}
-
-Core::Core() : _appState(MENU), _isRunning(false), _menuReady(false),
-    _hasMenuTeams(false), _expectedInitialTiles(0)
-{
-    initCommands();
-}
-Core::~Core()
-{
-
 }
 
 int Core::run(int ac, char** av)
@@ -70,10 +72,10 @@ int Core::run(int ac, char** av)
             graphics().setMenuStatus("Disconnected");
             _appState = MENU;
         }
-        if (_appState == GAME)
+        if (_appState == GAME) {
             sendPendingTimeRequest();
-        if (_appState == GAME)
             sendPendingTileRequest();
+        }
 
         if (_network.isConnected()) {
             for (int commandCount = 0; commandCount < MAX_NETWORK_COMMANDS_PER_FRAME; commandCount++) {
@@ -108,10 +110,6 @@ std::string Core::getGraphicLibraryPath(int ac, char** av) const
 
         if (isGraphicPathOption(arg) && i + 1 < ac)
             return av[i + 1];
-        if (arg.rfind("--graphic=", 0) == 0)
-            return arg.substr(std::string("--graphic=").size());
-        if (arg.rfind("--graphic-lib=", 0) == 0)
-            return arg.substr(std::string("--graphic-lib=").size());
     }
     return defaultPath;
 }
@@ -144,9 +142,6 @@ void Core::setupMenuDefaults(int ac, char** av)
 
         if (isGraphicPathOption(arg) && i + 1 < ac) {
             i++;
-        } else if (arg.rfind("--graphic=", 0) == 0 ||
-            arg.rfind("--graphic-lib=", 0) == 0) {
-            continue;
         } else if ((arg == "-p" || arg == "--port") && i + 1 < ac) {
             port = av[i + 1];
             i++;
@@ -479,8 +474,6 @@ void Core::parseCommand(const std::string& command)
     }
     std::stringstream ss(cleanCmd);
     std::string cmdType;
-
-    // std::cout << "[Graphic] Recv: " << cleanCmd << std::endl;
     
     ss >> cmdType;
 

@@ -12,7 +12,7 @@ TEAM3="TeamC"
 CLIENTS_NB=3
 FREQ=100
 MACHINE="127.0.0.1"
-MODE="./libzappy_graphic_3d.so"
+MODE="./libzappy_graphic_2d.so"
 
 # ==========================================
 # Fonction de nettoyage (Clean exit)

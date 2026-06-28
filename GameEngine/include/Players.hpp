@@ -113,6 +113,11 @@ private:
     static sf::Color getBroadcastColor(int teamColor, sf::Uint8 alpha);
 
     /**
+     * @brief Returns whether the selected-player blink is currently visible.
+     */
+    static bool shouldShowSelectedSprite();
+
+    /**
      * @brief Draws active broadcast effects.
      */
     static void drawBroadcasts(sf::RenderWindow& target, const GameWorld& world,

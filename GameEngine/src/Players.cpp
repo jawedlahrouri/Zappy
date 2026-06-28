@@ -215,7 +215,7 @@ void Players::updateSayenSounds(const GameWorld& world)
     }
 }
 
-static bool shouldShowSelectedSprite()
+bool Players::shouldShowSelectedSprite()
 {
     static const sf::Clock clock;
     static constexpr int BLINK_PERIOD_MS = 350;

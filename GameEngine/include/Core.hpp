@@ -22,6 +22,7 @@
     #include <functional>
     #include <set>
     #include <utility>
+    #include <vector>
 
     /**
      * @brief Coordinates networking, protocol parsing, and graphical rendering.
@@ -61,6 +62,16 @@
         };
         
         static constexpr int MAX_NETWORK_COMMANDS_PER_FRAME = 512;
+
+        /**
+         * @brief Checks whether an argument selects the graphical backend.
+         */
+        static bool isGraphicPathOption(const std::string& arg);
+
+        /**
+         * @brief Parses optional player ids from an incantation command tail.
+         */
+        static std::vector<int> parseTrailingPlayerIds(std::stringstream& ss);
 
         /**
          * @brief Initializes menu connection fields from CLI defaults.

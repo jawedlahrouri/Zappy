@@ -81,6 +81,11 @@
              * @brief Draws one text label at the given screen position.
              */
             static void drawText(sf::RenderWindow& window, const sf::Font& font, const std::string& str, unsigned int size, const sf::Color& color, float x, float y);
+
+            /**
+             * @brief Resolves the preview texture used for a team slot.
+             */
+            static std::string getMenuTeamTexture(std::size_t index);
     };
 
 #endif
