@@ -45,3 +45,6 @@ zappy_gui.AppImage
 implementation_plan.md
 G-YEP-400_zappy.pdf
 Team1_logs.txt
+
+# Generated Doxygen documentation (regenerate with: doxygen server/Doxyfile)
+docs/doxygen/

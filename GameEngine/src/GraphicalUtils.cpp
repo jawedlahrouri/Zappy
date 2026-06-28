@@ -81,12 +81,7 @@ void GraphicalUtils::drawEgg(sf::RenderTarget& target, const Egg& egg, float til
 
     float eggScale = 0.3f;
     eggSprite.setScale(eggScale, eggScale);
-
-    if (egg.isHatched) {
-        eggSprite.setColor(sf::Color(255, 215, 0, 200));
-    } else {
-        eggSprite.setColor(sf::Color(255, 255, 255, 255));
-    }
+    eggSprite.setColor(sf::Color(255, 255, 255, 255));
 
     float posX = startX + (tileSize / 2.0f) - (19.0f / 2.0f);
     float posY = startY + tileSize - 24.0f;

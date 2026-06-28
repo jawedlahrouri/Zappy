@@ -19,7 +19,7 @@ int EboEvent::getEggId() const { return _eggId; }
 
 void EventVisitor::visit(EboEvent *event) {
     try {
-        std::string payload = "ebo " + std::to_string(event->getEggId()) + "\n";
+        std::string payload = "ebo #" + std::to_string(event->getEggId()) + "\n";
         if (_targetFd != -1) {
             _network.sendResponse(_targetFd, payload);
         } else {

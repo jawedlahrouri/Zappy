@@ -14,19 +14,35 @@
 #include "application/Server/Server.hpp"
 #include "shared/ConsoleLogger.hpp"
 
-struct ServerConfig {
-    int port = 0;
-    int width = 0;
-    int height = 0;
-    std::vector<std::string> teamNames;
-    int clientsNb = 0;
-    int freq = 100;
-}; 
+/**
+ * @file main.cpp
+ * @brief Entry point: parses CLI args, wires dependencies, starts the server.
+ */
 
+/**
+ * @struct ServerConfig
+ * @brief Command-line configuration of the server.
+ */
+struct ServerConfig {
+    int port = 0;                        /**< Listening TCP port (-p). */
+    int width = 0;                       /**< Map width (-x). */
+    int height = 0;                      /**< Map height (-y). */
+    std::vector<std::string> teamNames;  /**< Team names (-n). */
+    int clientsNb = 0;                   /**< Starting slots per team (-c). */
+    int freq = 100;                      /**< Ticks per second (-f). */
+};
+
+/** @brief Prints the command-line usage. */
 static void print_help() {
     std::cout << "USAGE: ./zappy_server -p port -x width -y height -n name1 name2 ... -c clientsNb -f freq" << std::endl;
 }
 
+/**
+ * @brief Parses argv into a @ref ServerConfig, validating required options.
+ * @return The filled configuration.
+ * @throws ServerException On an unknown option, a missing value, or invalid
+ *         mandatory parameters.
+ */
 ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
     try {
     for (int i = 1; i < argc; i++) {
@@ -75,6 +91,13 @@ ServerConfig parse_args(int argc, char** argv, ServerConfig config) {
     }
 }
 
+/**
+ * @brief Program entry point.
+ * @details Loads the network backend, builds the master @ref Socket and
+ *          @ref Poll, injects them into a @ref Server, parses the CLI and opens
+ *          the server. Returns 84 on any error (Epitech convention).
+ * @return 0 on clean exit, 84 on error.
+ */
 int main (int argc, char** argv) {
     try {
     ConsoleLogger logger;

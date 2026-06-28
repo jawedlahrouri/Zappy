@@ -22,7 +22,7 @@ int PexEvent::getPlayerId() const {
 
 void EventVisitor::visit(PexEvent *event) {
     try {
-        std::string payload = "pex " + std::to_string(event->getPlayerId()) + "\n";
+        std::string payload = "pex #" + std::to_string(event->getPlayerId()) + "\n";
         _network.sendToGuis(payload);
     } catch (const std::exception &e) {
         throw ServerException(std::string("EventVisitor::visit(PexEvent): ") + e.what());

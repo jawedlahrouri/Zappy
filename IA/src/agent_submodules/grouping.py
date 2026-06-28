@@ -106,7 +106,12 @@ class Grouper:
         else:
             if self.agent.level >= 3:
                 if call_k == 0:
-                    logger.info(f"{self.agent.role.name.capitalize()} (lvl {self.agent.level}) : Je suis arrivé à la case de la Reine. Prêt pour l'élévation.")
+                    logger.info(f"{self.agent.role.name.capitalize()} (lvl {self.agent.level}) : Je suis arrivé à la case de la Reine. Purge des pierres et attente.")
+                    stones = ['linemate', 'deraumere', 'sibur', 'mendiane', 'phiras', 'thystame']
+                    for stone in stones:
+                        amount = self.agent.inventory.get(stone, 0)
+                        for _ in range(amount):
+                            self.agent.cmd.send_command(f"Set {stone}")
                     self.agent.state = AgentState.ELEVATION
                     self.role = 'ROYAL_FOLLOWER'
                     return True
@@ -167,7 +172,6 @@ class Grouper:
             self.agent.state = AgentState.ELEVATION
             return True
         elif players_on_tile > needed:
-            logger.warning(f"Trop de joueurs sur la case ({players_on_tile}/{needed}). Éjection !")
             return False
         logger.info(f"agent : Attente alliés. Broadcast...")
         secret_msg = self.comms.encode(f"{my_id}-{level}", "needmate")

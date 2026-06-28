@@ -21,6 +21,11 @@ Socket::Socket(int fd, const NetworkBackend::Symbols &symbols)
 {
 }
 
+/**
+ * @brief Creates the socket, enables SO_REUSEADDR and sets it non-blocking.
+ * @details Stores @p port / @p backlog for the later @ref bindSocket and
+ *          @ref receiveData calls.
+ */
 void Socket::createSocket(int port, int backlog)
 {
     _socket = _symbols.createInetSocket();
@@ -50,6 +55,11 @@ void Socket::receiveData()
     }
 }
 
+/**
+ * @brief Accepts a pending connection, wrapping it in a new client @ref Socket.
+ * @return The client socket, or @c nullptr when no connection is pending
+ *         (EWOULDBLOCK on the non-blocking listening socket).
+ */
 std::unique_ptr<ISocket> Socket::acceptConnection()
 {
     int fd = _symbols.acceptInet(_socket);
@@ -62,6 +72,10 @@ std::unique_ptr<ISocket> Socket::acceptConnection()
     return std::make_unique<Socket>(fd, _symbols);
 }
 
+/**
+ * @brief Sends bytes without blocking.
+ * @return Bytes written, or @c 0 if the send would block (retry later).
+ */
 size_t Socket::sendData(const std::string &data)
 {
     long sent = _symbols.send(_socket, data.c_str(), data.length());
@@ -74,6 +88,12 @@ size_t Socket::sendData(const std::string &data)
     return static_cast<size_t>(sent);
 }
 
+/**
+ * @brief Reads up to @p maxSize bytes without blocking.
+ * @return The bytes read; @c "" if the read would block.
+ * @throws ServerException If the peer closed the connection (recv == 0) or on
+ *         a genuine socket error.
+ */
 std::string Socket::recvData(size_t maxSize)
 {
     std::vector<char> buf(maxSize + 1, 0);
@@ -105,6 +125,9 @@ void Socket::setTcpNoDelay(bool noDelay)
     }
 }
 
+/**
+ * @brief Closes the client fd (if any) then the own/listening fd.
+ */
 void Socket::closeSocket()
 {
     if (_clientSocket != -1) {

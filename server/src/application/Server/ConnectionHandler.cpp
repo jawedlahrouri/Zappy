@@ -16,6 +16,12 @@
 #include "GUI.hpp"
 #include "ServerException.hpp"
 
+/**
+ * @brief Accepts one pending connection, registers it and sends @c WELCOME.
+ * @details Configures the client socket (non-blocking + TCP_NODELAY), starts
+ *          watching it for input, stores a @c PENDING @ref Client, and greets it.
+ *          Errors are logged, not thrown, so the loop keeps running.
+ */
 void ConnectionHandler::acceptClient(ISocket& masterSocket, IPoll& poll, ClientManager& clientManager, ILogger& logger)
 {
     try {
@@ -38,6 +44,12 @@ void ConnectionHandler::acceptClient(ISocket& masterSocket, IPoll& poll, ClientM
     }
 }
 
+/**
+ * @brief Reads the first line and upgrades the pending client to AI or GUI.
+ * @details "GRAPHIC" -> a @ref GUI logged in via @ref Login::login_gui. A valid
+ *          team name -> an @ref AI logged in via @ref Login::login_ai (dropped
+ *          if the team is full). An unknown name -> "ko" and disconnect.
+ */
 void ConnectionHandler::detectClientType(int clientSocket, ClientManager& clientManager, INetworkProvider& network, ILogger& logger, const std::vector<std::string>& teamNames)
 {
     try {

@@ -23,7 +23,7 @@ int PpoEvent::getOrientation() const { return _orientation; }
 
 void EventVisitor::visit(PpoEvent *event) {
     try {
-        std::string payload = "ppo " + std::to_string(event->getPlayerId()) + " " +
+        std::string payload = "ppo #" + std::to_string(event->getPlayerId()) + " " +
                             std::to_string(event->getX()) + " " +
                             std::to_string(event->getY()) + " " +
                             std::to_string(event->getOrientation()) + "\n";

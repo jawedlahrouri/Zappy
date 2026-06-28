@@ -27,7 +27,7 @@ void EventVisitor::visit(PicEvent *event) {
                             std::to_string(event->getY()) + " " +
                             std::to_string(event->getLevel());
         for (int id : event->getPlayerIds()) {
-            payload += " " + std::to_string(id);
+            payload += " #" + std::to_string(id);
         }
         payload += "\n";
 

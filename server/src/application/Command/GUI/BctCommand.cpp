@@ -78,6 +78,11 @@ void GuiCommandParser::parse_gui_bct(std::shared_ptr<GUI> client, const std::str
     }
 }
 
+/**
+ * @brief Replies with one tile's resources, or "sbp" if out of bounds.
+ * @par Protocol (GUI protocol)
+ * Request "bct X Y\n" -> Response "bct X Y q0 q1 q2 q3 q4 q5 q6\n".
+ */
 void GuiVisitor::visit(BctCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);

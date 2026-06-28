@@ -4,10 +4,11 @@
 # Configuration des variables du jeu
 # ==========================================
 PORT=4242
-WIDTH=10
-HEIGHT=10
+WIDTH=15
+HEIGHT=15
 TEAM1="TeamA"
 TEAM2="TeamB"
+TEAM3="TeamC"
 CLIENTS_NB=3
 FREQ=100
 MACHINE="127.0.0.1"
@@ -34,6 +35,7 @@ cleanup() {
     pkill -f "./server/zappy_ref-v3.0.1/linux/zappy_server"
     pkill -f "./zappy_gui"
     pkill -f "./zappy_ai"
+    pkill -f "auto_connect.py"
     echo "[+] Terminé."
     exit 0
 }
@@ -46,7 +48,7 @@ trap cleanup SIGINT
 # ==========================================
 echo "[+] Lancement du zappy_server..."
 # Options du serveur basées sur le sujet
-./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 -c $CLIENTS_NB -f $FREQ &
+./server/zappy_ref-v3.0.1/linux/zappy_server -p $PORT -x $WIDTH -y $HEIGHT -n $TEAM1 $TEAM2 $TEAM3 -c $CLIENTS_NB -f $FREQ &
 SERVER_PID=$!
 
 # Petite pause pour laisser le temps au serveur d'ouvrir ses sockets réseau
@@ -55,10 +57,11 @@ sleep 1
 # ==========================================
 # 3. Lancement des IA
 # ==========================================
-echo "[+] Lancement des clients IA..."
-# Lancement de 2 drones pour la TeamA et 1 pour la TeamB
-# On redirige la sortie standard vers /dev/null pour ne pas polluer ton terminal
-./zappy_ai -p $PORT -n $TEAM1 -h $MACHINE > /dev/null 2>&1 &
+echo "[+] Lancement de l'auto-connect IA..."
+# Lancement d'auto_connect.py qui surveille les slots et spawne les agents dynamiquement
+python3 IA/auto_connect.py -p $PORT -n $TEAM1 -h $MACHINE &
+AUTOCONNECT_PID=$!
+echo "  -> Auto-connect lancé (PID: $AUTOCONNECT_PID)"
 
 echo "[+] Tout est lancé ! Regarde la fenêtre du GUI."
 echo "[!] Appuie sur Ctrl+C dans ce terminal pour tout fermer proprement."

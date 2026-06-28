@@ -21,7 +21,7 @@ int PgtEvent::getResourceId() const { return _resourceId; }
 
 void EventVisitor::visit(PgtEvent *event) {
     try {
-        std::string payload = "pgt " + std::to_string(event->getPlayerId()) + " " +
+        std::string payload = "pgt #" + std::to_string(event->getPlayerId()) + " " +
                             std::to_string(event->getResourceId()) + "\n";
         if (_targetFd != -1) {
             _network.sendResponse(_targetFd, payload);

@@ -21,6 +21,12 @@ class Pathfinder:
 
         score = 0
         items_found = 0
+        
+        if tile_contents.count('player') >= 6:
+            stones = ['linemate', 'deraumere', 'sibur', 'mendiane', 'phiras', 'thystame']
+            if any(item in stones for item in target_items):
+                return -999
+                
         for item in target_items:
             count = tile_contents.count(item)
             items_found += count
@@ -110,5 +116,3 @@ class Pathfinder:
                 logger.info(f"Agent explore en avançant après scan. Étape {self.explore_step + 1}/3.")
                 self.cmd.send_command("Forward")
                 self.explore_step = 0
-    
-

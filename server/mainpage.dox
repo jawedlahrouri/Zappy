@@ -1,0 +1,58 @@
+/**
+ * @mainpage Zappy Server
+ *
+ * @section intro Overview
+ * The Zappy server runs the authoritative simulation of the Zappy world and
+ * serves two kinds of clients over TCP:
+ * - **AI** clients: the players, each driving one creature through the text
+ *   protocol (Forward, Look, Incantation, ...).
+ * - **GUI** clients: graphical observers that receive a live stream of events
+ *   describing the world.
+ *
+ * A single thread multiplexes all sockets with @c poll() and advances the game
+ * at a fixed frequency, interleaving network I/O and simulation ticks.
+ *
+ * @section layers Layered architecture
+ * The code is organised in concentric layers (inner layers never depend on
+ * outer ones):
+ * - @c domain/ — the model and rules: @ref Map, @ref GameEngine, the
+ *   @ref Client hierarchy and the network interfaces (@ref ISocket, @ref IPoll,
+ *   @ref INetworkProvider, @ref INetworkLoader).
+ * - @c infrastructure/ — concrete adapters over the OS: @ref Socket, @ref Poll
+ *   and @ref NetworkLoader, all reached through a dynamically loaded backend.
+ * - @c application/ — orchestration: @ref Server (the main loop), the command
+ *   and event Visitors, the client handlers.
+ * - @c presentation/ — protocol entry points: command parsing, dispatch tables
+ *   and the per-type client handlers.
+ * - @c shared/ — cross-cutting utilities: @ref CircularBuffer, @ref ILogger,
+ *   @ref ServerException.
+ *
+ * @section patterns Design patterns
+ * The most important patterns are documented as modules:
+ * - @ref visitor_ai — AI command Visitor.
+ * - @ref visitor_gui — GUI command Visitor.
+ * - @ref visitor_event — GUI event Visitor.
+ *
+ * Other patterns are described on their pivot types: Strategy on
+ * @ref IClientDataHandler, Facade + Dependency Injection on @ref Server /
+ * @ref INetworkProvider, Adapter on @ref NetworkLoader / @ref Socket, and
+ * Template Method on @ref Client.
+ *
+ * @section poll I/O multiplexing
+ * The cooperative single-thread model relies on the @c poll system call. See
+ * @ref IPoll for a detailed walkthrough of how the watch list is maintained,
+ * how @c POLLOUT is
+ * armed on demand, and how the poll timeout is kept in step with the game ticks.
+ *
+ * @section protocol Protocol
+ * The wire protocol (AI commands with their durations, GUI commands and the
+ * server-to-GUI events) is documented on each command/event class and follows
+ * the project's Zappy protocol specification.
+ *
+ * @section build Generating this documentation
+ * From the repository root:
+ * @verbatim
+ * doxygen server/Doxyfile          # HTML -> docs/doxygen/html/index.html
+ * make -C docs/doxygen/latex       # PDF  -> docs/doxygen/latex/refman.pdf
+ * @endverbatim
+ */
