@@ -22,9 +22,6 @@ if(NOT raylib_FOUND)
     FetchContent_MakeAvailable(raylib)
 endif()
 
-# ----------------------------------------------------------------======
-# ASTUCE EPITECH : Force les exécutables C++ à poper à la racine du repo
-# ----------------------------------------------------------------======
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 

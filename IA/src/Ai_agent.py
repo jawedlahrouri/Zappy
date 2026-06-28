@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import random
-import subprocess
 from src.agent_submodules.pathfinding import Pathfinder
 from src.agent_submodules.farm import Farmer
 from src.agent_submodules.grouping import Grouper
@@ -21,7 +20,7 @@ class ZappyAgent:
         self.farmer = Farmer() # Module de gestion des ressources pour savoir quoi collecter.
         self.comms = StealthComms() # Module de cryptage des message pour sécuriser la communication entre nos agents.
         self.grouper = Grouper(self.cmd, self.comms, self) # Module de groupage contenant la logique de regroupement de notre agent.
-        self.utils = utils(self.cmd, team_name, self) # Utilitaires divers, comme le lancement de clones.
+        self.utils = utils(self.cmd, team_name, self) # Utilitaires divers de l'agent.
         self.comportment = StateComportment(self) # Comportement de l'agent selon son état (survie, farming, grouping, etc).
         self.task = RoleTask(self) # Role de l'agent
 
@@ -30,6 +29,7 @@ class ZappyAgent:
         self.map_size = map_size # Dimensions de la carte.
         self.unread_messages = [] # Messages reçus du serveur mais pas encore traités.
         self.agent_id = random.randint(1000, 9998) # Un ID unique pour cet agent, utilisé dans les communications cryptées.
+        self.original_id = self.agent_id
         self.is_alive = True # Flag pour savoir si l'agent est encore en vie.
         self.state = AgentState.BEGINNER # État initial de l'agent, il commencera en mode beginner.
         self.role = AgentRole.PEASANT
@@ -37,12 +37,11 @@ class ZappyAgent:
         self.inventory = {} # Dictionnaire pour stocker les ressources que l'agent a en sa possession (nourriture, pierres, etc).
         self.vision = [] # Ce que l'agent voit autour de lui, mis à jour à chaque cycle.
         self.food_minimum = 6 # Seuil de nourriture en dessous duquel l'agent passe en mode survie pour éviter de mourir de faim.
-        self.food_safe = 15 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité.
+        self.food_safe = 20 # Seuil de nourriture au-dessus duquel l'agent se sent en sécurité.
         self.team_roster = {} # Dictionnaire pour suivre les alliés connus et leur dernière activité.
         self.population_target = 15 # Nombre d'agents que nous voulons idéalement dans l'équipe.
         self.is_queen_elected = False # Flag pour savoir si la reine a été élue.
         self.is_queen = False # Flag pour savoir si cet agent est la reine.
-        self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
         self.eggs_laid = 0 # Nombre d'oeufs pondus par la reine.
         self.message_stack = {} # Messages radio parsés du cycle courant.
 
@@ -63,6 +62,26 @@ class ZappyAgent:
             self.is_alive = False
             return
         self.vision = response
+
+        if getattr(self.cmd, 'pending_incantation_result', None):
+            res = self.cmd.pending_incantation_result
+            if res.startswith("Current level"):
+                try:
+                    new_level = int(res.split(":")[1].strip())
+                    if new_level > self.level:
+                        logger.info(f"Mise à jour du niveau suite à une incantation inattendue: {self.level} -> {new_level}")
+                        self.level = new_level
+                        self.agent_id_str = f"lvl{self.level}"
+                        if self.state in [AgentState.GROUPING, AgentState.ELEVATION]:
+                            self.state = AgentState.BEGINNER
+                            self.grouper.role = None
+                except Exception as e:
+                    logger.error(f"Erreur lors de la mise à jour du niveau inattendu: {e}")
+            self.cmd.pending_incantation_result = None
+        if self.grouper.role == 'ROYAL_FOLLOWER' and self.state == AgentState.ELEVATION:
+            self.message_stack = self.analyze_calls()
+            return
+
         if not (self.role == AgentRole.PEASANT and self.state in [AgentState.GROUPING, AgentState.ELEVATION]):
             ping_content = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
             secret_message = self.comms.encode(ping_content, "ping")
@@ -117,15 +136,16 @@ class ZappyAgent:
             self.team_roster[agent_id]["last_seen"] = 0
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
-                    if command == "ping" and len(params_list) >= 1:
+                    if command == "ping" and len(params_list) >= 2:
                         try:
                             self.team_roster[agent_id]["level"] = int(params_list[0])
+                            self.team_roster[agent_id]["food"] = int(params_list[1])
                         except (ValueError, IndexError):
                             pass
         for agent_id in list(self.team_roster.keys()):
             if agent_id not in self.message_stack:
                 self.team_roster[agent_id]["last_seen"] += 1
-                if self.team_roster[agent_id]["last_seen"] > 15:
+                if self.team_roster[agent_id]["last_seen"] > 150:
                     del self.team_roster[agent_id]
 
 
@@ -136,31 +156,49 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien."""
 
+        if self.is_queen_elected and not self.is_queen:
+            queen_data = self.team_roster.get(9999, None)
+            queen_is_dead = False
+            if queen_data is None:
+                queen_is_dead = True
+            if queen_is_dead:
+                logger.warning("La Reine (9999) semble morte ! Réinitialisation de l'élection.")
+                self.is_queen_elected = False
+                if 9999 in self.team_roster:
+                    del self.team_roster[9999]
+                if self.state == AgentState.GROUPING and self.grouper.role == 'ROYAL_FOLLOWER':
+                    self.grouper.role = None
+                    self.state = AgentState.FARMING
+                    logger.info("Grouping royal annulé suite à la mort de la Reine.")
+
         for agent_id, messages in self.message_stack.items():
             for msg_dict in messages:
                 for k, (command, params_list) in msg_dict.items():
-                    if command in ["evaqueen", "grouping"]:
-                        if agent_id > self.agent_id or not self.is_queen:
-                            self.is_queen_elected = True
-                            if self.is_queen and agent_id > self.agent_id:
-                                logger.info(f"Une autre Reine avec un ID plus grand ({agent_id}) détectée. Je redeviens paysan.")
-                                self.is_queen = False
-                                self.role = AgentRole.PEASANT
+                    if command == "evaqueen":
+                        self.is_queen_elected = True
+                        if self.is_queen and agent_id > self.original_id:
+                            logger.info(f"Une autre Reine avec un ID plus grand ({agent_id}) détectée. Je redeviens paysan.")
+                            self.is_queen = False
+                            self.agent_id = self.original_id
+                            self.role = AgentRole.PEASANT
+                        break
+                    elif command == "grouping":
+                        self.is_queen_elected = True
                         break
         if self.is_queen:
             return
         if self.level >= 3 and not self.is_queen_elected:
-            eligible_ids = [self.agent_id]
+            eligible_ids = [self.original_id]
             for a_id, data in self.team_roster.items():
                 if data.get("level", 1) >= 3:
                     eligible_ids.append(a_id)
                     
-            if self.agent_id == max(eligible_ids):
+            if self.original_id == max(eligible_ids):
                 self.role = AgentRole.QUEEN
                 self.is_queen = True
                 self.is_queen_elected = True
                 self.agent_id = 9999
-                queen_msg = f"{self.agent_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
+                queen_msg = f"{self.original_id}-{self.level}-{self.inventory.get('food', 0)}-{self.inventory.get('linemate', 0)}-{self.inventory.get('deraumere', 0)}-{self.inventory.get('sibur', 0)}-{self.inventory.get('mendiane', 0)}-{self.inventory.get('phiras', 0)}-{self.inventory.get('thystame', 0)}"
                 secret_message = self.comms.encode(queen_msg, "evaqueen")
                 self.cmd.send_command(f"Broadcast {secret_message}")
                 logger.info(f"Agent élu REINE ! ID mis à: {self.agent_id}")
@@ -180,10 +218,17 @@ class ZappyAgent:
         Ne retourne rien, mais fais agir l'agent selon son rôle (queen, guard, protector, peasant)."""
 
         if self.eggs_laid >= 1:
-            nb_mature_egg = self.cmd.send_command('Connect_nbr')
-            if isinstance(nb_mature_egg, int) and nb_mature_egg >= 1:
-                self.utils.launch_clone()
-                self.eggs_laid = max(0, self.eggs_laid - 1)
+            current_connect_nbr = self.cmd.send_command('Connect_nbr')
+            if isinstance(current_connect_nbr, int):
+                if not hasattr(self, 'last_connect_nbr'):
+                    self.last_connect_nbr = current_connect_nbr
+                
+                delta = current_connect_nbr - self.last_connect_nbr
+                if delta > 0:
+                    self.eggs_laid = max(0, self.eggs_laid - delta)
+                
+                self.last_connect_nbr = current_connect_nbr
+
         match self.role:
             case AgentRole.QUEEN:
                 self.task.act_queen()
@@ -196,9 +241,6 @@ class ZappyAgent:
             -Aucun paramètre.
         Ne retourne rien, mais maintient la boucle de vie de l'agent tant qu'il est en vie."""
 
-        if self.client_num > 0:
-            self.utils.launch_clone()
-            self.client_num = 0
         while self.is_alive:
             self.update_internal_state()
             if not self.is_alive:

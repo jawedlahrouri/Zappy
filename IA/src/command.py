@@ -11,6 +11,7 @@ class ZappyCommand:
         self.network = network # L'instance de connexion réseau pour envoyer les commandes et recevoir les réponses.
         self.broadcast_queue = [] # Queue pour stocker les messages de diffusion reçus du serveur, à traiter par l'agent.
         self.system_queue = [] # Queue pour stocker les messages système (comme les réponses aux commandes) reçus du serveur, à traiter par l'agent.
+        self.pending_incantation_result = None # Stocke le résultat d'une incantation inattendue.
 
     def wait_for_incantation_follower(self):
         """Attends les messages d'incantation pour un follower, en gérant les réponses inattendues.\n
@@ -33,7 +34,7 @@ class ZappyCommand:
                 return False
             elif response.startswith("["): 
                 timeout_counter += 1
-                if timeout_counter > 800:
+                if timeout_counter > 2000:
                     logger.warning("Le leader n'a pas lancé l'incantation à temps, annulation de l'attente FOLLOWER.")
                     return False
                 self.network.send_command("Inventory\n")
@@ -50,7 +51,14 @@ class ZappyCommand:
             if self.system_queue:
                 msg = self.system_queue.pop(0)
                 if not expect_incantation:
-                    if msg == "Elevation underway" or msg.startswith("Current level"):
+                    if msg == "Elevation underway":
+                        logger.warning("Je suis entraîné dans une incantation inattendue !")
+                        incantation_result = self._wait_for_response(expect_incantation=True)
+                        logger.info(f"Résultat de l'incantation inattendue: {incantation_result}")
+                        if incantation_result and incantation_result.startswith("Current level"):
+                            self.pending_incantation_result = incantation_result
+                        continue
+                    if msg.startswith("Current level"):
                         continue
                 return msg
             messages = self.network.receive_messages()
@@ -142,7 +150,11 @@ class ZappyCommand:
         logger.info(f"l'agent envoie la commande:  Connect_nbr")
         self.network.send_command("Connect_nbr\n")
         response = self._wait_for_response()
-        return -1 if response == "ko" else int(response)
+        try:
+            return -1 if response == "ko" else int(response)
+        except ValueError:
+            logger.error(f"[Erreur] Réponse inattendue pour Connect_nbr : '{response}'. Retour de 0 par sécurité.")
+            return 0
     
     def death(self):
         """Envoie la commande Death au serveur et attend la réponse.\n
