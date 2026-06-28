@@ -26,8 +26,11 @@ class utils:
         return False
 
     def fork(self):
-        """Pond un oeuf via la commande Fork.\n
+        """Pond un oeuf via la commande Fork.
+        Params:
+            -Aucun paramètre.
         Retourne True si réussi, False sinon."""
+
         success = self.agent.cmd.send_command("Fork")
         if success:
             logger.info("Un oeuf a été pondu. En attente de l'éclosion (600 TU)...")
@@ -37,7 +40,9 @@ class utils:
             
     def verify_command(self, command, commands):
         """Cherche une commande dans la liste de messages et retourne ses params.
-        commands est une liste de dicts : [{k: (command, [params])}, ...]
+        Params:
+            -command (str): La commande à chercher.
+            -commands (list): La liste de messages.
         Retourne les params si trouvé, None sinon."""
         for msg_dict in commands:
             for k, (cmd, params) in msg_dict.items():
@@ -58,7 +63,10 @@ class utils:
         return False
     
     def verify_id_message(self, id):
-        """Retourne les messages d'un agent spécifique, ou None si absent."""
+        """ Vérifie si des messages existent pour un agent spécifique.
+        Params:
+            -id (int): L'identifiant de l'agent.
+        Retourne les messages d'un agent spécifique, ou None si absent."""
         return self.agent.message_stack.get(id, None)
     
     def which_role(self):
@@ -87,6 +95,7 @@ class utils:
         Retourne:
             -bool: True si la reine a envoyé un ordre d'élévation, False sinon.
         """
+
         messages = self.verify_id_message(9999)
         if messages is None:
             return False
@@ -103,6 +112,7 @@ class utils:
         Retourne:    
             -bool: True si il doit en ramasser, False sinon.
         """
+
         food_level = self.agent.inventory.get("food", 0)
         if self.agent.state == AgentState.GROUPING or self.agent.state == AgentState.ELEVATION:
             return False

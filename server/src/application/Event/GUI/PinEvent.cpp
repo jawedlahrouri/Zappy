@@ -29,7 +29,7 @@ int PinEvent::getQ6() const { return _q6; }
 
 void EventVisitor::visit(PinEvent *event) {
     try {
-        std::string payload = "pin " + std::to_string(event->getPlayerId()) + " " +
+        std::string payload = "pin #" + std::to_string(event->getPlayerId()) + " " +
                             std::to_string(event->getX()) + " " +
                             std::to_string(event->getY()) + " " +
                             std::to_string(event->getQ0()) + " " +

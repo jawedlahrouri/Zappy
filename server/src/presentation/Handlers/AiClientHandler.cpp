@@ -10,6 +10,11 @@
 #include "presentation/Parsing/Parsing.hpp"
 #include "AI.hpp"
 
+/**
+ * @brief Parses every complete line received from an AI client.
+ * @details Each line is routed through @ref Parsing::parse_ai_command, which
+ *          enqueues the command for tick-paced execution by the game engine.
+ */
 void AiClientHandler::handleData(std::shared_ptr<Client> client, Server& server)
 {
     std::string line;

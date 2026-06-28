@@ -11,9 +11,10 @@
 #include "AiCommandParser.hpp"
 #include "application/Server/Server.hpp"
 #include "application/Event/GUI/EnwEvent.hpp"
+#include "application/Event/GUI/PfkEvent.hpp"
 
 #include "ServerException.hpp"
-#include <iostream>
+#include "shared/ILogger.hpp"
 
 void ForkCommand::Accept(IAiVisitor *visitor) {
     try {
@@ -57,8 +58,9 @@ void AiVisitor::visit(ForkCommand *element) {
         
         _network.getGameEngine()->getMap().addEgg(egg);
         
+        _network.sendEvent(PfkEvent(aiClient->getId()));
         _network.sendEvent(EnwEvent(eggId, aiClient->getId(), pos_x, pos_y));
-        
+        _network.getLogger().debug("ForkCommand: egg created id " + std::to_string(eggId));
         _network.sendResponse(aiClient->getId(), "ok\n");
     } catch (const std::exception &e) {
         throw ServerException(std::string("AiVisitor::visit: ") + e.what());

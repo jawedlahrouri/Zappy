@@ -153,18 +153,80 @@ void GameWorld::stopIncantation(int x, int y)
     _incantationTiles.erase(tile);
 }
 
+void GameWorld::triggerBroadcast(int playerId, int durationMs)
+{
+    auto player = _players.find(playerId);
+
+    if (player == _players.end())
+        return;
+    if (_dyingPlayers.find(playerId) != _dyingPlayers.end())
+        return;
+    pruneBroadcasts();
+    _broadcasts.push_back({playerId, player->second.x, player->second.y,
+        player->second.teamColor, durationMs, std::chrono::steady_clock::now()});
+}
+
+void GameWorld::triggerPlayerDeath(int playerId, int durationMs)
+{
+    auto player = _players.find(playerId);
+
+    if (player == _players.end())
+        return;
+    _incantingPlayers.erase(playerId);
+    _broadcasts.erase(std::remove_if(_broadcasts.begin(), _broadcasts.end(),
+        [playerId](const BroadcastState& broadcast) {
+            return broadcast.playerId == playerId;
+        }), _broadcasts.end());
+    _dyingPlayers[playerId] = {playerId, player->second.teamColor, durationMs,
+        std::chrono::steady_clock::now()};
+}
+
+void GameWorld::updateAnimations()
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    pruneBroadcasts();
+    for (auto it = _dyingPlayers.begin(); it != _dyingPlayers.end(); ) {
+        const auto endTime = it->second.startTime +
+            std::chrono::milliseconds(std::max(1, it->second.durationMs));
+
+        if (now >= endTime) {
+            const int playerId = it->first;
+
+            it = _dyingPlayers.erase(it);
+            removePlayer(playerId);
+        } else {
+            ++it;
+        }
+    }
+}
+
 void GameWorld::addEgg(int id, int parentId, int x, int y)
 {
-    _eggs[id] = {id, x, y, parentId, false};
-}
-    
-void GameWorld::hatchEgg(int id) {
-    if (_eggs.find(id) != _eggs.end()) _eggs[id].isHatched = true;
+    _eggs[id] = {id, x, y, parentId};
 }
 
 void GameWorld::removeEgg(int id) {
     _eggs.erase(id);
 }
+
+void GameWorld::adjustTileResource(int x, int y, int resourceIndex, int delta)
+{
+    if (x < 0 || x >= _width || y < 0 || y >= _height)
+        return;
+    Resources& res = _map[x][y].resources;
+    switch (resourceIndex) {
+        case 0: res.food      = std::max(0, res.food      + delta); break;
+        case 1: res.linemate  = std::max(0, res.linemate  + delta); break;
+        case 2: res.deraumere = std::max(0, res.deraumere + delta); break;
+        case 3: res.sibur     = std::max(0, res.sibur     + delta); break;
+        case 4: res.mendiane  = std::max(0, res.mendiane  + delta); break;
+        case 5: res.phiras    = std::max(0, res.phiras    + delta); break;
+        case 6: res.thystame  = std::max(0, res.thystame  + delta); break;
+        default: break;
+    }
+}
+
 
 const std::map<int, Egg>&  GameWorld::getEggs() const
 {
@@ -174,6 +236,11 @@ const std::map<int, Egg>&  GameWorld::getEggs() const
 void GameWorld::removePlayer(int id)
 {
     _incantingPlayers.erase(id);
+    _dyingPlayers.erase(id);
+    _broadcasts.erase(std::remove_if(_broadcasts.begin(), _broadcasts.end(),
+        [id](const BroadcastState& broadcast) {
+            return broadcast.playerId == id;
+        }), _broadcasts.end());
     for (auto it = _incantationTiles.begin(); it != _incantationTiles.end(); ) {
         auto& players = it->second;
 
@@ -184,6 +251,16 @@ void GameWorld::removePlayer(int id)
             ++it;
     }
     _players.erase(id);
+}
+
+void GameWorld::setWinner(const std::string& teamName)
+{
+    _winner = teamName;
+}
+
+const std::optional<std::string>& GameWorld::getWinner() const
+{
+    return _winner;
 }
 
 int GameWorld::getWidth() const
@@ -217,4 +294,32 @@ std::optional<IncantationState> GameWorld::getPlayerIncantation(int id) const
     if (now >= endTime)
         return std::nullopt;
     return it->second;
+}
+
+std::optional<DeathState> GameWorld::getPlayerDeath(int id) const
+{
+    const auto it = _dyingPlayers.find(id);
+
+    if (it == _dyingPlayers.end())
+        return std::nullopt;
+    return it->second;
+}
+
+const std::vector<BroadcastState>& GameWorld::getBroadcasts() const
+{
+    pruneBroadcasts();
+    return _broadcasts;
+}
+
+void GameWorld::pruneBroadcasts() const
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    _broadcasts.erase(std::remove_if(_broadcasts.begin(), _broadcasts.end(),
+        [now](const BroadcastState& broadcast) {
+            const auto endTime = broadcast.startTime +
+                std::chrono::milliseconds(std::max(1, broadcast.durationMs));
+
+            return now >= endTime;
+        }), _broadcasts.end());
 }

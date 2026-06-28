@@ -5,10 +5,19 @@
 ** ConsoleLogger.hpp
 */
 
+/**
+ * @file ConsoleLogger.hpp
+ * @brief Console implementation of @ref ILogger.
+ */
+
 #pragma once
 
 #include "shared/ILogger.hpp"
 
+/**
+ * @class ConsoleLogger
+ * @brief @ref ILogger that writes severity-tagged messages to the console.
+ */
 class ConsoleLogger : public ILogger {
 public:
     ConsoleLogger() = default;

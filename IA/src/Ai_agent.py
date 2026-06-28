@@ -93,7 +93,10 @@ class ZappyAgent:
     def analyze_calls(self): 
         """
         Analyse les messages radio non lus.
-        Retourne : {id_agent : [{k : (command, [params])}], id_agent2 : ...}
+        PARAMS:
+            -Aucun paramètre.
+        Retourne :
+            -{id_agent : [{k : (command, [params])}], id_agent2 : ...}
         """
         parsed_calls = {}
         self.unread_messages = self.cmd.get_unread_broadcasts()

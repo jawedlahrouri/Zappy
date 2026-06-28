@@ -5,6 +5,29 @@
 ** IEventVisitor.hpp
 */
 
+/**
+ * @file IEventVisitor.hpp
+ * @brief Visitor interface for server-to-GUI events.
+ */
+
+/**
+ * @defgroup visitor_event GUI Event Visitor
+ * @brief Double-dispatch over outgoing GUI events (Visitor pattern).
+ *
+ * @par Design Pattern: Visitor (GoF)
+ * The third Visitor of the project (alongside @ref visitor_ai and
+ * @ref visitor_gui), this one serialises the events the server *pushes* to GUIs
+ * (player movement, broadcast, incantation, egg laid, ...):
+ * - Visitor interface : @ref IEventVisitor — one @c visit() per event type.
+ * - Concrete visitor  : @ref EventVisitor — formats the event and sends it to
+ *   one GUI (@ref EventVisitor::setTargetClient) or all GUIs.
+ * - Element interface  : @ref IEventElement — declares @c Accept(IEventVisitor*) const.
+ * - Concrete elements  : @c PnwEvent, @c PbcEvent, ... (the event DTOs).
+ *
+ * Protocol: the Zappy GUI protocol.
+ * @{
+ */
+
 #ifndef IEVENTVISITOR_HPP_
 #define IEVENTVISITOR_HPP_
 
@@ -25,6 +48,11 @@ class PinEvent;
 class EdiEvent;
 class EboEvent;
 
+/**
+ * @interface IEventVisitor
+ * @ingroup visitor_event
+ * @brief Declares one @c visit() handler per concrete GUI event.
+ */
 class IEventVisitor {
 public:
     virtual ~IEventVisitor() = default;
@@ -45,5 +73,7 @@ public:
     virtual void visit(EdiEvent *event) = 0;
     virtual void visit(EboEvent *event) = 0;
 };
+
+/** @} */ // end of visitor_event
 
 #endif /* !IEVENTVISITOR_HPP_ */

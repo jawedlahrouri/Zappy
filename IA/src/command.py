@@ -128,6 +128,7 @@ class ZappyCommand:
         Params:
             -Aucun paramètre.
         Retourne True si l'incantation est un succès, False sinon."""
+
         logger.info(f"l'agent envoie la commande: Incantation")
         self.network.send_command("Incantation\n")
         first_response = self._wait_for_response(expect_incantation=True)

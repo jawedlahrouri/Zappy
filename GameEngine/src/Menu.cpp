@@ -8,7 +8,7 @@
 #include "Menu.hpp"
 #include "TextureManager.hpp"
 
-static std::string getMenuTeamTexture(std::size_t index)
+std::string Menu::getMenuTeamTexture(std::size_t index)
 {
     if (index == 0)
         return "bluePlayer";
@@ -154,7 +154,7 @@ void Menu::drawTexts(sf::RenderWindow& window, const sf::Font& font, const sf::V
     drawText(window, font, "Port", 24, sf::Color(235, 240, 245), centerX, centerY - 35.0f);
     drawInputBox(window, windowSize, centerY + 10.0f, activeField == 1);
     drawText(window, font, port, 22, sf::Color(18, 24, 30), centerX, centerY + 4.0f);
-    drawText(window, font, "Press Enter", 26, sf::Color(18, 24, 30), startButton.getPosition().x, startButton.getPosition().y - 6.0f);
+    drawText(window, font, "Press to enter", 26, sf::Color(18, 24, 30), startButton.getPosition().x, startButton.getPosition().y - 6.0f);
     if (!status.empty())
         drawText(window, font, status, 18, sf::Color(255, 220, 80), centerX, startButton.getPosition().y + 65.0f);
     drawText(window, font, "Esc to quit", 18, sf::Color(160, 170, 180), centerX, startButton.getPosition().y + 95.0f);

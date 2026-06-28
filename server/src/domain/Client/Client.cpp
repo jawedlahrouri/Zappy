@@ -7,6 +7,9 @@
 
 #include "Client.hpp"
 
+/**
+ * @brief Takes ownership of the socket; the client starts as @c PENDING.
+ */
 Client::Client(std::unique_ptr<ISocket> clientSocket, int id)
     : _socket(std::move(clientSocket)), _id(id), _type(ClientType::PENDING)
 {
@@ -42,6 +45,9 @@ void Client::clearWriteBuffer()
     _writeBuffer.clear();
 }
 
+/**
+ * @brief Drops the first @p len sent bytes, clearing fully if @p len covers all.
+ */
 void Client::removeFromWriteBuffer(size_t len)
 {
     if (len >= _writeBuffer.size()) {

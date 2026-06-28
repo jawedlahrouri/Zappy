@@ -54,6 +54,11 @@ void GuiCommandParser::parse_gui_pin(std::shared_ptr<GUI> client, const std::str
     }
 }
 
+/**
+ * @brief Replies with a player's inventory, or "sbp" if the id is unknown.
+ * @par Protocol (GUI protocol)
+ * Request "pin #n\n" -> Response "pin #n X Y q0 q1 q2 q3 q4 q5 q6\n".
+ */
 void GuiVisitor::visit(PinCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);
@@ -75,7 +80,7 @@ void GuiVisitor::visit(PinCommand *element) {
 
         auto& inv = ai->getInventory();
 
-        std::string response = "pin " + std::to_string(ai->getId()) + " " +
+        std::string response = "pin #" + std::to_string(ai->getId()) + " " +
                                std::to_string(ai->getX()) + " " +
                                std::to_string(ai->getY()) + " " +
                                std::to_string(inv["food"]) + " " +

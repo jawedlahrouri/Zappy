@@ -78,6 +78,7 @@ class RoleTask:
         RETURNS:
             -None
         """
+
         if self.agent.state == AgentState.ELEVATION:
             result = self.agent.comportment.act_elevating()
             if result and result != AgentState.ELEVATION:

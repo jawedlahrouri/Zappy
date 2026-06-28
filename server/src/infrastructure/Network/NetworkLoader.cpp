@@ -9,6 +9,11 @@
 #include "ServerException.hpp"
 #include <stdexcept>
 
+/// @cond INTERNAL
+/*
+ * Platform shims: OPEN_LIB / CLOSE_LIB / GET_SYM and getPlatformError() map to
+ * the Windows or POSIX dynamic-loading API so the rest of the file is portable.
+ */
 #ifdef _WIN32
     #include <windows.h>
     #define OPEN_LIB(path)      static_cast<void *>(LoadLibraryA(path.c_str()))
@@ -32,6 +37,7 @@
         return err ? std::string(err) : std::string("unknown error");
     }
 #endif
+/// @endcond
 
 NetworkLoader::NetworkLoader()
     : _handle(nullptr), _symbols{}
@@ -52,6 +58,11 @@ std::string NetworkLoader::defaultLibraryPath()
 #endif
 }
 
+/**
+ * @brief Opens the backend library and resolves all its symbols.
+ * @details Reloads if a library was already open. On Windows, retries with a
+ *          @c "lib" prefix before failing.
+ */
 void NetworkLoader::load(const std::string &libraryPath)
 {
     if (_handle != nullptr) {
@@ -100,6 +111,10 @@ void *NetworkLoader::resolveSymbol(const std::string &name) const
     return sym;
 }
 
+/**
+ * @brief Resolves every @c net_* export into the @ref NetworkBackend::Symbols.
+ * @throws ServerException via @ref resolveSymbol if any symbol is missing.
+ */
 void NetworkLoader::loadAllSymbols()
 {
     _symbols.createInetSocket = reinterpret_cast<NetworkBackend::FnCreateInetSocket>(resolveSymbol("net_createInetSocket"));

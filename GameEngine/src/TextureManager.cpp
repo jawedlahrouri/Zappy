@@ -41,3 +41,8 @@ const sf::Texture& TextureManager::getTexture(const std::string& name) const
     }
     return it->second;
 }
+
+void TextureManager::clear()
+{
+    _textures.clear();
+}

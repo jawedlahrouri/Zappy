@@ -175,6 +175,7 @@ class StateComportment:
         Retourne:
             - AgentState: l'etat dans lequel l'agent doit etre.
         """
+
         if self.agent.level >= 3:
             self.agent.state = AgentState.FARMING
             return AgentState.FARMING
@@ -242,6 +243,10 @@ class StateComportment:
 
     def act_wait(self):
         """Etat d'attente en cas de feeder qui a trop de bouffe
+        PARAMS:
+            -Aucun paramètre.
+        Retourne:
+            -AgentState: L'état dans lequel l'agent doit rester ou passer.
         """
         if self.agent.utils.is_grouping():
             self.agent.state = AgentState.GROUPING

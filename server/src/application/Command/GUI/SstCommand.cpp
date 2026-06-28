@@ -54,6 +54,11 @@ void GuiCommandParser::parse_gui_sst(std::shared_ptr<GUI> client, const std::str
     }
 }
 
+/**
+ * @brief Applies the new time unit and echoes it back.
+ * @par Protocol (GUI protocol)
+ * Request "sst T\n" -> Response "sgt T\n" (an invalid value yields "sbp").
+ */
 void GuiVisitor::visit(SstCommand *element) {
     try {
         Server* server = dynamic_cast<Server*>(&_network);
