@@ -10,23 +10,19 @@
 #include <algorithm>
 #include <cmath>
 
-namespace {
-    constexpr float DEG_TO_RAD = 0.017453292519943295769f;
+float Graphic3DCamera::clampFloat(float value, float min, float max)
+{
+    return std::max(min, std::min(value, max));
+}
 
-    float clampFloat(float value, float min, float max)
-    {
-        return std::max(min, std::min(value, max));
-    }
+Vector3 Graphic3DCamera::addVector(Vector3 a, Vector3 b)
+{
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
 
-    Vector3 addVector(Vector3 a, Vector3 b)
-    {
-        return {a.x + b.x, a.y + b.y, a.z + b.z};
-    }
-
-    Vector3 scaleVector(Vector3 vector, float scale)
-    {
-        return {vector.x * scale, vector.y * scale, vector.z * scale};
-    }
+Vector3 Graphic3DCamera::scaleVector(Vector3 vector, float scale)
+{
+    return {vector.x * scale, vector.y * scale, vector.z * scale};
 }
 
 Graphic3DCamera::Graphic3DCamera()

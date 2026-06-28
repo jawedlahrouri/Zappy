@@ -123,11 +123,6 @@
             static int countResourceItems(const Resources& resources);
 
             /**
-             * @brief Counts hatched eggs in the world.
-             */
-            static int countHatchedEggs(const GameWorld& world);
-
-            /**
              * @brief Draws compact shared inventories for each team.
              * @return Next row index after the rendered block.
              */

@@ -203,11 +203,7 @@ void GameWorld::updateAnimations()
 
 void GameWorld::addEgg(int id, int parentId, int x, int y)
 {
-    _eggs[id] = {id, x, y, parentId, false};
-}
-    
-void GameWorld::hatchEgg(int id) {
-    if (_eggs.find(id) != _eggs.end()) _eggs[id].isHatched = true;
+    _eggs[id] = {id, x, y, parentId};
 }
 
 void GameWorld::removeEgg(int id) {

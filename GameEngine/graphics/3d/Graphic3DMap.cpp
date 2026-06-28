@@ -107,14 +107,12 @@ void Graphic3DMap::drawEggs(const GameWorld& world) const
         (void)id;
         const Vector3 tile = Graphic3DUtils::getTileCenter(egg.x, egg.y,
             width, height);
-        const Color color = egg.isHatched ?
-            Color{247, 213, 88, 255} : Color{235, 232, 218, 255};
 
         DrawSphere({
             tile.x + 0.52f,
             Graphic3DConfig::TILE_HEIGHT + 0.18f,
             tile.z + 0.52f
-        }, 0.22f, color);
+        }, 0.22f, {235, 232, 218, 255});
     }
 }
 

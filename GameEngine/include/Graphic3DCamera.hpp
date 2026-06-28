@@ -42,6 +42,23 @@
             static constexpr float MIN_CAMERA_DISTANCE = 4.0f;
             /** Maximum allowed camera distance from the target. */
             static constexpr float MAX_CAMERA_DISTANCE = 80.0f;
+            /** Conversion factor from degrees to radians. */
+            static constexpr float DEG_TO_RAD = 0.017453292519943295769f;
+
+            /**
+             * @brief Clamps a floating-point value between two bounds.
+             */
+            static float clampFloat(float value, float min, float max);
+
+            /**
+             * @brief Adds two Raylib Vector3 values.
+             */
+            static Vector3 addVector(Vector3 a, Vector3 b);
+
+            /**
+             * @brief Scales a Raylib Vector3 by a scalar.
+             */
+            static Vector3 scaleVector(Vector3 vector, float scale);
 
             /**
              * @brief Re-centers the camera for a world snapshot.
