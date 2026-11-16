@@ -1,3 +1,5 @@
+[![Academic Year](https://img.shields.io/badge/Epitech-Tek2-green?style=for-the-badge&logo=epitech&logoColor=white)](https://www.epitech.eu/)
+
 # Zappy
 
 > Jeu réseau multijoueur où des équipes d'IA autonomes explorent une planète
